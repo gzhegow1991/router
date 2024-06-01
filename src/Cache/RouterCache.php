@@ -6,17 +6,14 @@
 
 namespace Gzhegow\Router\Cache;
 
-use Gzhegow\Router\RouterFactory;
+use Gzhegow\Router\Lib;
 use Gzhegow\Router\Route\RouteCompiled;
 use Gzhegow\Router\Exception\LogicException;
 use Gzhegow\Router\Exception\RuntimeException;
 use Gzhegow\Router\Cache\Struct\RouterCacheRuntime;
-use function Gzhegow\Router\_php_dump;
-use function Gzhegow\Router\_filter_dirpath;
-use function Gzhegow\Router\_filter_filename;
 
 
-class RouterCache
+class RouterCache implements RouterCacheInterface
 {
     const CACHE_MODE_NO_CACHE = 'NO_CACHE';
     const CACHE_MODE_STORAGE  = 'STORAGE';
@@ -28,12 +25,7 @@ class RouterCache
 
 
     /**
-     * @var RouterFactory
-     */
-    protected $factory;
-
-    /**
-     * @var string
+     * @var string @see \Gzhegow\Router\Cache\RouterCache::LIST_CACHE_MODE
      */
     protected $cacheMode = self::CACHE_MODE_NO_CACHE;
     /**
@@ -55,14 +47,8 @@ class RouterCache
     protected $cacheAdapterItem;
 
 
-    public function __construct(RouterFactory $factory)
-    {
-        $this->factory = $factory;
-    }
-
-
     /**
-     * @param string|null                                   $cacheMode
+     * @param string|null                                   $cacheMode @see \Gzhegow\Router\Cache\RouterCache::LIST_CACHE_MODE
      * @param object|\Psr\Cache\CacheItemPoolInterface|null $cacheAdapter
      * @param string|null                                   $cacheDirpath
      * @param string|null                                   $cacheFilename
@@ -87,17 +73,17 @@ class RouterCache
         if ((null !== $cacheAdapter) && ! is_a($cacheAdapter, $class = '\Psr\Cache\CacheItemPoolInterface')) {
             throw new LogicException(
                 'The `cacheAdapter` should be instance of: ' . $class
-                . ' / ' . _php_dump($cacheAdapter)
+                . ' / ' . Lib::php_dump($cacheAdapter)
             );
         }
 
-        if ((null !== $cacheDirpath) && (null === _filter_dirpath($cacheDirpath))) {
+        if ((null !== $cacheDirpath) && (null === Lib::filter_dirpath($cacheDirpath))) {
             throw new LogicException(
                 'The `cacheDirpath` should be valid directory path: ' . $cacheDirpath
             );
         }
 
-        if ((null !== $cacheFilename) && (null === _filter_filename($cacheFilename))) {
+        if ((null !== $cacheFilename) && (null === Lib::filter_filename($cacheFilename))) {
             throw new LogicException(
                 'The `cacheFilename` should be valid filename: ' . $cacheFilename
             );

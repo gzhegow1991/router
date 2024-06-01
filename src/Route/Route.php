@@ -51,13 +51,13 @@ class Route implements \Serializable, \JsonSerializable
      */
     public $contractActionAttributes;
     /**
-     * @var GenericMiddleware[]
+     * @var array<string, GenericMiddleware>
      */
-    public $contractMiddlewareList;
+    public $contractMiddlewareIndex;
     /**
-     * @var GenericFallback[]
+     * @var array<string, GenericFallback>
      */
-    public $contractFallbackList;
+    public $contractFallbackIndex;
 
 
     public function getId() : int

@@ -45,7 +45,7 @@ class RouteCollection
 
     public function registerRoute(Route $route) : int
     {
-        $id = $this->id++;
+        $id = ++$this->id;
 
         $route->id = $id;
 
@@ -57,7 +57,7 @@ class RouteCollection
     }
 
 
-    protected function indexRoute(Route $route) // : static
+    protected function indexRoute(Route $route) : void
     {
         $path = $route->path;
         $name = $route->name;
@@ -96,7 +96,5 @@ class RouteCollection
         foreach ( $route->tagIndex ?? [] as $tag => $bool ) {
             $this->routeIndexByTag[ $tag ][ $route->id ] = true;
         }
-
-        return $this;
     }
 }

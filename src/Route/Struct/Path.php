@@ -2,11 +2,9 @@
 
 namespace Gzhegow\Router\Route\Struct;
 
+use Gzhegow\Router\Lib;
 use Gzhegow\Router\Router;
 use Gzhegow\Router\Exception\LogicException;
-use function Gzhegow\Router\_err;
-use function Gzhegow\Router\_php_dump;
-use function Gzhegow\Router\_filter_path;
 
 
 class Path
@@ -28,7 +26,7 @@ class Path
     {
         if (null === ($instance = static::tryFrom($from))) {
             throw new LogicException([
-                'Unknown `from`: ' . _php_dump($from),
+                'Unknown `from`: ' . Lib::php_dump($from),
             ]);
         }
 
@@ -53,7 +51,7 @@ class Path
     protected static function fromStatic($static) : ?object
     {
         if (! is_a($static, static::class)) {
-            return _err([ 'The `from` should be instance of: ' . static::class, $static ]);
+            return Lib::php_trigger_error([ 'The `from` should be instance of: ' . static::class, $static ]);
         }
 
         return $static;
@@ -64,12 +62,12 @@ class Path
      */
     protected static function fromString($string) : ?object
     {
-        if (null === ($path = _filter_path($string))) {
-            return _err([ 'The `from` should be valid path', $string ]);
+        if (null === ($path = Lib::filter_path($string))) {
+            return Lib::php_trigger_error([ 'The `from` should be valid path', $string ]);
         }
 
         if (0 !== strpos($path, '/')) {
-            return _err([ 'The `from` should start with `/` sign', $string ]);
+            return Lib::php_trigger_error([ 'The `from` should start with `/` sign', $string ]);
         }
 
         $allowed = ''
@@ -82,7 +80,7 @@ class Path
         if (preg_match("/[^{$allowed}]/", $path)) {
             $regex = "/[{$allowed}]+/";
 
-            return _err([ 'The `from` should match the regex: ' . $regex, $string ]);
+            return Lib::php_trigger_error([ 'The `from` should match the regex: ' . $regex, $string ]);
         }
 
         $instance = new static();

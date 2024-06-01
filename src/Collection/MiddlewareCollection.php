@@ -66,7 +66,7 @@ class MiddlewareCollection
         $id = $this->middlewareMapKeyToId[ $key ] ?? null;
 
         if (null === $id) {
-            $id = $this->id++;
+            $id = ++$this->id;
 
             $this->middlewareList[ $id ] = $middleware;
 

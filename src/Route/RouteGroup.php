@@ -2,7 +2,7 @@
 
 namespace Gzhegow\Router\Route;
 
-use Gzhegow\Router\Router;
+use Gzhegow\Router\RouterInterface;
 
 
 /**
@@ -11,14 +11,15 @@ use Gzhegow\Router\Router;
 class RouteGroup
 {
     /**
-     * @var Router
+     * @var RouterInterface
      */
     protected $router;
 
     /**
      * @var RouteBlueprint
      */
-    public $routeBlueprint;
+    protected $routeBlueprint;
+
     /**
      * @var RouteBlueprint[]
      */
@@ -26,11 +27,13 @@ class RouteGroup
 
 
     public function __construct(
-        Router $router,
+        RouterInterface $router,
+        //
         RouteBlueprint $routeBlueprint
     )
     {
         $this->router = $router;
+
         $this->routeBlueprint = $routeBlueprint;
     }
 
@@ -57,9 +60,9 @@ class RouteGroup
     }
 
 
-    public function httpMethods($httpMethods) // : static
+    public function httpMethodList($httpMethods) // : static
     {
-        $this->routeBlueprint->httpMethods($httpMethods);
+        $this->routeBlueprint->httpMethodList($httpMethods);
 
         return $this;
     }
@@ -72,9 +75,9 @@ class RouteGroup
     }
 
 
-    public function tags($tags) // : static
+    public function tagList($tags) // : static
     {
-        $this->routeBlueprint->tags($tags);
+        $this->routeBlueprint->tagList($tags);
 
         return $this;
     }
@@ -87,9 +90,9 @@ class RouteGroup
     }
 
 
-    public function middlewares($middlewares) // : static
+    public function middlewareList($middlewares) // : static
     {
-        $this->routeBlueprint->middlewares($middlewares);
+        $this->routeBlueprint->middlewareList($middlewares);
 
         return $this;
     }
@@ -102,9 +105,9 @@ class RouteGroup
     }
 
 
-    public function fallbacks($fallbacks) // : static
+    public function fallbackList($fallbacks) // : static
     {
-        $this->routeBlueprint->fallbacks($fallbacks);
+        $this->routeBlueprint->fallbackList($fallbacks);
 
         return $this;
     }

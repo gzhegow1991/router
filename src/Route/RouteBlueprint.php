@@ -2,6 +2,7 @@
 
 namespace Gzhegow\Router\Route;
 
+use Gzhegow\Router\Lib;
 use Gzhegow\Router\Route\Struct\Tag;
 use Gzhegow\Router\Route\Struct\Name;
 use Gzhegow\Router\Route\Struct\Path;
@@ -9,7 +10,6 @@ use Gzhegow\Router\Route\Struct\HttpMethod;
 use Gzhegow\Router\Handler\Action\GenericAction;
 use Gzhegow\Router\Handler\Fallback\GenericFallback;
 use Gzhegow\Router\Handler\Middleware\GenericMiddleware;
-use function Gzhegow\Router\_array_string_index;
 
 
 class RouteBlueprint
@@ -74,14 +74,14 @@ class RouteBlueprint
     }
 
 
-    public function httpMethods($httpMethods) // : static
+    public function httpMethodList($httpMethods) // : static
     {
         $httpMethods = $httpMethods ?? [];
         $httpMethods = (array) $httpMethods;
 
         $index = [];
         if ($httpMethods) {
-            $index = _array_string_index($httpMethods);
+            $index = Lib::array_string_index($httpMethods);
         }
 
         $httpMethodIndex = [];
@@ -106,7 +106,7 @@ class RouteBlueprint
             return $this;
         }
 
-        $index = _array_string_index($this->httpMethodIndex ?? [], $httpMethods);
+        $index = Lib::array_string_index($this->httpMethodIndex ?? [], $httpMethods);
 
         $httpMethodIndex = [];
 
@@ -122,14 +122,14 @@ class RouteBlueprint
     }
 
 
-    public function tags($tags) // : static
+    public function tagList($tags) // : static
     {
         $tags = $tags ?? [];
         $tags = (array) $tags;
 
         $index = [];
         if ($tags) {
-            $index = _array_string_index($tags);
+            $index = Lib::array_string_index($tags);
         }
 
         $tagIndex = [];
@@ -154,7 +154,7 @@ class RouteBlueprint
             return $this;
         }
 
-        $index = _array_string_index($this->tagIndex ?? [], $tags);
+        $index = Lib::array_string_index($this->tagIndex ?? [], $tags);
 
         $tagIndex = [];
         foreach ( $index as $httpMethod => $bool ) {
@@ -169,7 +169,7 @@ class RouteBlueprint
     }
 
 
-    public function middlewares($middlewares) // : static
+    public function middlewareList($middlewares) // : static
     {
         $middlewares = $middlewares ?? [];
         $middlewares = (array) $middlewares;
@@ -206,7 +206,7 @@ class RouteBlueprint
     }
 
 
-    public function fallbacks($fallbacks) // : static
+    public function fallbackList($fallbacks) // : static
     {
         $fallbacks = $fallbacks ?? [];
         $fallbacks = (array) $fallbacks;

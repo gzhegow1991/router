@@ -66,7 +66,7 @@ class FallbackCollection
         $id = $this->fallbackMapKeyToId[ $key ] ?? null;
 
         if (null === $id) {
-            $id = $this->id++;
+            $id = ++$this->id;
 
             $this->fallbackList[ $id ] = $fallback;
 

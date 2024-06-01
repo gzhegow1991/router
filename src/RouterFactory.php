@@ -9,14 +9,15 @@ use Gzhegow\Router\Pipeline\Pipeline;
 use Gzhegow\Router\Cache\RouterCache;
 use Gzhegow\Router\Route\RouteBlueprint;
 use Gzhegow\Router\Collection\RouteCollection;
+use Gzhegow\Router\Cache\RouterCacheInterface;
 use Gzhegow\Router\Collection\PatternCollection;
 use Gzhegow\Router\Collection\FallbackCollection;
 use Gzhegow\Router\Collection\MiddlewareCollection;
 
 
-class RouterFactory
+class RouterFactory implements RouterFactoryInterface
 {
-    public function newRouter() : Router
+    public function newRouter() : RouterInterface
     {
         $processor = $this->newRouterProcessor();
         $cache = $this->newRouterCache();
@@ -29,14 +30,14 @@ class RouterFactory
     }
 
 
-    public function newRouterProcessor() : RouterProcessor
+    public function newRouterProcessor() : RouterProcessorInterface
     {
         return new RouterProcessor($this);
     }
 
-    public function newRouterCache() : RouterCache
+    public function newRouterCache() : RouterCacheInterface
     {
-        return new RouterCache($this);
+        return new RouterCache();
     }
 
 
@@ -61,12 +62,18 @@ class RouterFactory
     }
 
 
+    public function newRouteNode() : RouterNode
+    {
+        return new RouterNode();
+    }
+
+
     public function newRouteBlueprint() : RouteBlueprint
     {
         return new RouteBlueprint();
     }
 
-    public function newRouteGroup(Router $router, RouteBlueprint $routeBlueprint) : RouteGroup
+    public function newRouteGroup(RouterInterface $router, RouteBlueprint $routeBlueprint) : RouteGroup
     {
         return new RouteGroup($router, $routeBlueprint);
     }
@@ -76,27 +83,9 @@ class RouterFactory
         return new Route();
     }
 
-    public function newRouteNode() : RouterNode
-    {
-        return new RouterNode();
-    }
 
-
-    public function newPipeline(RouterProcessor $processor) : Pipeline
+    public function newPipeline(RouterProcessorInterface $processor) : Pipeline
     {
         return new Pipeline($processor);
-    }
-
-
-    /**
-     * @template-covariant T of object
-     *
-     * @param class-string<T>|T $class
-     *
-     * @return T
-     */
-    public function newHandlerObject(string $class, array $parameters = []) : object
-    {
-        return new $class(...$parameters);
     }
 }

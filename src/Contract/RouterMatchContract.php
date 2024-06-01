@@ -2,11 +2,8 @@
 
 namespace Gzhegow\Router\Contract;
 
+use Gzhegow\Router\Lib;
 use Gzhegow\Router\Exception\LogicException;
-use function Gzhegow\Router\_err;
-use function Gzhegow\Router\_php_dump;
-use function Gzhegow\Router\_array_int_index;
-use function Gzhegow\Router\_array_string_index;
 
 
 class RouterMatchContract
@@ -45,7 +42,7 @@ class RouterMatchContract
     {
         if (null === ($instance = static::tryFrom($from))) {
             throw new LogicException([
-                'Unknown `from`: ' . _php_dump($from),
+                'Unknown `from`: ' . Lib::php_dump($from),
             ]);
         }
 
@@ -70,7 +67,7 @@ class RouterMatchContract
     protected static function fromStatic($static) : ?object
     {
         if (! is_a($static, static::class)) {
-            return _err([ 'The `from` should be instance of: ' . static::class, $static ]);
+            return Lib::php_trigger_error([ 'The `from` should be instance of: ' . static::class, $static ]);
         }
 
         return $static;
@@ -82,7 +79,7 @@ class RouterMatchContract
     protected static function fromArray($array) : ?object
     {
         if (! is_array($array)) {
-            return _err([ 'The `from` should be array', $array ]);
+            return Lib::php_trigger_error([ 'The `from` should be array', $array ]);
         }
 
         $ids = [];
@@ -108,12 +105,12 @@ class RouterMatchContract
 
         $instance = new static();
 
-        $instance->idIndex = _array_int_index([], ...$ids);
-        $instance->nameIndex = _array_string_index([], ...$names);
-        $instance->tagIndex = _array_string_index([], ...$groups);
+        $instance->idIndex = Lib::array_int_index([], ...$ids);
+        $instance->nameIndex = Lib::array_string_index([], ...$names);
+        $instance->tagIndex = Lib::array_string_index([], ...$groups);
 
-        $instance->pathIndex = _array_string_index([], ...$pathes);
-        $instance->httpMethodIndex = _array_string_index([], ...$methods);
+        $instance->pathIndex = Lib::array_string_index([], ...$pathes);
+        $instance->httpMethodIndex = Lib::array_string_index([], ...$methods);
 
         return $instance;
     }

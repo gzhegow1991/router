@@ -2,10 +2,8 @@
 
 namespace Gzhegow\Router\Route\Struct;
 
+use Gzhegow\Router\Lib;
 use Gzhegow\Router\Exception\LogicException;
-use function Gzhegow\Router\_err;
-use function Gzhegow\Router\_php_dump;
-use function Gzhegow\Router\_filter_string;
 
 
 class Tag
@@ -27,7 +25,7 @@ class Tag
     {
         if (null === ($instance = static::tryFrom($from))) {
             throw new LogicException([
-                'Unknown `from`: ' . _php_dump($from),
+                'Unknown `from`: ' . Lib::php_dump($from),
             ]);
         }
 
@@ -52,7 +50,7 @@ class Tag
     protected static function fromStatic($static) : ?object
     {
         if (! is_a($static, static::class)) {
-            return _err([ 'The `from` should be instance of: ' . static::class, $static ]);
+            return Lib::php_trigger_error([ 'The `from` should be instance of: ' . static::class, $static ]);
         }
 
         return $static;
@@ -63,8 +61,8 @@ class Tag
      */
     protected static function fromString($string) : ?object
     {
-        if (null === ($tag = _filter_string($string))) {
-            return _err([ 'The `from` should be non-empty string', $string ]);
+        if (null === ($tag = Lib::filter_string($string))) {
+            return Lib::php_trigger_error([ 'The `from` should be non-empty string', $string ]);
         }
 
         $instance = new static();

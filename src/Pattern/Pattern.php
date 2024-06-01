@@ -2,12 +2,9 @@
 
 namespace Gzhegow\Router\Pattern;
 
+use Gzhegow\Router\Lib;
 use Gzhegow\Router\Router;
 use Gzhegow\Router\Exception\LogicException;
-use function Gzhegow\Router\_err;
-use function Gzhegow\Router\_php_dump;
-use function Gzhegow\Router\_filter_regex;
-use function Gzhegow\Router\_filter_string;
 
 
 class Pattern implements \Serializable, \JsonSerializable
@@ -37,7 +34,7 @@ class Pattern implements \Serializable, \JsonSerializable
     {
         if (null === ($instance = static::tryFrom($from))) {
             throw new LogicException([
-                'Unknown `from`: ' . _php_dump($from),
+                'Unknown `from`: ' . Lib::php_dump($from),
             ]);
         }
 
@@ -62,7 +59,7 @@ class Pattern implements \Serializable, \JsonSerializable
     protected static function fromStatic($static) : ?object
     {
         if (! is_a($static, static::class)) {
-            return _err([ 'The `from` should be instance of: ' . static::class, $static ]);
+            return Lib::php_trigger_error([ 'The `from` should be instance of: ' . static::class, $static ]);
         }
 
         return $static;
@@ -74,7 +71,7 @@ class Pattern implements \Serializable, \JsonSerializable
     protected static function fromArray($array) : ?object
     {
         if (! is_array($array)) {
-            return _err([
+            return Lib::php_trigger_error([
                 'The `from` should be array',
                 $array,
             ]);
@@ -82,15 +79,15 @@ class Pattern implements \Serializable, \JsonSerializable
 
         [ $pattern, $regex ] = $array + [ null, null ];
 
-        if (null === ($_pattern = _filter_string($pattern))) {
-            return _err([
+        if (null === ($_pattern = Lib::filter_string($pattern))) {
+            return Lib::php_trigger_error([
                 'The `from[0]` should be non-empty string',
                 $array,
             ]);
         }
 
-        if (null === ($_regex = _filter_string($regex))) {
-            return _err([
+        if (null === ($_regex = Lib::filter_string($regex))) {
+            return Lib::php_trigger_error([
                 'The `from[1]` should be non-empty string',
                 $array,
             ]);
@@ -100,7 +97,7 @@ class Pattern implements \Serializable, \JsonSerializable
             && (Router::PATTERN_ENCLOSURE[ 0 ] === $_pattern[ 0 ])
             && (Router::PATTERN_ENCLOSURE[ 1 ] === $_pattern[ strlen($_pattern) - 1 ])
         )) {
-            return _err([
+            return Lib::php_trigger_error([
                 'The `from[0]` should be wrapped with signs: '
                 . '`' . Router::PATTERN_ENCLOSURE[ 0 ] . '`'
                 . ' `' . Router::PATTERN_ENCLOSURE[ 1 ] . '`',
@@ -111,7 +108,7 @@ class Pattern implements \Serializable, \JsonSerializable
         $_attribute = substr($_pattern, 1, -1);
 
         if (! preg_match($var = '/[a-z][a-z0-9_]*/', $_attribute)) {
-            return _err([
+            return Lib::php_trigger_error([
                 'The `from[0]` should match regex: ' . $var . ' / ' . $_attribute,
                 $array,
             ]);
@@ -127,14 +124,14 @@ class Pattern implements \Serializable, \JsonSerializable
                 $vars[ $i ] = "`{$symbol}`";
             }
 
-            return _err([
+            return Lib::php_trigger_error([
                 'The `from[1]` should not contain symbols: ' . implode(',', $vars),
                 $array,
             ]);
         }
 
-        if (null === _filter_regex($var = "/{$_regex}/")) {
-            return _err([
+        if (null === Lib::filter_regex($var = "/{$_regex}/")) {
+            return Lib::php_trigger_error([
                 'The `from[1]` caused invalid regex: ' . $var,
                 $array,
             ]);

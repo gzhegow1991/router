@@ -2,10 +2,8 @@
 
 namespace Gzhegow\Router\Route\Struct;
 
+use Gzhegow\Router\Lib;
 use Gzhegow\Router\Exception\LogicException;
-use function Gzhegow\Router\_err;
-use function Gzhegow\Router\_php_dump;
-use function Gzhegow\Router\_filter_string;
 
 
 class HttpMethod
@@ -50,7 +48,7 @@ class HttpMethod
     {
         if (null === ($instance = static::tryFrom($from))) {
             throw new LogicException([
-                'Unknown `from`: ' . _php_dump($from),
+                'Unknown `from`: ' . Lib::php_dump($from),
             ]);
         }
 
@@ -75,7 +73,7 @@ class HttpMethod
     protected static function fromStatic($static) : ?object
     {
         if (! is_a($static, static::class)) {
-            return _err([ 'The `from` should be instance of: ' . static::class, $static ]);
+            return Lib::php_trigger_error([ 'The `from` should be instance of: ' . static::class, $static ]);
         }
 
         return $static;
@@ -86,14 +84,14 @@ class HttpMethod
      */
     protected static function fromString($string) : ?object
     {
-        if (null === ($_string = _filter_string($string))) {
-            return _err([ 'The `from` should be non-empty string', $string ]);
+        if (null === ($_string = Lib::filter_string($string))) {
+            return Lib::php_trigger_error([ 'The `from` should be non-empty string', $string ]);
         }
 
         $_string = strtoupper($_string);
 
         if (! isset(static::LIST_METHOD[ $_string ])) {
-            return _err([
+            return Lib::php_trigger_error([
                 'The `from` should be one of: ' . implode(',', array_keys(static::LIST_METHOD)),
                 $string,
             ]);

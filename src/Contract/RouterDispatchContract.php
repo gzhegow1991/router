@@ -2,11 +2,9 @@
 
 namespace Gzhegow\Router\Contract;
 
+use Gzhegow\Router\Lib;
 use Gzhegow\Router\Route\Struct\HttpMethod;
 use Gzhegow\Router\Exception\LogicException;
-use function Gzhegow\Router\_err;
-use function Gzhegow\Router\_php_dump;
-use function Gzhegow\Router\_filter_path;
 
 
 class RouterDispatchContract
@@ -32,7 +30,7 @@ class RouterDispatchContract
     {
         if (null === ($instance = static::tryFrom($from))) {
             throw new LogicException([
-                'Unknown `from`: ' . _php_dump($from)
+                'Unknown `from`: ' . Lib::php_dump($from),
             ]);
         }
 
@@ -57,7 +55,7 @@ class RouterDispatchContract
     protected static function fromStatic($static) : ?object
     {
         if (! is_a($static, static::class)) {
-            return _err([ 'The `from` should be instance of: ' . static::class, $static ]);
+            return Lib::php_trigger_error([ 'The `from` should be instance of: ' . static::class, $static ]);
         }
 
         return $static;
@@ -69,21 +67,21 @@ class RouterDispatchContract
     protected static function fromArray($array) : ?object
     {
         if (! is_array($array)) {
-            return _err([ 'The `from` should be array', $array ]);
+            return Lib::php_trigger_error([ 'The `from` should be array', $array ]);
         }
 
         [ $httpMethod, $requestUri ] = $array;
 
         if (null === ($_httpMethod = HttpMethod::tryFrom($httpMethod))) {
-            return _err([
-                'The `from[0]` should be valid `httpMethod`: ' . _php_dump($httpMethod),
+            return Lib::php_trigger_error([
+                'The `from[0]` should be valid `httpMethod`: ' . Lib::php_dump($httpMethod),
                 $array,
             ]);
         }
 
-        if (null === ($_requestUri = _filter_path($requestUri))) {
-            return _err([
-                'The `from[0]` should be valid `path`: ' . _php_dump($requestUri),
+        if (null === ($_requestUri = Lib::filter_path($requestUri))) {
+            return Lib::php_trigger_error([
+                'The `from[0]` should be valid `path`: ' . Lib::php_dump($requestUri),
                 $array,
             ]);
         }

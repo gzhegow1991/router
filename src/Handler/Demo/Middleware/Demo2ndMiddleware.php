@@ -2,7 +2,7 @@
 
 namespace Gzhegow\Router\Handler\Demo\Middleware;
 
-class DemoMiddleware
+class Demo2ndMiddleware
 {
     public function __invoke(callable $fnNext, $input = null, $context = null) // : mixed
     {

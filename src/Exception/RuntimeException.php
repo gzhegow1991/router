@@ -2,7 +2,7 @@
 
 namespace Gzhegow\Router\Exception;
 
-use function Gzhegow\Router\_php_throw_errors;
+use Gzhegow\Router\Lib;
 
 
 class RuntimeException extends \RuntimeException
@@ -19,7 +19,7 @@ class RuntimeException extends \RuntimeException
 
     public function __construct(...$errors)
     {
-        foreach ( _php_throw_errors(...$errors) as $k => $v ) {
+        foreach ( Lib::php_throw_errors(...$errors) as $k => $v ) {
             $this->{$k} = $v;
         }
 

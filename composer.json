@@ -15,12 +15,7 @@
   "autoload": {
     "psr-4": {
       "Gzhegow\\Router\\": "src/"
-    },
-    "files": [
-      "helpers/array.php",
-      "helpers/assert.php",
-      "helpers/php.php"
-    ]
+    }
   },
 
   "require": {
