@@ -40,10 +40,22 @@ $router = (new RouterFactory())->newRouter();
 
 // >>> Ставим настройки роутера
 $settings = [
+    // > позволить регистрировать callable с объектами и \Closure, кеш в этом случае работать не будет
     $registerAllowObjectsAndClosures = false,
-    $compileAllowTrailingSlash = Router::TRAILING_SLASH_AS_IS,
+    //
+    // > на этапе добавления проверить маршрут на предмет того, заканчивается ли он на слеш и бросить исключение
+    $compileTrailingSlashMode = Router::TRAILING_SLASH_AS_IS,
+    // Router::TRAILING_SLASH_AS_IS // > оставить как есть
+    // Router::TRAILING_SLASH_ALWAYS, // > при вызове маршрута добавлять к нему trailing-slash
+    // Router::TRAILING_SLASH_NEVER, // > при вызове маршрута удалить trailing-slash
+    //
+    // > не учитывать метод при вызове dispatch(), в этом случае POST действия будут отрабатывать даже на запросы из браузера (однако порядок регистрации важен, если на том же маршруте GET/POST, то отработает тот что раньше зарегистрирован)
     $dispatchIgnoreMethod = false,
+    //
+    // > подменить метод при вызове dispatch(), например, несмотря на GET запрос выполнить действие, зарегистрированное на POST
     $dispatchForceMethod = null, // HttpMethod::METHOD_POST | HttpMethod::METHOD_GET | HttpMethod::METHOD_PUT | HttpMethod::METHOD_OPTIONS | etc.
+    //
+    // > при вызове dispatch() к переданному маршруту добавить обратный слеш, удалить его или оставить без изменений
     $dispatchTrailingSlashMode = Router::TRAILING_SLASH_AS_IS,  // TRAILING_SLASH_ALWAYS | TRAILING_SLASH_NEVER
     // Router::TRAILING_SLASH_AS_IS // > оставить как есть
     // Router::TRAILING_SLASH_ALWAYS, // > при вызове маршрута добавлять к нему trailing-slash

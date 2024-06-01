@@ -807,12 +807,12 @@ class Router implements RouterInterface
 
             $isEndsWithSlash = ('/' === $pathValue[ strlen($pathValue) - 1 ]);
 
-            if ($isEndsWithSlash && ($this->dispatchTrailingSlashMode === static::TRAILING_SLASH_NEVER)) {
+            if ($isEndsWithSlash && ($this->compileTrailingSlashMode === static::TRAILING_SLASH_NEVER)) {
                 throw new RuntimeException(
                     'The `path` must not end with `/` sign: ' . $pathValue
                 );
 
-            } elseif (! $isEndsWithSlash && ($this->dispatchTrailingSlashMode === static::TRAILING_SLASH_ALWAYS)) {
+            } elseif (! $isEndsWithSlash && ($this->compileTrailingSlashMode === static::TRAILING_SLASH_ALWAYS)) {
                 throw new RuntimeException(
                     'The `path` must end with `/` sign: ' . $pathValue
                 );
