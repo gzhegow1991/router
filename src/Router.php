@@ -269,6 +269,7 @@ class Router implements RouterInterface
     protected function cacheSave() // : static
     {
         if (! $this->isRouterChanged) return $this;
+        if ($this->registerAllowObjectsAndClosures) return $this;
 
         $cacheData = [
             'routeCollection'      => $this->routeCollection,
@@ -1010,9 +1011,16 @@ class Router implements RouterInterface
         $this->isRouterChanged = true;
 
         if (! $this->registerAllowObjectsAndClosures) {
+            $runtimeAction = null
+                ?? $route->action->closure
+                ?? $route->action->methodObject
+                ?? $route->action->invokableObject;
+
             if ($route->action->closure || $route->action->methodObject || $route->action->invokableObject) {
                 throw new RuntimeException(
-                    'This route `action` should not be runtime object or \Closure: ' . Lib::php_dump($route)
+                    'The `action` should not be runtime object or \Closure: '
+                    . Lib::php_dump($runtimeAction)
+                    . ' / ' . $route->path
                 );
             }
         }

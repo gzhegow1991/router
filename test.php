@@ -30,7 +30,7 @@ set_error_handler(function ($errno, $errstr, $errfile, $errline) {
     }
 });
 set_exception_handler(function ($e) {
-    var_dump($e);
+    var_dump($e->getMessage(), Lib::php_dump($e));
     die();
 });
 
@@ -128,6 +128,7 @@ $router->cacheRemember(function (RouterInterface $router) {
             DemoRuntimeFallback::class, // > этот Fallback написан обрабатывать только \RuntimeException
         ])
         ->register(function (RouterInterface $router) {
+            $router->route('/api/v1/user/{id}/test', 'GET', function () { return 1; });
             $router->route('/api/v1/user/{id}/main', 'GET', [ DemoController::class, 'mainGet' ], 'user.main');
             $router->route('/api/v1/user/{id}/main', 'POST', [ DemoController::class, 'mainPost' ], 'user.main'); // > это имя мы уже использовали выше, однако path совпадает и так можно
 
