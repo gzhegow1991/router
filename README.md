@@ -40,14 +40,17 @@ require_once __DIR__ . '/vendor/autoload.php';
 ini_set('memory_limit', '32M');
 
 // > настраиваем обработку ошибок
-error_reporting(E_ALL & ~E_USER_NOTICE);
+error_reporting(E_ALL);
 set_error_handler(function ($errno, $errstr, $errfile, $errline) {
     if (error_reporting() & $errno) {
         throw new \ErrorException($errstr, -1, $errno, $errfile, $errline);
     }
 });
 set_exception_handler(function ($e) {
-    var_dump($e);
+    var_dump(Lib::php_dump($e));
+    var_dump($e->getMessage());
+    var_dump(($e->getFile() ?? '{file}') . ': ' . ($e->getLine() ?? '{line}'));
+
     die();
 });
 

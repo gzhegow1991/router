@@ -76,7 +76,7 @@ class Lib
             return $error;
         }
 
-        $throwErrors = Lib::php_throw_errors($error, ...$errors);
+        $throwErrors = static::php_throw_errors($error, ...$errors);
 
         $message = $throwErrors[ 'message' ] ?? __FUNCTION__;
         $code = $throwErrors[ 'code' ] ?? -1;
@@ -121,7 +121,7 @@ class Lib
                 continue;
             }
 
-            if (null !== ($_string = Lib::filter_string($err))) {
+            if (null !== ($_string = static::filter_string($err))) {
                 $_message = $_string;
 
                 continue;
@@ -134,7 +134,7 @@ class Lib
                 $_messageData = (array) $err;
 
                 if (isset($_messageData[ 0 ])) {
-                    $_message = Lib::filter_string($_messageData[ 0 ]);
+                    $_message = static::filter_string($_messageData[ 0 ]);
                 }
             }
         }
@@ -163,6 +163,16 @@ class Lib
         return $result;
     }
 
+
+    public static function php_trigger_error_enabled(bool $enable = null)
+    {
+        static $enabled;
+
+        $enabled = $enable ?? $enabled ?? false;
+
+        return $enabled;
+    }
+
     public static function php_trigger_error($err, int $error_level = null, $result = null)
     {
         $error_level = $error_level ?? E_USER_NOTICE;
@@ -171,7 +181,9 @@ class Lib
             ? (array) $err
             : [ $err ];
 
-        trigger_error($error[ 0 ], $error_level);
+        if (static::php_trigger_error_enabled()) {
+            trigger_error($error[ 0 ], $error_level);
+        }
 
         return $result;
     }
@@ -328,7 +340,7 @@ class Lib
 
         $optional[ 0 ] = $optional[ 'with_pathinfo' ] ?? $optional[ 0 ] ?? false;
 
-        if (null === ($_value = Lib::filter_string($value))) {
+        if (null === ($_value = static::filter_string($value))) {
             return null;
         }
 
@@ -355,7 +367,7 @@ class Lib
         array &$pathinfo = null
     ) : ?string
     {
-        $_value = Lib::filter_path(
+        $_value = static::filter_path(
             $value, $optional,
             $pathinfo
         );
@@ -374,7 +386,7 @@ class Lib
 
     public static function filter_filename($value) : ?string
     {
-        if (null === ($_value = Lib::filter_string($value))) {
+        if (null === ($_value = static::filter_string($value))) {
             return null;
         }
 
@@ -392,7 +404,7 @@ class Lib
 
     public static function filter_regex($regex) : ?string
     {
-        if (null === ($_value = Lib::filter_string($regex))) {
+        if (null === ($_value = static::filter_string($regex))) {
             return null;
         }
 
@@ -420,7 +432,7 @@ class Lib
             return ltrim(get_class($value), '\\');
         }
 
-        if (null === ($_value = Lib::filter_string($value))) {
+        if (null === ($_value = static::filter_string($value))) {
             return null;
         }
 
@@ -446,7 +458,7 @@ class Lib
 
     public static function filter_class($value, bool $useRegex = null) : ?string
     {
-        $_value = Lib::filter_struct($value, $useRegex, 'class_exists');
+        $_value = static::filter_struct($value, $useRegex, 'class_exists');
 
         if (null === $_value) {
             return null;
