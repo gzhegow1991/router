@@ -164,7 +164,7 @@ class Lib
     }
 
 
-    public static function php_trigger_error_enabled(bool $enable = null)
+    public static function php_trigger_error_enabled(bool $enable = null) : bool
     {
         static $enabled;
 
@@ -173,7 +173,7 @@ class Lib
         return $enabled;
     }
 
-    public static function php_trigger_error($err, int $error_level = null, $result = null)
+    public static function php_trigger_error($err, int $error_level = null, $result = null) // : mixed
     {
         $error_level = $error_level ?? E_USER_NOTICE;
 
