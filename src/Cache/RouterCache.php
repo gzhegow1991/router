@@ -165,8 +165,6 @@ class RouterCache implements RouterCacheInterface
 
     public function clearCache() // : static
     {
-        $this->initCache();
-
         if ($this->cacheMode === static::CACHE_MODE_STORAGE) {
             if ($this->cacheAdapter) {
                 $cacheAdapter = $this->cacheAdapter;
