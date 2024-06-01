@@ -1,0 +1,37 @@
+{
+  "name": "gzhegow/router",
+  "type": "library",
+
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+
+  "authors": [
+    {
+      "name": "gzhegow",
+      "email": "6562680@gmail.com"
+    }
+  ],
+
+  "autoload": {
+    "psr-4": {
+      "Gzhegow\\Router\\": "src/"
+    },
+    "files": [
+      "helpers/array.php",
+      "helpers/assert.php",
+      "helpers/php.php"
+    ]
+  },
+
+  "require": {
+    "php": "^7.2|^8.0",
+
+    "ext-json": "*"
+  },
+
+  "config": {
+    "optimize-autoloader": true,
+
+    "sort-packages": false
+  }
+}
