@@ -166,10 +166,12 @@ $router->cacheRemember(function (RouterInterface $router) {
 
 // > так можно искать маршруты с помощью имен или тегов
 echo 'Case 1:' . PHP_EOL;
-// $batch = $router->matchAllByNames([ 'user.main' ]); // > все результаты
-// $batch = $router->matchAllByTags([ 'user' ]); // > все результаты
-// $routes = $router->matchFirstByName('user.main'); // > первый результат
-// $routes = $router->matchFirstByTag('user'); // > первый результат
+// > все результаты
+// [ 1 => $routes1, 2 => $routes2 ] = $batch = $router->matchAllByNames([ 1 => 'user.main', 2 => 'user.logic' ]);
+// [ 1 => $routes1, 2 => $routes2 ] = $batch = $router->matchAllByTags([ 1 => 'tag1', 2 => 'tag2' ]);
+// > первый результат
+// $route = $router->matchFirstByName('user.main');
+// $route = $router->matchFirstByTag('user');
 $batch = $router->matchAllByNames([ 'user.main' ]);
 foreach ( $batch as $id => $routes ) {
     var_dump([
