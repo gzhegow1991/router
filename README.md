@@ -289,7 +289,7 @@ var_dump($result);
 // bool(true)
 echo PHP_EOL;
 
-// > этот маршрут бросает \LogicException, запустятся DemoFallback и DemoRuntimeFallback
+// > этот маршрут бросает \RuntimeException, запустятся DemoFallback и DemoRuntimeFallback
 echo 'Case 6:' . PHP_EOL;
 $contract = RouterDispatchContract::from([ 'GET', '/api/v1/user/1/runtime' ]);
 $result = $router->dispatch($contract);
