@@ -7,7 +7,7 @@ use Gzhegow\Router\Lib;
 
 
 class LogicException extends \LogicException
-    implements RouterException
+    implements ExceptionInterface
 {
     public $message;
     public $code;

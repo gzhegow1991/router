@@ -2,7 +2,7 @@
 
 namespace Gzhegow\Router\Exception;
 
-interface RouterException
+interface ExceptionInterface
 {
 
 }

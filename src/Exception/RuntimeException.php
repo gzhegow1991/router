@@ -6,7 +6,7 @@ use Gzhegow\Router\Lib;
 
 
 class RuntimeException extends \RuntimeException
-    implements RouterException
+    implements ExceptionInterface
 {
     public $message;
     public $code;
