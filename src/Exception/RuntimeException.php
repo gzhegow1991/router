@@ -19,7 +19,7 @@ class RuntimeException extends \RuntimeException
 
     public function __construct(...$errors)
     {
-        foreach ( Lib::php_throw_errors(...$errors) as $k => $v ) {
+        foreach ( Lib::php_throwable_args(...$errors) as $k => $v ) {
             $this->{$k} = $v;
         }
 
