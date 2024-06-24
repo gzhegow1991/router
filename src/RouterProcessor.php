@@ -127,13 +127,15 @@ class RouterProcessor implements RouterProcessorInterface
      */
     public function newHandlerObject(string $class, array $parameters = []) : object
     {
-        return new $class(...$parameters);
+        $handler = new $class(...$parameters);
+
+        return $handler;
     }
 
 
     protected function callUserFunc($fn, ...$args) // : mixed
     {
-        $result = call_user_func_array($fn, ...$args);
+        $result = call_user_func($fn, ...$args);
 
         return $result;
     }
