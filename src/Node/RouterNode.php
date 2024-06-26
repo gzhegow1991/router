@@ -3,7 +3,7 @@
 namespace Gzhegow\Router\Node;
 
 
-class RouterNode implements \Serializable, \JsonSerializable
+class RouterNode implements \Serializable
 {
     /**
      * @var string
@@ -59,10 +59,5 @@ class RouterNode implements \Serializable, \JsonSerializable
         $array = unserialize($data);
 
         $this->__unserialize($array);
-    }
-
-    public function jsonSerialize()
-    {
-        return $this->__serialize();
     }
 }

@@ -7,7 +7,7 @@ use Gzhegow\Router\Router;
 use Gzhegow\Router\Exception\LogicException;
 
 
-class Pattern implements \Serializable, \JsonSerializable
+class Pattern implements \Serializable
 {
     /**
      * @var string
@@ -174,10 +174,5 @@ class Pattern implements \Serializable, \JsonSerializable
         $array = unserialize($data);
 
         $this->__unserialize($array);
-    }
-
-    public function jsonSerialize()
-    {
-        return $this->__serialize();
     }
 }

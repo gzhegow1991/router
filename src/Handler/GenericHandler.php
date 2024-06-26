@@ -6,7 +6,7 @@ use Gzhegow\Router\Lib;
 use Gzhegow\Router\Exception\LogicException;
 
 
-abstract class GenericHandler implements \Serializable, \JsonSerializable
+abstract class GenericHandler implements \Serializable
 {
     /**
      * @var string
@@ -243,10 +243,5 @@ abstract class GenericHandler implements \Serializable, \JsonSerializable
         $array = unserialize($data);
 
         $this->__unserialize($array);
-    }
-
-    public function jsonSerialize()
-    {
-        return $this->__serialize();
     }
 }

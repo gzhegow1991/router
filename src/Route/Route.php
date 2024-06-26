@@ -7,7 +7,7 @@ use Gzhegow\Router\Handler\Fallback\GenericFallback;
 use Gzhegow\Router\Handler\Middleware\GenericMiddleware;
 
 
-class Route implements \Serializable, \JsonSerializable
+class Route implements \Serializable
 {
     /**
      * @var int
@@ -92,10 +92,5 @@ class Route implements \Serializable, \JsonSerializable
         $array = unserialize($data);
 
         $this->__unserialize($array);
-    }
-
-    public function jsonSerialize()
-    {
-        return $this->__serialize();
     }
 }

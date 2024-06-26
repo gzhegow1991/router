@@ -7,10 +7,8 @@
 namespace Gzhegow\Router\Cache;
 
 use Gzhegow\Router\Lib;
-use Gzhegow\Router\Route\RouteCompiled;
 use Gzhegow\Router\Exception\LogicException;
 use Gzhegow\Router\Exception\RuntimeException;
-use Gzhegow\Router\Cache\Struct\RouterCacheRuntime;
 
 
 class RouterCache implements RouterCacheInterface
