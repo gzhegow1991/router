@@ -855,9 +855,16 @@ class Router implements RouterInterface
         if (! $this->compileTrailingSlashMode) {
             $pathValue = $path->getValue();
 
-            if ('/' === $pathValue[ strlen($pathValue) - 1 ]) {
+            $isEndsWithSlash = ('/' === $pathValue[ strlen($pathValue) - 1 ]);
+
+            if ($isEndsWithSlash && ($this->compileTrailingSlashMode === static::TRAILING_SLASH_NEVER)) {
                 throw new RuntimeException(
                     'The `path` must not end with `/` sign: ' . $pathValue
+                );
+
+            } elseif (! $isEndsWithSlash && ($this->compileTrailingSlashMode === static::TRAILING_SLASH_ALWAYS)) {
+                throw new RuntimeException(
+                    'The `path` must end with `/` sign: ' . $pathValue
                 );
             }
         }
@@ -1158,9 +1165,16 @@ class Router implements RouterInterface
         $pathValue = $path->getValue();
 
         if (! $this->compileTrailingSlashMode) {
-            if ('/' === $pathValue[ strlen($pathValue) - 1 ]) {
+            $isEndsWithSlash = ('/' === $pathValue[ strlen($pathValue) - 1 ]);
+
+            if ($isEndsWithSlash && ($this->compileTrailingSlashMode === static::TRAILING_SLASH_NEVER)) {
                 throw new RuntimeException(
                     'The `path` must not end with `/` sign: ' . $pathValue
+                );
+
+            } elseif (! $isEndsWithSlash && ($this->compileTrailingSlashMode === static::TRAILING_SLASH_ALWAYS)) {
+                throw new RuntimeException(
+                    'The `path` must end with `/` sign: ' . $pathValue
                 );
             }
         }
