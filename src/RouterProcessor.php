@@ -45,6 +45,9 @@ class RouterProcessor implements RouterProcessorInterface
                 $input,
                 $context,
                 //
+                'fnNext'     => $fnNext,
+                'input'      => $input,
+                'context'    => $context,
                 'middleware' => $middleware,
                 'pipeline'   => $pipeline,
                 'route'      => $route,
@@ -75,6 +78,8 @@ class RouterProcessor implements RouterProcessorInterface
                 $input,
                 $context,
                 //
+                'input'    => $input,
+                'context'  => $context,
                 'action'   => $action,
                 'pipeline' => $pipeline,
                 'route'    => $route,
@@ -106,6 +111,9 @@ class RouterProcessor implements RouterProcessorInterface
                 $input,
                 $context,
                 //
+                'e'        => $e,
+                'input'    => $input,
+                'context'  => $context,
                 'fallback' => $fallback,
                 'pipeline' => $pipeline,
                 'route'    => $route,
