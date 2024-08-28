@@ -505,18 +505,16 @@ class Router implements RouterInterface
         }
 
         $dispatchHttpMethod = $contractHttpMethod;
-
         if ($this->dispatchForceMethod) {
             $dispatchHttpMethod = $this->dispatchForceMethod;
         }
 
-        $indexMatch = null;
+        $routeNodeCurrent = $this->routerNodeRoot;
 
         $middlewareIndex = [];
         $fallbackIndex = [];
 
-        $routeNodeCurrent = $this->routerNodeRoot;
-
+        $indexMatch = null;
         $pathCurrent = '';
 
         $slice = $contractRequestUri;
@@ -525,45 +523,32 @@ class Router implements RouterInterface
         while ( $slice ) {
             $part = array_shift($slice);
 
-            if (isset($routeNodeCurrent->routeIndexByPart[ $part ])) {
-                $indexMatch = $routeNodeCurrent->routeIndexByPart[ $part ];
+            $isRoute = empty($slice);
 
-                break;
-            }
+            if ($isRoute) {
+                if (isset($routeNodeCurrent->routeIndexByPart[ $part ])) {
+                    $indexMatch = $routeNodeCurrent->routeIndexByPart[ $part ];
 
-            if (isset($routeNodeCurrent->childrenByPart[ $part ])) {
-                $routeNodeCurrent = $routeNodeCurrent->childrenByPart[ $part ];
-
-                $pathCurrent .= '/' . $routeNodeCurrent->part;
-
-                if (isset($this->middlewareCollection->middlewareIndexByPath[ $pathCurrent ])) {
-                    $middlewareIndex += $this->middlewareCollection->middlewareIndexByPath[ $pathCurrent ];
+                    break;
                 }
 
-                if (isset($this->fallbackCollection->fallbackIndexByPath[ $pathCurrent ])) {
-                    $fallbackIndex += $this->fallbackCollection->fallbackIndexByPath[ $pathCurrent ];
-                }
+                foreach ( $routeNodeCurrent->routeIndexByRegex ?? [] as $regex => $routeIndex ) {
+                    if (preg_match('/^' . $regex . '$/', $part, $matches)) {
+                        $indexMatch = $routeIndex;
 
-                continue;
-            }
-
-            foreach ( $routeNodeCurrent->routeIndexByRegex ?? [] as $regex => $routeIndex ) {
-                if (preg_match('/^' . $regex . '$/', $part, $matches)) {
-                    $indexMatch = $routeIndex;
-
-                    foreach ( $matches as $key => $value ) {
-                        if (is_string($key)) {
-                            $contractActionAttributes[ $key ] = $value;
+                        foreach ( $matches as $key => $value ) {
+                            if (is_string($key)) {
+                                $contractActionAttributes[ $key ] = $value;
+                            }
                         }
+
+                        break 2;
                     }
-
-                    break 2;
                 }
-            }
 
-            foreach ( $routeNodeCurrent->childrenByRegex ?? [] as $regex => $routeNode ) {
-                if (preg_match('/^' . $regex . '$/', $part, $matches)) {
-                    $routeNodeCurrent = $routeNode;
+            } else {
+                if (isset($routeNodeCurrent->childrenByPart[ $part ])) {
+                    $routeNodeCurrent = $routeNodeCurrent->childrenByPart[ $part ];
 
                     $pathCurrent .= '/' . $routeNodeCurrent->part;
 
@@ -575,13 +560,31 @@ class Router implements RouterInterface
                         $fallbackIndex += $this->fallbackCollection->fallbackIndexByPath[ $pathCurrent ];
                     }
 
-                    foreach ( $matches as $key => $value ) {
-                        if (is_string($key)) {
-                            $contractActionAttributes[ $key ] = $value;
-                        }
-                    }
+                    continue;
+                }
 
-                    continue 2;
+                foreach ( $routeNodeCurrent->childrenByRegex ?? [] as $regex => $routeNode ) {
+                    if (preg_match('/^' . $regex . '$/', $part, $matches)) {
+                        $routeNodeCurrent = $routeNode;
+
+                        $pathCurrent .= '/' . $routeNodeCurrent->part;
+
+                        if (isset($this->middlewareCollection->middlewareIndexByPath[ $pathCurrent ])) {
+                            $middlewareIndex += $this->middlewareCollection->middlewareIndexByPath[ $pathCurrent ];
+                        }
+
+                        if (isset($this->fallbackCollection->fallbackIndexByPath[ $pathCurrent ])) {
+                            $fallbackIndex += $this->fallbackCollection->fallbackIndexByPath[ $pathCurrent ];
+                        }
+
+                        foreach ( $matches as $key => $value ) {
+                            if (is_string($key)) {
+                                $contractActionAttributes[ $key ] = $value;
+                            }
+                        }
+
+                        continue 2;
+                    }
                 }
             }
         }
@@ -1008,7 +1011,7 @@ class Router implements RouterInterface
             $this->registerRoute($route);
         }
 
-        unset($this->routeGroupCurrent);
+        $this->routeGroupCurrent = null;
 
         return $this;
     }
