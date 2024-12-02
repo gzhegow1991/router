@@ -23,9 +23,12 @@ use Gzhegow\Router\Contract\RouterMatchContract;
 use Gzhegow\Router\Collection\FallbackCollection;
 use Gzhegow\Router\Contract\RouterDispatchContract;
 use Gzhegow\Router\Collection\MiddlewareCollection;
-use Gzhegow\Router\Handler\Fallback\GenericFallback;
 use Gzhegow\Router\Exception\Runtime\NotFoundException;
-use Gzhegow\Router\Handler\Middleware\GenericMiddleware;
+use Gzhegow\Router\Handler\Action\Internal\ThrowAction;
+use Gzhegow\Router\Exception\Exception\DispatchException;
+use Gzhegow\Pipeline\Exception\Runtime\PipelineException;
+use Gzhegow\Router\Handler\Fallback\GenericHandlerFallback;
+use Gzhegow\Router\Handler\Middleware\GenericHandlerMiddleware;
 
 
 class Router implements RouterInterface
@@ -46,11 +49,12 @@ class Router implements RouterInterface
     /**
      * @var RouterFactoryInterface
      */
-    protected $factory;
+    protected $routerFactory;
     /**
-     * @var RouterProcessorInterface
+     * @var PipelineFactoryInterface
      */
-    protected $processor;
+    protected $pipelineFactory;
+
     /**
      * @var RouterCacheInterface
      */
@@ -113,31 +117,34 @@ class Router implements RouterInterface
      * @var RouterNode
      */
     protected $routerNodeRoot;
-
     /**
      * @var RouteGroup
      */
-    protected $routeGroupCurrent;
+    protected $routeGroupRoot;
 
 
     public function __construct(
-        RouterFactoryInterface $factory,
-        RouterProcessorInterface $processor,
+        RouterFactoryInterface $routerFactory,
+        PipelineFactoryInterface $pipelineFactory,
+        //
         RouterCacheInterface $cache
     )
     {
-        $this->factory = $factory;
-        $this->processor = $processor;
+        $this->routerFactory = $routerFactory;
+        $this->pipelineFactory = $pipelineFactory;
+
         $this->cache = $cache;
 
-        $this->routeCollection = $this->factory->newRouteCollection();
-        $this->middlewareCollection = $this->factory->newMiddlewareCollection();
-        $this->fallbackCollection = $this->factory->newFallbackCollection();
-        $this->patternCollection = $this->factory->newPatternCollection();
+        $this->routeCollection = $this->routerFactory->newRouteCollection();
+        $this->middlewareCollection = $this->routerFactory->newMiddlewareCollection();
+        $this->fallbackCollection = $this->routerFactory->newFallbackCollection();
+        $this->patternCollection = $this->routerFactory->newPatternCollection();
 
-        $routerNodeRoot = $this->factory->newRouteNode();
+        $routerNodeRoot = $this->routerFactory->newRouteNode();
         $routerNodeRoot->part = '/';
         $this->routerNodeRoot = $routerNodeRoot;
+
+        $this->routeGroupRoot = $this->routerFactory->newRouteGroup();
     }
 
 
@@ -276,6 +283,7 @@ class Router implements RouterInterface
             'middlewareCollection' => $this->middlewareCollection,
             'fallbackCollection'   => $this->fallbackCollection,
             'patternCollection'    => $this->patternCollection,
+            //
             'routerNodeRoot'       => $this->routerNodeRoot,
         ];
 
@@ -287,61 +295,310 @@ class Router implements RouterInterface
     }
 
 
-    /**
-     * @param string[] $names
-     *
-     * @return Route[][]
-     */
-    public function matchAllByNames(array $names) : array
+    public function group(RouteBlueprint $from = null) : RouteGroup
     {
-        $result = [];
+        $routeGroup = $this->routeGroupRoot->group($from);
 
-        $namesIndex = [];
+        return $routeGroup;
+    }
 
-        $indexMatch = [];
-        foreach ( $names as $idx => $name ) {
-            $result[ $idx ] = [];
 
-            $namesIndex[ $name ][ $idx ] = true;
+    /**
+     * @param string                                    $path
+     * @param string|string[]                           $httpMethods
+     * @param callable|object|array|class-string|string $action
+     *
+     * @param string|null                               $name
+     * @param string|string[]|null                      $tags
+     */
+    public function route(
+        $path, $httpMethods, $action,
+        $name = null, $tags = null
+    ) : RouteBlueprint
+    {
+        $routeGroup = $this->routeGroupRoot->route(
+            $path, $httpMethods, $action,
+            $name, $tags
+        );
 
-            if (isset($this->routeCollection->routeIndexByName[ $name ])) {
-                $indexMatch += $this->routeCollection->routeIndexByName[ $name ];
+        return $routeGroup;
+    }
+
+    /**
+     * @return static
+     */
+    public function addRoute(RouteBlueprint $routeBlueprint) // : static
+    {
+        $this->routeGroupRoot->addRoute($routeBlueprint);
+
+        return $this;
+    }
+
+
+    public function newBlueprint(RouteBlueprint $from = null) : RouteBlueprint
+    {
+        $routeBlueprint = $this->routeGroupRoot->newBlueprint($from);
+
+        return $routeBlueprint;
+    }
+
+    /**
+     * @param string|null                                    $path
+     * @param string|string[]|null                           $httpMethods
+     * @param callable|object|array|class-string|string|null $action
+     * @param string|null                                    $name
+     * @param string|string[]|null                           $tags
+     */
+    public function blueprint(
+        RouteBlueprint $from = null,
+        $path = null, $httpMethods = null, $action = null, $name = null, $tags = null
+    ) : RouteBlueprint
+    {
+        $routeBlueprint = $this->routeGroupRoot->blueprint(
+            $from,
+            $path, $httpMethods, $action, $name, $tags
+        );
+
+        return $routeBlueprint;
+    }
+
+
+    /**
+     * @param string $pattern
+     * @param string $regex
+     */
+    public function pattern($pattern, $regex) // : static
+    {
+        $pattern = Pattern::from([ $pattern, $regex ]);
+
+        $this->registerPattern($pattern);
+
+        return $this;
+    }
+
+
+    /**
+     * @param string                                    $path
+     * @param callable|object|array|class-string|string $middleware
+     */
+    public function middlewareOnPath($path, $middleware) // : static
+    {
+        $path = Path::from($path);
+        $middleware = GenericHandlerMiddleware::from($middleware);
+
+        if ($this->compileTrailingSlashMode) {
+            $pathValue = $path->getValue();
+
+            $isEndsWithSlash = ('/' === $pathValue[ strlen($pathValue) - 1 ]);
+
+            if ($isEndsWithSlash && ($this->compileTrailingSlashMode === static::TRAILING_SLASH_NEVER)) {
+                throw new RuntimeException(
+                    'The `path` must not end with `/` sign: ' . $pathValue
+                );
+
+            } elseif (! $isEndsWithSlash && ($this->compileTrailingSlashMode === static::TRAILING_SLASH_ALWAYS)) {
+                throw new RuntimeException(
+                    'The `path` must end with `/` sign: ' . $pathValue
+                );
             }
         }
 
-        $routesMatch = [];
-        foreach ( $indexMatch as $id => $bool ) {
-            $routesMatch[ $id ] = $this->routeCollection->routeList[ $id ];
+        $this->registerMiddleware($middleware);
+
+        $this->middlewareCollection->addPathMiddleware($path, $middleware);
+
+        return $this;
+    }
+
+    /**
+     * @param string                                    $tag
+     * @param callable|object|array|class-string|string $middleware
+     */
+    public function middlewareOnTag($tag, $middleware) // : static
+    {
+        $tag = Tag::from($tag);
+        $middleware = GenericHandlerMiddleware::from($middleware);
+
+        $this->registerMiddleware($middleware);
+
+        $this->middlewareCollection->addTagMiddleware($tag, $middleware);
+
+        return $this;
+    }
+
+
+    /**
+     * @param string                                    $path
+     * @param callable|object|array|class-string|string $fallback
+     */
+    public function fallbackOnPath($path, $fallback) // : static
+    {
+        $path = Path::from($path);
+        $fallback = GenericHandlerFallback::from($fallback);
+
+        if (! $this->compileTrailingSlashMode) {
+            $pathValue = $path->getValue();
+
+            $isEndsWithSlash = ('/' === $pathValue[ strlen($pathValue) - 1 ]);
+
+            if ($isEndsWithSlash && ($this->compileTrailingSlashMode === static::TRAILING_SLASH_NEVER)) {
+                throw new RuntimeException(
+                    'The `path` must not end with `/` sign: ' . $pathValue
+                );
+
+            } elseif (! $isEndsWithSlash && ($this->compileTrailingSlashMode === static::TRAILING_SLASH_ALWAYS)) {
+                throw new RuntimeException(
+                    'The `path` must end with `/` sign: ' . $pathValue
+                );
+            }
         }
 
-        foreach ( $routesMatch as $route ) {
-            /** @var Route $route */
+        $this->registerFallback($fallback);
 
-            foreach ( $namesIndex[ $route->name ] ?? [] as $idx => $bool ) {
-                $result[ $idx ][ $route->id ] = $route;
+        $this->fallbackCollection->addPathFallback($path, $fallback);
+
+        return $this;
+    }
+
+    /**
+     * @param string                                    $tag
+     * @param callable|object|array|class-string|string $fallback
+     */
+    public function fallbackOnTag($tag, $fallback) // : static
+    {
+        $tag = Tag::from($tag);
+        $fallback = GenericHandlerFallback::from($fallback);
+
+        $this->registerFallback($fallback);
+
+        $this->fallbackCollection->addTagFallback($tag, $fallback);
+
+        return $this;
+    }
+
+
+    /**
+     * @return static
+     */
+    public function commit() // : static
+    {
+        $this->registerRouteGroup($this->routeGroupRoot);
+
+        $this->routeGroupRoot = $this->routerFactory->newRouteGroup();
+
+        return $this;
+    }
+
+
+    /**
+     * @param int[] $ids
+     *
+     * @return Route[]
+     */
+    public function matchAllByIds($ids) : array
+    {
+        $result = [];
+
+        $_ids = (array) $ids;
+
+        $routeList = $this->routeCollection->routeList;
+
+        foreach ( $_ids as $id ) {
+            if (isset($routeList[ $id ])) {
+                $result[ $id ] = $routeList[ $id ];
             }
         }
 
         return $result;
     }
 
-    public function matchFirstByName(string $name, array $optional = [], array &$routes = null) : ?Route
+    public function matchFirstByIds($ids) : ?Route
     {
-        $routes = null;
-
-        $all = $optional[ 'all' ] ?? $optional[ 0 ] ?? false;
-
-        $index = $this->routeCollection->routeIndexByName[ $name ] ?? [];
-
         $result = null;
 
-        if ($index) {
-            $result = $this->routeCollection->routeList[ key($index) ];
+        $_ids = (array) $ids;
 
-            if ($all) {
-                foreach ( $index as $id => $bool ) {
-                    $routes[ $id ] = $this->routeCollection->routeList[ $id ];
+        $routeList = $this->routeCollection->routeList;
+
+        foreach ( $_ids as $id ) {
+            if (isset($routeList[ $id ])) {
+                $result = $routeList[ $id ];
+
+                break;
+            }
+        }
+
+        return $result;
+    }
+
+
+    /**
+     * @param string[] $names
+     *
+     * @return Route[]|Route[][]
+     */
+    public function matchAllByNames($names, bool $unique = null) : array
+    {
+        $result = [];
+
+        $_names = (array) $names;
+        $_unique = $unique ?? false;
+
+        $routeIndexByName = $this->routeCollection->routeIndexByName;
+
+        $matchIndex = [];
+        $namesIndex = [];
+        foreach ( $_names as $idx => $name ) {
+            $result[ $idx ] = [];
+
+            if (isset($routeIndexByName[ $name ])) {
+                $matchIndex += $routeIndexByName[ $name ];
+            }
+
+            if (! $_unique) {
+                $namesIndex[ $name ][ $idx ] = true;
+            }
+        }
+
+        $routesMatch = [];
+        foreach ( $matchIndex as $id => $bool ) {
+            $routesMatch[ $id ] = $this->routeCollection->routeList[ $id ];
+        }
+
+        if ($_unique) {
+            $result = $routesMatch;
+
+        } else {
+            foreach ( $routesMatch as $route ) {
+                /** @var Route $route */
+
+                foreach ( $namesIndex[ $route->name ] ?? [] as $idx => $bool ) {
+                    $result[ $idx ][ $route->id ] = $route;
                 }
+            }
+        }
+
+        return $result;
+    }
+
+    public function matchFirstByNames($names) : ?Route
+    {
+        $result = null;
+
+        $_names = (array) $names;
+
+        $routeIndexByName = $this->routeCollection->routeIndexByName;
+
+        $matchIndex = [];
+        foreach ( $_names as $name ) {
+            if (isset($routeIndexByName[ $name ])) {
+                $matchIndex += $routeIndexByName[ $name ];
+            }
+
+            if (count($matchIndex)) {
+                $result = $this->routeCollection->routeList[ key($matchIndex) ];
+
+                break;
             }
         }
 
@@ -352,36 +609,47 @@ class Router implements RouterInterface
     /**
      * @param string[] $tags
      *
-     * @return Route[][]
+     * @return Route[]|Route[][]
      */
-    public function matchAllByTags(array $tags) : array
+    public function matchAllByTags($tags, bool $unique = null) : array
     {
         $result = [];
 
-        $tagsIndex = [];
+        $_tags = (array) $tags;
+        $_unique = $unique ?? false;
 
-        $indexMatch = [];
-        foreach ( $tags as $idx => $tag ) {
+        $routeIndexByTag = $this->routeCollection->routeIndexByTag;
+
+        $matchIndex = [];
+        $tagsIndex = [];
+        foreach ( $_tags as $idx => $tag ) {
             $result[ $idx ] = [];
 
-            $tagsIndex[ $tag ][ $idx ] = true;
+            if (isset($routeIndexByTag[ $tag ])) {
+                $matchIndex += $routeIndexByTag[ $tag ];
+            }
 
-            if (isset($this->routeCollection->routeIndexByTag[ $tag ])) {
-                $indexMatch += $this->routeCollection->routeIndexByTag[ $tag ];
+            if (! $_unique) {
+                $tagsIndex[ $tag ][ $idx ] = true;
             }
         }
 
         $routesMatch = [];
-        foreach ( $indexMatch as $id => $bool ) {
+        foreach ( $matchIndex as $id => $bool ) {
             $routesMatch[ $id ] = $this->routeCollection->routeList[ $id ];
         }
 
-        foreach ( $routesMatch as $route ) {
-            /** @var Route $route */
+        if ($_unique) {
+            $result = $routesMatch;
 
-            foreach ( $route->tagIndex ?? [] as $tag => $b ) {
-                foreach ( $tagsIndex[ $tag ] ?? [] as $idx => $bb ) {
-                    $result[ $idx ][ $route->id ] = $route;
+        } else {
+            foreach ( $routesMatch as $route ) {
+                /** @var Route $route */
+
+                foreach ( $route->tagIndex as $tag => $b ) {
+                    foreach ( $tagsIndex[ $tag ] ?? [] as $idx => $bb ) {
+                        $result[ $idx ][ $route->id ] = $route;
+                    }
                 }
             }
         }
@@ -389,23 +657,24 @@ class Router implements RouterInterface
         return $result;
     }
 
-    public function matchFirstByTag(string $tag, array $optional = [], array &$routes = null) : ?Route
+    public function matchFirstByTags($tags) : ?Route
     {
-        $routes = null;
-
-        $all = $optional[ 'all' ] ?? $optional[ 0 ] ?? false;
-
-        $index = $this->routeCollection->routeIndexByTag[ $tag ] ?? [];
-
         $result = null;
 
-        if ($index) {
-            $result = $this->routeCollection->routeList[ key($index) ];
+        $_tags = (array) $tags;
 
-            if ($all) {
-                foreach ( $index as $id => $bool ) {
-                    $routes[ $id ] = $this->routeCollection->routeList[ $id ];
-                }
+        $routeIndexByTag = $this->routeCollection->routeIndexByTag;
+
+        $matchIndex = [];
+        foreach ( $_tags as $tag ) {
+            if (isset($routeIndexByTag[ $tag ])) {
+                $matchIndex += $routeIndexByTag[ $tag ];
+            }
+
+            if (count($matchIndex)) {
+                $result = $this->routeCollection->routeList[ key($matchIndex) ];
+
+                break;
             }
         }
 
@@ -461,7 +730,7 @@ class Router implements RouterInterface
             $route = $this->routeCollection->routeList[ $id ];
 
             if ($hasHttpMethodIndex) {
-                if (! array_intersect_key($route->httpMethodIndex ?? [], $contract->httpMethodIndex)) {
+                if (! array_intersect_key($route->httpMethodIndex, $contract->httpMethodIndex)) {
                     continue;
                 }
             }
@@ -494,30 +763,38 @@ class Router implements RouterInterface
     {
         $contractHttpMethod = $contract->httpMethod->getValue();
         $contractRequestUri = $contract->requestUri;
-        $contractActionAttributes = [];
-
-        if ($this->dispatchTrailingSlashMode) {
-            $contractRequestUri = rtrim($contractRequestUri, '/');
-
-            if ($this->dispatchTrailingSlashMode === static::TRAILING_SLASH_ALWAYS) {
-                $contractRequestUri = $contractRequestUri . '/';
-            }
-        }
 
         $dispatchHttpMethod = $contractHttpMethod;
         if ($this->dispatchForceMethod) {
             $dispatchHttpMethod = $this->dispatchForceMethod;
         }
 
+        $dispatchRequestUri = $contractRequestUri;
+        if ($this->dispatchTrailingSlashMode) {
+            $dispatchRequestUri = rtrim($dispatchRequestUri, '/');
+
+            if ($this->dispatchTrailingSlashMode === static::TRAILING_SLASH_ALWAYS) {
+                $dispatchRequestUri = $dispatchRequestUri . '/';
+            }
+        }
+
+        $dispatchActionAttributes = [];
+
         $routeNodeCurrent = $this->routerNodeRoot;
 
-        $middlewareIndex = [];
-        $fallbackIndex = [];
+        $middlewareIndexes = [
+            'path' => [],
+            'tags' => [],
+        ];
+        $fallbackIndexes = [
+            'path' => [],
+            'tags' => [],
+        ];
 
         $indexMatch = null;
         $pathCurrent = '';
 
-        $slice = $contractRequestUri;
+        $slice = $dispatchRequestUri;
         $slice = trim($slice, '/');
         $slice = explode('/', $slice);
         while ( $slice ) {
@@ -532,13 +809,13 @@ class Router implements RouterInterface
                     break;
                 }
 
-                foreach ( $routeNodeCurrent->routeIndexByRegex ?? [] as $regex => $routeIndex ) {
+                foreach ( $routeNodeCurrent->routeIndexByRegex as $regex => $routeIndex ) {
                     if (preg_match('/^' . $regex . '$/', $part, $matches)) {
                         $indexMatch = $routeIndex;
 
                         foreach ( $matches as $key => $value ) {
                             if (is_string($key)) {
-                                $contractActionAttributes[ $key ] = $value;
+                                $dispatchActionAttributes[ $key ] = $value;
                             }
                         }
 
@@ -553,33 +830,33 @@ class Router implements RouterInterface
                     $pathCurrent .= '/' . $routeNodeCurrent->part;
 
                     if (isset($this->middlewareCollection->middlewareIndexByPath[ $pathCurrent ])) {
-                        $middlewareIndex += $this->middlewareCollection->middlewareIndexByPath[ $pathCurrent ];
+                        $middlewareIndexes[ 'path' ][ $pathCurrent ] = $this->middlewareCollection->middlewareIndexByPath[ $pathCurrent ];
                     }
 
                     if (isset($this->fallbackCollection->fallbackIndexByPath[ $pathCurrent ])) {
-                        $fallbackIndex += $this->fallbackCollection->fallbackIndexByPath[ $pathCurrent ];
+                        $fallbackIndexes[ 'path' ][ $pathCurrent ] = $this->fallbackCollection->fallbackIndexByPath[ $pathCurrent ];
                     }
 
                     continue;
                 }
 
-                foreach ( $routeNodeCurrent->childrenByRegex ?? [] as $regex => $routeNode ) {
+                foreach ( $routeNodeCurrent->childrenByRegex as $regex => $routeNode ) {
                     if (preg_match('/^' . $regex . '$/', $part, $matches)) {
                         $routeNodeCurrent = $routeNode;
 
                         $pathCurrent .= '/' . $routeNodeCurrent->part;
 
                         if (isset($this->middlewareCollection->middlewareIndexByPath[ $pathCurrent ])) {
-                            $middlewareIndex += $this->middlewareCollection->middlewareIndexByPath[ $pathCurrent ];
+                            $middlewareIndexes[ 'path' ][ $pathCurrent ] = $this->middlewareCollection->middlewareIndexByPath[ $pathCurrent ];
                         }
 
                         if (isset($this->fallbackCollection->fallbackIndexByPath[ $pathCurrent ])) {
-                            $fallbackIndex += $this->fallbackCollection->fallbackIndexByPath[ $pathCurrent ];
+                            $fallbackIndexes[ 'path' ][ $pathCurrent ] = $this->fallbackCollection->fallbackIndexByPath[ $pathCurrent ];
                         }
 
                         foreach ( $matches as $key => $value ) {
                             if (is_string($key)) {
-                                $contractActionAttributes[ $key ] = $value;
+                                $dispatchActionAttributes[ $key ] = $value;
                             }
                         }
 
@@ -589,7 +866,7 @@ class Router implements RouterInterface
             }
         }
 
-        $routeCurrentId = null;
+        $routeFoundId = null;
         if (null !== $indexMatch) {
             $intersect = [];
 
@@ -602,88 +879,128 @@ class Router implements RouterInterface
             $indexMatch = array_intersect_key(...$intersect);
 
             if ($indexMatch) {
-                $routeCurrentId = key($indexMatch);
+                $routeFoundId = key($indexMatch);
             }
         }
 
-        $routeCurrentClone = null;
+        $routeFoundClone = null;
+        if (null !== $routeFoundId) {
+            $routeFoundClone = clone $this->routeCollection->routeList[ $routeFoundId ];
+        }
 
-        if (null !== $routeCurrentId) {
-            $routeCurrentClone = clone $this->routeCollection->routeList[ $routeCurrentId ];
-
-            $routePath = $routeCurrentClone->path;
+        if (null !== $routeFoundClone) {
+            $routePath = $routeFoundClone->path;
 
             if (isset($this->middlewareCollection->middlewareIndexByPath[ $routePath ])) {
-                $middlewareIndex += $this->middlewareCollection->middlewareIndexByPath[ $routePath ];
+                $middlewareIndexes[ 'path' ][ $routePath ] = $this->middlewareCollection->middlewareIndexByPath[ $routePath ];
             }
 
-            foreach ( $routeCurrentClone->tagIndex ?? [] as $tag => $bool ) {
+            foreach ( $routeFoundClone->tagIndex as $tag => $bool ) {
                 if (isset($this->middlewareCollection->middlewareIndexByTag[ $tag ])) {
-                    $middlewareIndex += $this->middlewareCollection->middlewareIndexByTag[ $tag ];
+                    $middlewareIndexes[ 'tags' ] += $this->middlewareCollection->middlewareIndexByTag[ $tag ];
                 }
             }
 
             if (isset($this->fallbackCollection->fallbackIndexByPath[ $routePath ])) {
-                $fallbackIndex += $this->fallbackCollection->fallbackIndexByPath[ $routePath ];
+                $fallbackIndexes[ 'path' ][ $routePath ] = $this->fallbackCollection->fallbackIndexByPath[ $routePath ];
             }
 
-            foreach ( $routeCurrentClone->tagIndex ?? [] as $tag => $bool ) {
+            foreach ( $routeFoundClone->tagIndex as $tag => $bool ) {
                 if (isset($this->fallbackCollection->fallbackIndexByTag[ $tag ])) {
-                    $fallbackIndex += $this->fallbackCollection->fallbackIndexByTag[ $tag ];
+                    $fallbackIndexes[ 'tags' ] += $this->fallbackCollection->fallbackIndexByTag[ $tag ];
                 }
             }
         }
 
-        /** @var GenericMiddleware[] $middlewareList */
-        $middlewareList = array_intersect_key($this->middlewareCollection->middlewareList ?? [], $middlewareIndex);
+        $fnSort = static function ($a, $b) {
+            return 0
+                || (strlen($b) - strlen($a))
+                || strcasecmp($a, $b);
+        };
 
-        /** @var GenericFallback[] $fallbackList */
-        $fallbackList = array_intersect_key($this->fallbackCollection->fallbackList ?? [], $fallbackIndex);
+        uksort($middlewareIndexes[ 'path' ], $fnSort);
+        uksort($fallbackIndexes[ 'path' ], $fnSort);
 
-        ksort($middlewareList);
-        ksort($fallbackList);
+        $middlewareIndex = [];
+        $fallbackIndex = [];
 
-        $pipeline = $this->factory->newPipeline($this->processor);
+        foreach ( $middlewareIndexes[ 'path' ] as $index ) {
+            $middlewareIndex += $index;
+        }
+        foreach ( $fallbackIndexes[ 'path' ] as $index ) {
+            $fallbackIndex += $index;
+        }
 
-        if ($routeCurrentClone) {
-            $routeCurrentClone->contractActionAttributes = $contractActionAttributes;
+        $middlewareIndex += $middlewareIndexes[ 'tags' ];
+        $fallbackIndex += $fallbackIndexes[ 'tags' ];
 
-            $routeCurrentClone->contractMiddlewareIndex = [];
+        /** @var GenericHandlerMiddleware[] $middlewareList */
+        $middlewareList = [];
+        foreach ( $middlewareIndex as $i => $bool ) {
+            $middlewareList[ $i ] = $this->middlewareCollection->middlewareList[ $i ];
+        }
+
+        /** @var GenericHandlerFallback[] $fallbackList */
+        $fallbackList = [];
+        foreach ( $fallbackIndex as $i => $bool ) {
+            $fallbackList[ $i ] = $this->fallbackCollection->fallbackList[ $i ];
+        }
+
+        $pipeline = $this->pipelineFactory->newPipeline();
+
+        $chain = $pipeline;
+        foreach ( $middlewareList as $middleware ) {
+            $chain = $chain->startMiddleware($middleware);
+        }
+
+        if ($routeFoundClone) {
+            $routeFoundClone->dispatchActionAttributes = $dispatchActionAttributes;
+
+            $routeFoundClone->dispatchMiddlewareIndex = [];
             foreach ( $middlewareList as $middleware ) {
-                $routeCurrentClone->contractMiddlewareIndex[ $middleware->getKey() ] = true;
+                $routeFoundClone->dispatchMiddlewareIndex[ $middleware->getKey() ] = true;
             }
 
-            $routeCurrentClone->contractFallbackIndex = [];
+            $routeFoundClone->dispatchFallbackIndex = [];
             foreach ( $fallbackList as $fallback ) {
-                $routeCurrentClone->contractFallbackIndex[ $fallback->getKey() ] = true;
+                $routeFoundClone->dispatchFallbackIndex[ $fallback->getKey() ] = true;
             }
 
-            $pipeline
-                ->addMiddlewares($middlewareList)
-                ->addAction($routeCurrentClone->action)
-                ->addFallbacks($fallbackList)
-            ;
-
-            $result = $pipeline->runRoute(
-                $routeCurrentClone,
-                $input, $context
-            );
+            $chain->action($routeFoundClone->action);
 
         } else {
             $throwable = new NotFoundException(
                 'Route not found: '
-                . '`' . $contractRequestUri . '`'
-                . ' / ' . '`' . $dispatchHttpMethod . '`'
+                . "`{$contractRequestUri}`"
+                . " / `{$dispatchHttpMethod}`"
             );
 
-            $pipeline
-                ->addFallbacks($fallbackList)
-            ;
+            $chain->throwable($throwable);
+        }
 
-            $result = $pipeline->runThrowable(
-                $throwable,
-                $input, $context
+        foreach ( $fallbackList as $fallback ) {
+            $chain->fallback($fallback);
+        }
+
+        foreach ( $middlewareList as $middleware ) {
+            $chain = $chain->endMiddleware();
+        }
+
+        $processManager = $this->pipelineFactory->newProcessManager();
+
+        try {
+            $result = $processManager->run($pipeline, $input, $context);
+        }
+        catch ( PipelineException $throwable ) {
+            $e = new DispatchException(
+                "Unhandled exception occured during dispatch", -1
             );
+
+            foreach ( $throwable->getPreviousStack() as $ee ) {
+                $e->addPrevious($ee);
+            }
+
+            throw $e;
         }
 
         return $result;
@@ -710,7 +1027,7 @@ class Router implements RouterInterface
             if (is_object($route)) {
                 $_routes[ $idx ] = $route;
 
-            } elseif (null !== ($_name = Lib::filter_string($route))) {
+            } elseif (null !== ($_name = Lib::parse_astring($route))) {
                 $_routeNames[ $idx ] = $_name;
 
             } else {
@@ -732,8 +1049,6 @@ class Router implements RouterInterface
         }
 
         foreach ( $_routes as $idx => $route ) {
-            $hasRouteName = ! empty($route->name);
-
             $attributesCurrent = $this->generateUrlAttributes($route, $attributes, $idx);
 
             $result[ $idx ] = $this->generateUrl($route, $attributesCurrent);
@@ -784,239 +1099,24 @@ class Router implements RouterInterface
 
 
     /**
-     * @param string $pattern
-     * @param string $regex
+     * @return int[]
      */
-    public function pattern($pattern, $regex) // : static
+    public function registerRouteGroup(RouteGroup $routeGroup) : array
     {
-        $pattern = Pattern::from([ $pattern, $regex ]);
+        $report = [];
 
-        $this->registerPattern($pattern);
-
-        return $this;
-    }
-
-
-    /**
-     * @param string                                    $path
-     * @param callable|object|array|class-string|string $middleware
-     */
-    public function middlewareOnPath($path, $middleware) // : static
-    {
-        $path = Path::from($path);
-        $middleware = GenericMiddleware::from($middleware);
-
-        if ($this->compileTrailingSlashMode) {
-            $pathValue = $path->getValue();
-
-            $isEndsWithSlash = ('/' === $pathValue[ strlen($pathValue) - 1 ]);
-
-            if ($isEndsWithSlash && ($this->compileTrailingSlashMode === static::TRAILING_SLASH_NEVER)) {
-                throw new RuntimeException(
-                    'The `path` must not end with `/` sign: ' . $pathValue
-                );
-
-            } elseif (! $isEndsWithSlash && ($this->compileTrailingSlashMode === static::TRAILING_SLASH_ALWAYS)) {
-                throw new RuntimeException(
-                    'The `path` must end with `/` sign: ' . $pathValue
-                );
-            }
-        }
-
-        $this->registerMiddleware($middleware);
-
-        $this->middlewareCollection->addPathMiddleware($path, $middleware);
-
-        return $this;
-    }
-
-    /**
-     * @param string                                    $tag
-     * @param callable|object|array|class-string|string $middleware
-     */
-    public function middlewareOnTag($tag, $middleware) // : static
-    {
-        $tag = Tag::from($tag);
-        $middleware = GenericMiddleware::from($middleware);
-
-        $this->registerMiddleware($middleware);
-
-        $this->middlewareCollection->addTagMiddleware($tag, $middleware);
-
-        return $this;
-    }
-
-    /**
-     * @param string                                    $path
-     * @param callable|object|array|class-string|string $fallback
-     */
-    public function fallbackOnPath($path, $fallback) // : static
-    {
-        $path = Path::from($path);
-        $fallback = GenericFallback::from($fallback);
-
-        if (! $this->compileTrailingSlashMode) {
-            $pathValue = $path->getValue();
-
-            $isEndsWithSlash = ('/' === $pathValue[ strlen($pathValue) - 1 ]);
-
-            if ($isEndsWithSlash && ($this->compileTrailingSlashMode === static::TRAILING_SLASH_NEVER)) {
-                throw new RuntimeException(
-                    'The `path` must not end with `/` sign: ' . $pathValue
-                );
-
-            } elseif (! $isEndsWithSlash && ($this->compileTrailingSlashMode === static::TRAILING_SLASH_ALWAYS)) {
-                throw new RuntimeException(
-                    'The `path` must end with `/` sign: ' . $pathValue
-                );
-            }
-        }
-
-        $this->registerFallback($fallback);
-
-        $this->fallbackCollection->addPathFallback($path, $fallback);
-
-        return $this;
-    }
-
-    /**
-     * @param string                                    $tag
-     * @param callable|object|array|class-string|string $fallback
-     */
-    public function fallbackOnTag($tag, $fallback) // : static
-    {
-        $tag = Tag::from($tag);
-        $fallback = GenericFallback::from($fallback);
-
-        $this->registerFallback($fallback);
-
-        $this->fallbackCollection->addTagFallback($tag, $fallback);
-
-        return $this;
-    }
-
-
-    public function blueprint(RouteBlueprint $from = null) : RouteBlueprint
-    {
-        if ($from) {
-            $blueprint = clone $from;
-
-        } elseif ($this->routeGroupCurrent) {
-            $blueprint = clone $this->routeGroupCurrent->getRouteBlueprint();
-
-        } else {
-            $blueprint = $this->factory->newRouteBlueprint();
-        }
-
-        return $blueprint;
-    }
-
-    public function group(RouteBlueprint $from = null) : RouteGroup
-    {
-        if ($this->routeGroupCurrent) {
-            throw new RuntimeException(
-                'Unable to `' . __FUNCTION__ . '()` due to existing `groupCurrent`. '
-                . 'You should avoid nesting groups to make your code less complex'
-            );
-        }
-
-        $blueprint = $this->blueprint($from);
-
-        $routeGroup = $this->factory->newRouteGroup($this, $blueprint);
-
-        $this->routeGroupCurrent = $routeGroup;
-
-        return $routeGroup;
-    }
-
-
-    /**
-     * @param string                                    $path
-     * @param string|string[]                           $httpMethods
-     * @param callable|object|array|class-string|string $action
-     */
-    public function route($path, $httpMethods, $action, $name = null) : RouteBlueprint
-    {
-        if (! $this->routeGroupCurrent) {
-            throw new RuntimeException(
-                'Unable to `' . __FUNCTION__ . '()` due to empty `groupCurrent`. '
-                . 'You have to call it inside `($group = $router->group())->register(function () { /* here */ })` callback'
-            );
-        }
-
-        $blueprint = $this->blueprint();
-
-        $_httpMethods = $httpMethods ?? [ 'GET' => true ];
-        $_httpMethods = (array) $_httpMethods;
-
-        $blueprint
-            ->path($path)
-            ->httpMethod($_httpMethods)
-            ->action($action)
-        ;
-
-        if (null !== $name) {
-            $blueprint->name($name);
-        }
-
-        $this->routeGroupCurrent->routeList[] = $blueprint;
-
-        return $blueprint;
-    }
-
-    public function routeAdd($pathOrBlueprint, ...$arguments) // : static
-    {
-        array_unshift($arguments, $pathOrBlueprint);
-
-        $from = null;
-
-        is_a($pathOrBlueprint, RouteBlueprint::class)
-            ? ([ $from, $path, $httpMethods, $action, $name ] = $arguments + [ null, null, null, null, null ])
-            : ([ $path, $httpMethods, $action, $name ] = $arguments + [ null, null, null, null ]);
-
-        $blueprint = $this->blueprint($from);
-
-        $httpMethods = $httpMethods ?? [ 'GET' => true ];
-        $httpMethods = (array) $httpMethods;
-
-        if (null !== $path) {
-            $blueprint->path($path);
-        }
-
-        if ($httpMethods) {
-            $blueprint->httpMethod($httpMethods);
-        }
-
-        if (null !== $action) {
-            $blueprint->action($action);
-        }
-
-        if (null !== $name) {
-            $blueprint->name($name);
-        }
-
-        $route = $this->compileRoute($blueprint);
-
-        $this->registerRoute($route);
-
-        return $this;
-    }
-
-
-    protected function registerRouteGroup(RouteGroup $routeGroup) // : static
-    {
-        foreach ( $routeGroup->getRouteList() as $i => $routeBlueprint ) {
+        foreach ( $routeGroup->getRoutes() as $routeBlueprint ) {
             $route = $this->compileRoute($routeBlueprint);
 
-            $this->registerRoute($route);
+            $id = $this->registerRoute($route);
+
+            $report[ $id ] = $route;
         }
 
-        $this->routeGroupCurrent = null;
-
-        return $this;
+        return $report;
     }
 
-    protected function registerRoute(Route $route) // : static
+    public function registerRoute(Route $route) : int
     {
         $this->isRouterChanged = true;
 
@@ -1035,7 +1135,7 @@ class Router implements RouterInterface
             }
         }
 
-        $this->routeCollection->registerRoute($route);
+        $id = $this->routeCollection->registerRoute($route);
 
         $path = $route->path;
 
@@ -1050,19 +1150,20 @@ class Router implements RouterInterface
             $isPattern = (false !== strpos($part, static::PATTERN_ENCLOSURE[ 0 ]));
             $isRoute = empty($slice);
 
-            $partCompiled = $part;
+            $partRegex = null;
             if ($isPattern) {
                 $partRegex = $this->compilePathRegex($part);
-
-                $partCompiled = $partRegex;
             }
 
             if ($isRoute) {
-                ($isPattern)
-                    ? ($routeNodePrevious->routeIndexByRegex[ $partRegex ][ $route->id ] = true)
-                    : ($routeNodePrevious->routeIndexByPart[ $part ][ $route->id ] = true);
+                if ($isPattern) {
+                    $routeNodePrevious->routeIndexByRegex[ $partRegex ][ $route->id ] = true;
 
-                foreach ( $route->httpMethodIndex ?? [] as $httpMethod => $bool ) {
+                } else {
+                    $routeNodePrevious->routeIndexByPart[ $part ][ $route->id ] = true;
+                }
+
+                foreach ( $route->httpMethodIndex as $httpMethod => $bool ) {
                     $routeNodePrevious->routeIndexByMethod[ $httpMethod ][ $route->id ] = true;
                 }
 
@@ -1071,7 +1172,7 @@ class Router implements RouterInterface
                     $routeNode = $routeNodePrevious->childrenByRegex[ $partRegex ] ?? null;
 
                     if (null === $routeNode) {
-                        $routeNode = $this->factory->newRouteNode();
+                        $routeNode = $this->routerFactory->newRouteNode();
                         $routeNode->part = $part;
 
                         $routeNodePrevious->childrenByRegex[ $partRegex ] = $routeNode;
@@ -1081,7 +1182,7 @@ class Router implements RouterInterface
                     $routeNode = $routeNodePrevious->childrenByPart[ $part ] ?? null;
 
                     if (null === $routeNode) {
-                        $routeNode = $this->factory->newRouteNode();
+                        $routeNode = $this->routerFactory->newRouteNode();
                         $routeNode->part = $part;
 
                         $routeNodePrevious->childrenByPart[ $part ] = $routeNode;
@@ -1092,10 +1193,10 @@ class Router implements RouterInterface
             }
         }
 
-        return $this;
+        return $id;
     }
 
-    protected function registerPattern(Pattern $pattern) // : static
+    public function registerPattern(Pattern $pattern) : string
     {
         $this->isRouterChanged = true;
 
@@ -1105,12 +1206,12 @@ class Router implements RouterInterface
             );
         }
 
-        $this->patternCollection->registerPattern($pattern);
+        $id = $this->patternCollection->registerPattern($pattern);
 
-        return $this;
+        return $id;
     }
 
-    protected function registerMiddleware(GenericMiddleware $middleware) // : static
+    public function registerMiddleware(GenericHandlerMiddleware $middleware) : int
     {
         $this->isRouterChanged = true;
 
@@ -1122,12 +1223,12 @@ class Router implements RouterInterface
             }
         }
 
-        $this->middlewareCollection->registerMiddleware($middleware);
+        $id = $this->middlewareCollection->registerMiddleware($middleware);
 
-        return $this;
+        return $id;
     }
 
-    protected function registerFallback(GenericFallback $fallback) // : static
+    public function registerFallback(GenericHandlerFallback $fallback) : int
     {
         $this->isRouterChanged = true;
 
@@ -1139,9 +1240,9 @@ class Router implements RouterInterface
             }
         }
 
-        $this->fallbackCollection->registerFallback($fallback);
+        $id = $this->fallbackCollection->registerFallback($fallback);
 
-        return $this;
+        return $id;
     }
 
 
@@ -1184,7 +1285,7 @@ class Router implements RouterInterface
 
         $pathRegex = $this->compilePathRegex($pathValue, $attributesIndex);
 
-        $route = $this->factory->newRoute();
+        $route = $this->routerFactory->newRoute();
 
         $route->path = $pathValue;
         $route->compiledPathRegex = $pathRegex;
@@ -1200,13 +1301,13 @@ class Router implements RouterInterface
         $route->tagIndex = $routeBlueprint->tagIndex;
 
         if ($routeBlueprint->middlewareDict) {
-            foreach ( $routeBlueprint->middlewareDict ?? [] as $middleware ) {
+            foreach ( $routeBlueprint->middlewareDict as $middleware ) {
                 $this->middlewareOnPath($pathValue, $middleware);
             }
         }
 
-        if ($routeBlueprint->tagIndex || $routeBlueprint->fallbackDict) {
-            foreach ( $routeBlueprint->fallbackDict ?? [] as $fallback ) {
+        if ($routeBlueprint->fallbackDict) {
+            foreach ( $routeBlueprint->fallbackDict as $fallback ) {
                 $this->fallbackOnPath($pathValue, $fallback);
             }
         }
@@ -1218,7 +1319,7 @@ class Router implements RouterInterface
     {
         $attributesIndex = null;
 
-        $patternDict = $this->patternCollection->patternDict ?? [];
+        $patternDict = $this->patternCollection->patternDict;
 
         $regex = ''
             . preg_quote(static::PATTERN_ENCLOSURE[ 0 ], '/')
@@ -1262,7 +1363,7 @@ class Router implements RouterInterface
 
         unset($patternDict);
 
-        if (null === Lib::filter_regex('/^' . $pathRegex . '$/')) {
+        if (null === Lib::parse_regex('/^' . $pathRegex . '$/')) {
             throw new RuntimeException(
                 'The output regex is not valid: ' . $pathRegex
             );

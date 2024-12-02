@@ -41,15 +41,16 @@ class HttpMethod
     {
     }
 
+
     /**
      * @return static
      */
-    public static function from($from) : object
+    public static function from($from) : self
     {
-        if (null === ($instance = static::tryFrom($from))) {
-            throw new LogicException([
-                'Unknown `from`: ' . Lib::php_dump($from),
-            ]);
+        $instance = static::tryFrom($from, $error);
+
+        if (null === $instance) {
+            throw $error;
         }
 
         return $instance;
@@ -58,11 +59,38 @@ class HttpMethod
     /**
      * @return static|null
      */
-    public static function tryFrom($from) : ?object
+    public static function tryFrom($from, \Throwable &$last = null) : ?self
     {
+        $last = null;
+
+        Lib::php_errors_start($b);
+
         $instance = null
-            ?? static::fromStatic($from)
-            ?? static::fromString($from);
+            ?? static::tryFromInstance($from)
+            ?? static::tryFromString($from);
+
+        $errors = Lib::php_errors_end($b);
+
+        if (null === $instance) {
+            foreach ( $errors as $error ) {
+                $last = new LogicException($error, null, $last);
+            }
+        }
+
+        return $instance;
+    }
+
+
+    /**
+     * @return static|null
+     */
+    protected static function tryFromInstance($instance) : ?self
+    {
+        if (! is_a($instance, static::class)) {
+            return Lib::php_error(
+                [ 'The `from` should be instance of: ' . static::class, $instance ]
+            );
+        }
 
         return $instance;
     }
@@ -70,31 +98,23 @@ class HttpMethod
     /**
      * @return static|null
      */
-    protected static function fromStatic($static) : ?object
+    protected static function tryFromString($string) : ?self
     {
-        if (! is_a($static, static::class)) {
-            return Lib::php_trigger_error([ 'The `from` should be instance of: ' . static::class, $static ]);
-        }
-
-        return $static;
-    }
-
-    /**
-     * @return static|null
-     */
-    protected static function fromString($string) : ?object
-    {
-        if (null === ($_string = Lib::filter_string($string))) {
-            return Lib::php_trigger_error([ 'The `from` should be non-empty string', $string ]);
+        if (null === ($_string = Lib::parse_astring($string))) {
+            return Lib::php_error(
+                [ 'The `from` should be non-empty string', $string ]
+            );
         }
 
         $_string = strtoupper($_string);
 
         if (! isset(static::LIST_METHOD[ $_string ])) {
-            return Lib::php_trigger_error([
-                'The `from` should be one of: ' . implode(',', array_keys(static::LIST_METHOD)),
-                $string,
-            ]);
+            return Lib::php_error(
+                [
+                    'The `from` should be one of: ' . implode(',', array_keys(static::LIST_METHOD)),
+                    $string,
+                ]
+            );
         }
 
         $instance = new static();

@@ -5,7 +5,6 @@ namespace Gzhegow\Router;
 use Gzhegow\Router\Route\Route;
 use Gzhegow\Router\Node\RouterNode;
 use Gzhegow\Router\Route\RouteGroup;
-use Gzhegow\Router\Pipeline\Pipeline;
 use Gzhegow\Router\Route\RouteBlueprint;
 use Gzhegow\Router\Cache\RouterCacheInterface;
 use Gzhegow\Router\Collection\RouteCollection;
@@ -16,10 +15,12 @@ use Gzhegow\Router\Collection\MiddlewareCollection;
 
 interface RouterFactoryInterface
 {
-    public function newRouter() : RouterInterface;
+    public function newRouter(
+        PipelineFactoryInterface $pipelineFactory = null,
+        //
+        RouterCacheInterface $routerCache = null
+    ) : RouterInterface;
 
-
-    public function newRouterProcessor() : RouterProcessorInterface;
 
     public function newRouterCache() : RouterCacheInterface;
 
@@ -36,12 +37,9 @@ interface RouterFactoryInterface
     public function newRouteNode() : RouterNode;
 
 
-    public function newRouteBlueprint() : RouteBlueprint;
+    public function newRouteBlueprint(RouteBlueprint $from = null) : RouteBlueprint;
 
-    public function newRouteGroup(RouterInterface $router, RouteBlueprint $routeBlueprint) : RouteGroup;
+    public function newRouteGroup(RouteBlueprint $routeBlueprint = null) : RouteGroup;
 
     public function newRoute() : Route;
-
-
-    public function newPipeline(RouterProcessorInterface $processor) : Pipeline;
 }

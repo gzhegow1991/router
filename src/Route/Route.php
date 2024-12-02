@@ -2,9 +2,9 @@
 
 namespace Gzhegow\Router\Route;
 
-use Gzhegow\Router\Handler\Action\GenericAction;
-use Gzhegow\Router\Handler\Fallback\GenericFallback;
-use Gzhegow\Router\Handler\Middleware\GenericMiddleware;
+use Gzhegow\Router\Handler\Action\GenericHandlerAction;
+use Gzhegow\Router\Handler\Fallback\GenericHandlerFallback;
+use Gzhegow\Router\Handler\Middleware\GenericHandlerMiddleware;
 
 
 class Route implements \Serializable
@@ -24,13 +24,13 @@ class Route implements \Serializable
     public $compiledPathRegex;
 
     /**
-     * @var GenericAction
+     * @var GenericHandlerAction
      */
     public $action;
     /**
      * @var array<string, mixed>
      */
-    public $compiledActionAttributes;
+    public $compiledActionAttributes = [];
 
     /**
      * @var string
@@ -40,24 +40,24 @@ class Route implements \Serializable
     /**
      * @var array<string, bool>
      */
-    public $httpMethodIndex;
+    public $httpMethodIndex = [];
     /**
      * @var array<string, bool>
      */
-    public $tagIndex;
+    public $tagIndex = [];
 
     /**
      * @var array<string, mixed>
      */
-    public $contractActionAttributes;
+    public $dispatchActionAttributes = [];
     /**
-     * @var array<string, GenericMiddleware>
+     * @var array<string, GenericHandlerMiddleware>
      */
-    public $contractMiddlewareIndex;
+    public $dispatchMiddlewareIndex = [];
     /**
-     * @var array<string, GenericFallback>
+     * @var array<string, GenericHandlerFallback>
      */
-    public $contractFallbackIndex;
+    public $dispatchFallbackIndex = [];
 
 
     public function getId() : int

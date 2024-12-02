@@ -6,14 +6,14 @@ class DemoController
 {
     public function mainGet()
     {
-        var_dump(__METHOD__);
+        echo __METHOD__ . PHP_EOL;
 
         return 1;
     }
 
     public function mainPost()
     {
-        var_dump(__METHOD__);
+        echo __METHOD__ . PHP_EOL;
 
         return 1;
     }
@@ -21,14 +21,14 @@ class DemoController
 
     public function logic()
     {
-        var_dump(__METHOD__);
+        echo __METHOD__ . PHP_EOL;
 
         throw new \LogicException();
     }
 
     public function runtime()
     {
-        var_dump(__METHOD__);
+        echo __METHOD__ . PHP_EOL;
 
         throw new \RuntimeException();
     }

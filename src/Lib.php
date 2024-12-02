@@ -4,117 +4,44 @@ namespace Gzhegow\Router;
 
 class Lib
 {
-    /**
-     * > gzhegow, выводит короткую и наглядную форму содержимого переменной в виде строки
-     */
-    public static function php_dump($value, int $maxlen = null) : string
+    public static function php_dump($value, ...$values) : string
     {
-        if (is_string($value)) {
-            $_value = ''
-                . '{ '
-                . 'string(' . strlen($value) . ')'
-                . ' "'
-                . ($maxlen
-                    ? (substr($value, 0, $maxlen) . '...')
-                    : $value
-                )
-                . '"'
-                . ' }';
+        array_unshift($values, $value);
 
-        } elseif (! is_iterable($value)) {
-            $_value = null
-                ?? (($value === null) ? '{ NULL }' : null)
-                ?? (($value === false) ? '{ FALSE }' : null)
-                ?? (($value === true) ? '{ TRUE }' : null)
-                ?? (is_object($value) ? ('{ object(' . get_class($value) . ' # ' . spl_object_id($value) . ') }') : null)
-                ?? (is_resource($value) ? ('{ resource(' . gettype($value) . ' # ' . ((int) $value) . ') }') : null)
-                //
-                ?? (is_int($value) ? (var_export($value, 1)) : null) // INF
-                ?? (is_float($value) ? (var_export($value, 1)) : null) // NAN
-                //
-                ?? null;
+        $valueExports = [];
+        foreach ( $values as $i => $v ) {
+            $line = static::php_var_export($v, [ "with_objects" => false, "with_ids" => false ]);
 
-        } else {
-            $_value = [];
-            foreach ( $value as $k => $v ) {
-                $_value[ $k ] = null
-                    ?? (is_array($v) ? '{ array(' . count($v) . ') }' : null)
-                    // ! recursion
-                    ?? static::php_dump($v, $maxlen);
-            }
+            $line = trim($line);
+            $line = preg_replace('/\s+/', ' ', $line);
 
-            ob_start();
-            var_dump($_value);
-            $_value = ob_get_clean();
-
-            if (is_object($value)) {
-                $_value = '{ iterable(' . get_class($value) . ' # ' . spl_object_id($value) . '): ' . $_value . ' }';
-            }
-
-            $_value = trim($_value);
-            $_value = preg_replace('/\s+/', ' ', $_value);
+            $valueExports[ $i ] = $line;
         }
 
-        if (null === $_value) {
-            throw static::php_throwable(
-                'Unable to dump variable'
-            );
-        }
+        $output = implode(' | ', $valueExports);
 
-        return $_value;
+        return $output;
     }
 
-    /**
-     * > gzhegow, перебрасывает исключение на "тихое", если из библиотеки внутреннее постоянно подсвечивается в PHPStorm
-     *
-     * @return \LogicException|\RuntimeException|null
-     */
-    public static function php_throwable($error = null, ...$errors) : ?object
+    public static function php_dump_multiline($value, ...$values) : string
     {
-        if (is_a($error, \Closure::class)) {
-            $error = $error(...$errors);
+        array_unshift($values, $value);
+
+        $valueExports = [];
+        foreach ( $values as $i => $v ) {
+            $line = static::php_var_export($v, [ "with_objects" => false, "with_ids" => false ]);
+
+            $valueExports[ $i ] = $line;
         }
 
-        if (
-            is_a($error, \LogicException::class)
-            || is_a($error, \RuntimeException::class)
-        ) {
-            return $error;
-        }
+        $output = implode(PHP_EOL . PHP_EOL, $valueExports);
 
-        $throwErrors = static::php_throwable_args($error, ...$errors);
-
-        $message = $throwErrors[ 'message' ] ?? __FUNCTION__;
-        $code = $throwErrors[ 'code' ] ?? -1;
-        $previous = $throwErrors[ 'previous' ] ?? null;
-
-        return $previous
-            ? new \RuntimeException($message, $code, $previous)
-            : new \LogicException($message, $code);
+        return $output;
     }
 
-    /**
-     * > gzhegow, парсит ошибки для передачи результата в конструктор исключения
-     *
-     * @return array{
-     *     messageList: string[],
-     *     codeList: int[],
-     *     previousList: string[],
-     *     messageCodeList: array[],
-     *     messageDataList: array[],
-     *     message: ?string,
-     *     code: ?int,
-     *     previous: ?string,
-     *     messageCode: ?string,
-     *     messageData: ?array,
-     *     messageObject: ?object,
-     *     __unresolved: array,
-     * }
-     */
-    public static function php_throwable_args($arg = null, ...$args) : array
-    {
-        array_unshift($args, $arg);
 
+    public static function php_throwable_args(...$args) : array
+    {
         $len = count($args);
 
         $messageList = null;
@@ -126,46 +53,48 @@ class Lib
         $__unresolved = [];
 
         for ( $i = 0; $i < $len; $i++ ) {
-            $a = $args[ $i ];
+            $arg = $args[ $i ];
 
-            if (is_a($a, \Throwable::class)) {
-                $previousList[ $i ] = $a;
+            if (is_a($arg, \Throwable::class)) {
+                $previousList[ $i ] = $arg;
 
                 continue;
             }
 
             if (
-                is_array($a)
-                || is_a($a, \stdClass::class)
+                is_array($arg)
+                || is_a($arg, \stdClass::class)
             ) {
-                $messageDataList[ $i ] = (array) $a;
+                $messageData = (array) $arg;
 
-                if ('' !== ($messageString = (string) $messageDataList[ $i ][ 0 ])) {
+                $messageString = isset($messageData[ 0 ])
+                    ? (string) $messageData[ 0 ]
+                    : '';
+
+                if ('' !== $messageString) {
+                    unset($messageData[ 0 ]);
+
                     $messageList[ $i ] = $messageString;
-
-                    unset($messageDataList[ $i ][ 0 ]);
-
-                    if (! $messageDataList[ $i ]) {
-                        unset($messageDataList[ $i ]);
-                    }
                 }
 
-                continue;
-            }
-
-            if (is_int($a)) {
-                $codeList[ $i ] = $a;
+                $messageDataList[ $i ] = $messageData;
 
                 continue;
             }
 
-            if ('' !== ($vString = (string) $a)) {
+            if (is_int($arg)) {
+                $codeList[ $i ] = $arg;
+
+                continue;
+            }
+
+            if ('' !== ($vString = (string) $arg)) {
                 $messageList[ $i ] = $vString;
 
                 continue;
             }
 
-            $__unresolved[ $i ] = $a;
+            $__unresolved[ $i ] = $arg;
         }
 
         for ( $i = 0; $i < $len; $i++ ) {
@@ -211,25 +140,198 @@ class Lib
     }
 
 
-    public static function php_trigger_error_enabled(bool $enable = null) : bool
+    public static function php_var_dump($value, array $options = []) : string
     {
-        static $enabled;
+        $maxlen = $options[ 'maxlen' ] ?? null;
+        $withArrays = $options[ 'with_arrays' ] ?? true;
+        $withIds = $options[ 'with_ids' ] ?? true;
 
-        $enabled = $enable ?? $enabled ?? false;
+        if ($maxlen < 1) $maxlen = null;
 
-        return $enabled;
+        $var = null;
+        $dump = null;
+
+        if (is_iterable($value)) {
+            if (is_object($value)) {
+                $id = $withIds
+                    ? ' # ' . spl_object_id($value)
+                    : '';
+
+                $var = 'iterable(' . get_class($value) . $id . ')';
+
+            } else {
+                $var = 'array(' . count($value) . ')';
+
+                if ($withArrays) {
+                    $dump = [];
+
+                    foreach ( $value as $i => $v ) {
+                        // ! recursion
+                        $dump[ $i ] = static::php_var_dump(
+                            $v,
+                            []
+                            + [ 'with_arrays' => false ]
+                            + $options
+                        );
+                    }
+
+                    $dump = var_export($dump, true);
+                }
+            }
+
+        } else {
+            if (is_object($value)) {
+                $id = $withIds
+                    ? ' # ' . spl_object_id($value)
+                    : '';
+
+                $var = 'object(' . get_class($value) . $id . ')';
+
+                if (method_exists($value, '__debugInfo')) {
+                    ob_start();
+                    var_dump($value);
+                    $dump = ob_get_clean();
+                }
+
+            } elseif (is_string($value)) {
+                $var = 'string(' . strlen($value) . ')';
+
+                $dump = "\"{$dump}\"";
+
+            } elseif (is_resource($value)) {
+                $id = $withIds
+                    ? ' # ' . ((int) $value)
+                    : '';
+
+                $var = '{ resource(' . get_resource_type($value) . $id . ') }';
+
+            } else {
+                $var = null
+                    ?? (($value === null) ? '{ NULL }' : null)
+                    ?? (($value === false) ? '{ FALSE }' : null)
+                    ?? (($value === true) ? '{ TRUE }' : null)
+                    //
+                    ?? (is_int($value) ? (var_export($value, 1)) : null) // INF
+                    ?? (is_float($value) ? (var_export($value, 1)) : null) // NAN
+                    //
+                    ?? null;
+            }
+        }
+
+        $_value = $var;
+        if (null !== $dump) {
+            if (null !== $maxlen) {
+                $dump = explode("\n", $dump);
+
+                $dump = array_map(function ($v) use ($maxlen) {
+                    $_v = $v;
+
+                    $_v = trim($_v);
+                    $_v = substr($_v, 0, $maxlen) . '...';
+
+                    return $_v;
+                }, $dump);
+
+                $dump = implode(PHP_EOL, $dump);
+            }
+
+            $_value = "{$var} : {$dump}";
+        }
+
+        $_value = "{ {$_value} }";
+
+        return $_value;
     }
 
-    public static function php_trigger_error($err, int $error_level = null, $result = null) // : mixed
+    public static function php_var_export($var, array $options = []) : string
     {
-        $error_level = $error_level ?? E_USER_NOTICE;
+        $indent = $options[ 'indent' ] ?? "  ";
+        $newline = $options[ 'newline' ] ?? PHP_EOL;
+        $withObjects = $options[ 'with_objects' ] ?? true;
+        $withIds = $options[ 'with_ids' ] ?? true;
 
-        $error = is_array($err)
-            ? (array) $err
-            : [ $err ];
+        switch ( gettype($var) ) {
+            case "NULL":
+                $result = "NULL";
+                break;
 
-        if (static::php_trigger_error_enabled()) {
-            trigger_error($error[ 0 ], $error_level);
+            case "boolean":
+                $result = ($var === true) ? "TRUE" : "FALSE";
+                break;
+
+            case "string":
+                $result = '"' . addcslashes($var, "\\\$\"\r\n\t\v\f") . '"';
+                break;
+
+            case "array":
+                $keys = array_keys($var);
+
+                foreach ( $keys as $key ) {
+                    if (is_string($key)) {
+                        $isList = false;
+
+                        break;
+                    }
+                }
+                $isList = $isList ?? true;
+
+                $isListIndexed = $isList
+                    && ($keys === range(0, count($var) - 1));
+
+                $lines = [];
+                foreach ( $var as $key => $value ) {
+                    $line = $indent;
+
+                    if (! $isListIndexed) {
+                        $line .= is_string($key) ? "\"{$key}\"" : $key;
+                        $line .= " => ";
+                    }
+
+                    // ! recursion
+                    $line .= static::php_var_export($value, $options);
+
+                    $lines[] = $line;
+                }
+
+                $result = "["
+                    . $newline
+                    . implode("," . $newline, $lines) . $newline
+                    . $indent . "]";
+
+                break;
+
+            case "object":
+                if ($withObjects) {
+                    $result = var_export($var, true);
+
+                } else {
+                    $id = $withIds
+                        ? ' # ' . spl_object_id($var)
+                        : null;
+
+                    $result = '{ object(' . get_class($var) . $id . ') }';
+                }
+
+                break;
+
+            case "resource":
+                if ($withObjects) {
+                    $result = var_export($var, true);
+
+                } else {
+                    $id = $withIds
+                        ? ' # ' . spl_object_id($var)
+                        : null;
+
+                    $result = '{ resource(' . get_resource_type($var) . $id . ') }';
+                }
+
+                break;
+
+            default:
+                $result = var_export($var, true);
+
+                break;
         }
 
         return $result;
@@ -237,100 +339,89 @@ class Lib
 
 
     /**
-     * @param callable|array|object|class-string     $mixed
-     *
-     * @param array{0: class-string, 1: string}|null $resultArray
-     * @param callable|string|null                   $resultString
-     *
-     * @return array{0: class-string|object, 1: string}|null
+     * @return object{ errors: array }
      */
-    public static function php_method_exists(
-        $mixed, $method = null,
-        array &$resultArray = null, string &$resultString = null
-    ) : ?array
+    public static function php_errors() : object
     {
-        $resultArray = null;
-        $resultString = null;
+        static $stack;
 
-        $method = $method ?? '';
+        $stack = $stack
+            ?? new class {
+                public $errors = [];
+            };
 
-        $_class = null;
-        $_object = null;
-        $_method = null;
-        if (is_object($mixed)) {
-            $_object = $mixed;
-
-        } elseif (is_array($mixed)) {
-            $list = array_values($mixed);
-
-            /** @noinspection PhpWrongStringConcatenationInspection */
-            [ $classOrObject, $_method ] = $list + [ '', '' ];
-
-            is_object($classOrObject)
-                ? ($_object = $classOrObject)
-                : ($_class = $classOrObject);
-
-        } elseif (is_string($mixed)) {
-            [ $_class, $_method ] = explode('::', $mixed) + [ '', '' ];
-
-            $_method = $_method ?? $method;
-        }
-
-        if (isset($_method) && ! is_string($_method)) {
-            return null;
-        }
-
-        if ($_object) {
-            if ($_object instanceof \Closure) {
-                return null;
-            }
-
-            if (method_exists($_object, $_method)) {
-                $class = get_class($_object);
-
-                $resultArray = [ $class, $_method ];
-                $resultString = $class . '::' . $_method;
-
-                return [ $_object, $_method ];
-            }
-
-        } elseif ($_class) {
-            if (method_exists($_class, $_method)) {
-                $resultArray = [ $_class, $_method ];
-                $resultString = $_class . '::' . $_method;
-
-                return [ $_class, $_method ];
-            }
-        }
-
-        return null;
-    }
-
-
-    /**
-     * > gzhegow, всегда возвращает публичные свойства объекта
-     */
-    public static function php_get_object_vars_public(object $object) : array
-    {
-        $vars = get_object_vars($object);
-
-        return $vars;
+        return $stack;
     }
 
     /**
-     * > gzhegow, всегда возвращает все (публичные и защищенные) свойства объекта
+     * @return object{ list: array }
      */
-    public static function php_get_object_vars(object $object) : array
+    public static function php_errors_current() : object
     {
-        $vars = (function () {
-            return get_object_vars($this);
-        })->call($object);
+        $stack = static::php_errors();
 
-        return $vars;
+        $errors = end($stack->errors);
+
+        return $errors;
+    }
+
+    /**
+     * @return object{ list: array }
+     */
+    public static function php_errors_new() : object
+    {
+        $errors = new class {
+            public $list = [];
+        };
+
+        return $errors;
+    }
+
+    /**
+     * @return object{ list: array }
+     */
+    public static function php_errors_start(object &$errors = null) : object
+    {
+        $stack = static::php_errors();
+
+        $errors = static::php_errors_new();
+        $stack->errors[] = $errors;
+
+        return $errors;
+    }
+
+    public static function php_errors_end(?object $until) : array
+    {
+        $stack = static::php_errors();
+
+        $errors = static::php_errors_new();
+
+        while ( count($stack->errors) ) {
+            $current = array_pop($stack->errors);
+
+            foreach ( $current->list as $error ) {
+                $errors->list[] = $error;
+            }
+
+            if ($current === $until) {
+                break;
+            }
+        }
+
+        return $errors->list;
+    }
+
+    public static function php_error($error, $result = null) // : mixed
+    {
+        $current = static::php_errors_current();
+
+        $current->list[] = $error;
+
+        return $result;
     }
 
 
-    public static function filter_str($value) : ?string
+    public static function parse_string($value) : ?string
     {
         if (is_string($value)) {
             return $value;
@@ -364,9 +455,9 @@ class Lib
         return null;
     }
 
-    public static function filter_string($value) : ?string
+    public static function parse_astring($value) : ?string
     {
-        if (null === ($_value = static::filter_str($value))) {
+        if (null === ($_value = static::parse_string($value))) {
             return null;
         }
 
@@ -378,7 +469,7 @@ class Lib
     }
 
 
-    public static function filter_path(
+    public static function parse_path(
         $value, array $optional = [],
         array &$pathinfo = null
     ) : ?string
@@ -387,7 +478,7 @@ class Lib
 
         $optional[ 0 ] = $optional[ 'with_pathinfo' ] ?? $optional[ 0 ] ?? false;
 
-        if (null === ($_value = static::filter_string($value))) {
+        if (null === ($_value = static::parse_astring($value))) {
             return null;
         }
 
@@ -409,12 +500,12 @@ class Lib
         return $_value;
     }
 
-    public static function filter_dirpath(
+    public static function parse_dirpath(
         $value, array $optional = [],
         array &$pathinfo = null
     ) : ?string
     {
-        $_value = static::filter_path(
+        $_value = static::parse_path(
             $value, $optional,
             $pathinfo
         );
@@ -431,9 +522,9 @@ class Lib
     }
 
 
-    public static function filter_filename($value) : ?string
+    public static function parse_filename($value) : ?string
     {
-        if (null === ($_value = static::filter_string($value))) {
+        if (null === ($_value = static::parse_astring($value))) {
             return null;
         }
 
@@ -449,9 +540,9 @@ class Lib
     }
 
 
-    public static function filter_regex($regex) : ?string
+    public static function parse_regex($regex) : ?string
     {
-        if (null === ($_value = static::filter_string($regex))) {
+        if (null === ($_value = static::parse_astring($regex))) {
             return null;
         }
 
@@ -464,79 +555,6 @@ class Lib
         }
 
         return $_value;
-    }
-
-
-    /**
-     * @param callable ...$fnExistsList
-     */
-    public static function filter_struct($value, bool $useRegex = null, ...$fnExistsList) : ?string
-    {
-        $useRegex = $useRegex ?? false;
-        $fnExistsList = $fnExistsList ?: [ 'class_exists' ];
-
-        if (is_object($value)) {
-            return ltrim(get_class($value), '\\');
-        }
-
-        if (null === ($_value = static::filter_string($value))) {
-            return null;
-        }
-
-        $_value = ltrim($_value, '\\');
-
-        foreach ( $fnExistsList as $fn ) {
-            if ($fn($_value)) {
-                return $_value;
-            }
-        }
-
-        if ($useRegex) {
-            if (! preg_match(
-                '/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*$/',
-                $_value
-            )) {
-                return null;
-            }
-        }
-
-        return $_value;
-    }
-
-    public static function filter_class($value, bool $useRegex = null) : ?string
-    {
-        $_value = static::filter_struct($value, $useRegex, 'class_exists');
-
-        if (null === $_value) {
-            return null;
-        }
-
-        return $_value;
-    }
-
-
-    /**
-     * > gzhegow, разбивает массив на два, где в первом все цифровые ключи (список), во втором - все буквенные (словарь)
-     *
-     * @return array{
-     *     0: array<int, mixed>,
-     *     1: array<string, mixed>
-     * }
-     */
-    public static function array_kwargs(array $src = null) : array
-    {
-        if (! isset($src)) return [];
-
-        $list = [];
-        $dict = [];
-
-        foreach ( $src as $idx => $val ) {
-            is_int($idx)
-                ? ($list[ $idx ] = $val)
-                : ($dict[ $idx ] = $val);
-        }
-
-        return [ $list, $dict ];
     }
 
 

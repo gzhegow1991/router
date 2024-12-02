@@ -5,7 +5,6 @@ namespace Gzhegow\Router;
 use Gzhegow\Router\Route\Route;
 use Gzhegow\Router\Node\RouterNode;
 use Gzhegow\Router\Route\RouteGroup;
-use Gzhegow\Router\Pipeline\Pipeline;
 use Gzhegow\Router\Cache\RouterCache;
 use Gzhegow\Router\Route\RouteBlueprint;
 use Gzhegow\Router\Collection\RouteCollection;
@@ -17,23 +16,24 @@ use Gzhegow\Router\Collection\MiddlewareCollection;
 
 class RouterFactory implements RouterFactoryInterface
 {
-    public function newRouter() : RouterInterface
+    public function newRouter(
+        PipelineFactoryInterface $pipelineFactory = null,
+        //
+        RouterCacheInterface $routerCache = null
+    ) : RouterInterface
     {
-        $processor = $this->newRouterProcessor();
-        $cache = $this->newRouterCache();
+        $pipelineFactory = $pipelineFactory ?? new PipelineFactory();
+
+        $routerCache = $routerCache ?? $this->newRouterCache();
 
         return new Router(
             $this,
-            $processor,
-            $cache
+            $pipelineFactory,
+            //
+            $routerCache
         );
     }
 
-
-    public function newRouterProcessor() : RouterProcessorInterface
-    {
-        return new RouterProcessor($this);
-    }
 
     public function newRouterCache() : RouterCacheInterface
     {
@@ -68,24 +68,29 @@ class RouterFactory implements RouterFactoryInterface
     }
 
 
-    public function newRouteBlueprint() : RouteBlueprint
+    public function newRouteBlueprint(RouteBlueprint $from = null) : RouteBlueprint
     {
-        return new RouteBlueprint();
+        if ($from) {
+            $instance = clone $from;
+
+        } else {
+            $instance = new RouteBlueprint();
+        }
+
+        $instance->resetAction();
+
+        return $instance;
     }
 
-    public function newRouteGroup(RouterInterface $router, RouteBlueprint $routeBlueprint) : RouteGroup
+    public function newRouteGroup(RouteBlueprint $routeBlueprint = null) : RouteGroup
     {
-        return new RouteGroup($router, $routeBlueprint);
+        $routeBlueprint = $this->newRouteBlueprint($routeBlueprint);
+
+        return new RouteGroup($this, $routeBlueprint);
     }
 
     public function newRoute() : Route
     {
         return new Route();
-    }
-
-
-    public function newPipeline(RouterProcessorInterface $processor) : Pipeline
-    {
-        return new Pipeline($processor);
     }
 }

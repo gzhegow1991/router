@@ -2,21 +2,6 @@
 
 namespace Gzhegow\Router\Handler\Demo\Middleware;
 
-class Demo1stMiddleware
+class Demo1stMiddleware extends \Gzhegow\Pipeline\Handler\Demo\Middleware\Demo1stMiddleware
 {
-    public function __invoke(callable $fnNext, $input = null, $context = null) // : mixed
-    {
-        $method = __METHOD__;
-
-        echo "@before :: {$method}" . PHP_EOL;
-
-        $result = call_user_func(
-            $fnNext,
-            $input, $context
-        );
-
-        echo "@after :: {$method}" . PHP_EOL;
-
-        return $result;
-    }
 }

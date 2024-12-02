@@ -13,24 +13,24 @@ class RouterNode implements \Serializable
     /**
      * @var array<string, RouterNode>
      */
-    public $childrenByPart;
+    public $childrenByPart = [];
     /**
      * @var array<string, RouterNode>
      */
-    public $childrenByRegex;
+    public $childrenByRegex = [];
 
     /**
      * @var array<string, array<int, bool>>
      */
-    public $routeIndexByPart;
+    public $routeIndexByPart = [];
     /**
      * @var array<string, array<int, bool>>
      */
-    public $routeIndexByRegex;
+    public $routeIndexByRegex = [];
     /**
      * @var array<string, array<int, bool>>
      */
-    public $routeIndexByMethod;
+    public $routeIndexByMethod = [];
 
 
     public function __serialize() : array

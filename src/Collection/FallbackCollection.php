@@ -4,7 +4,7 @@ namespace Gzhegow\Router\Collection;
 
 use Gzhegow\Router\Route\Struct\Tag;
 use Gzhegow\Router\Route\Struct\Path;
-use Gzhegow\Router\Handler\Fallback\GenericFallback;
+use Gzhegow\Router\Handler\Fallback\GenericHandlerFallback;
 
 
 class FallbackCollection
@@ -15,32 +15,32 @@ class FallbackCollection
     protected $id = 0;
 
     /**
-     * @var GenericFallback[]
+     * @var GenericHandlerFallback[]
      */
     public $fallbackList = [];
 
     /**
      * @var array<string, array<int, bool>>
      */
-    public $fallbackIndexByPath;
+    public $fallbackIndexByPath = [];
     /**
      * @var array<string, array<int, bool>>
      */
-    public $fallbackIndexByTag;
+    public $fallbackIndexByTag = [];
 
     /**
      * @var array<string, int>
      */
-    public $fallbackMapKeyToId;
+    public $fallbackMapKeyToId = [];
 
 
-    public function getFallback(int $id) : GenericFallback
+    public function getFallback(int $id) : GenericHandlerFallback
     {
         return $this->fallbackList[ $id ];
     }
 
 
-    public function addPathFallback(Path $path, GenericFallback $fallback) : int
+    public function addPathFallback(Path $path, GenericHandlerFallback $fallback) : int
     {
         $id = $this->registerFallback($fallback);
 
@@ -49,7 +49,7 @@ class FallbackCollection
         return $id;
     }
 
-    public function addTagFallback(Tag $tag, GenericFallback $fallback) : int
+    public function addTagFallback(Tag $tag, GenericHandlerFallback $fallback) : int
     {
         $id = $this->registerFallback($fallback);
 
@@ -59,7 +59,7 @@ class FallbackCollection
     }
 
 
-    public function registerFallback(GenericFallback $fallback) : int
+    public function registerFallback(GenericHandlerFallback $fallback) : int
     {
         $key = $fallback->getKey();
 

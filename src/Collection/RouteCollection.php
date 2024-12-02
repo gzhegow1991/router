@@ -21,20 +21,20 @@ class RouteCollection
     /**
      * @var array<string, array<int, bool>>
      */
-    public $routeIndexByName;
+    public $routeIndexByName = [];
     /**
      * @var array<string, array<int, bool>>
      */
-    public $routeIndexByTag;
+    public $routeIndexByTag = [];
 
     /**
      * @var array<string, string>
      */
-    public $routeMapPathToName;
+    public $routeMapPathToName = [];
     /**
      * @var array<string, string>
      */
-    public $routeMapHttpMethodPathToBoolean;
+    public $routeMapHttpMethodPathToBoolean = [];
 
 
     public function getRoute(int $id) : Route
@@ -79,7 +79,7 @@ class RouteCollection
             $this->routeIndexByName[ $name ][ $route->id ] = true;
         }
 
-        foreach ( $route->httpMethodIndex ?? [] as $httpMethod => $bool ) {
+        foreach ( $route->httpMethodIndex as $httpMethod => $bool ) {
             $key = "{$path}\0{$httpMethod}";
 
             if (isset($this->routeMapHttpMethodPathToBoolean[ $key ])) {
@@ -93,7 +93,7 @@ class RouteCollection
             $this->routeMapHttpMethodPathToBoolean[ $key ] = true;
         }
 
-        foreach ( $route->tagIndex ?? [] as $tag => $bool ) {
+        foreach ( $route->tagIndex as $tag => $bool ) {
             $this->routeIndexByTag[ $tag ][ $route->id ] = true;
         }
     }

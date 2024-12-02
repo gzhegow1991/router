@@ -2,18 +2,20 @@
 
 namespace Gzhegow\Router\Route;
 
-use Gzhegow\Router\RouterInterface;
+use Gzhegow\Router\RouterFactoryInterface;
 
 
-/**
- * @method
- */
 class RouteGroup
 {
     /**
-     * @var RouterInterface
+     * @var RouterFactoryInterface
      */
-    protected $router;
+    protected $routerFactory;
+
+    /**
+     * @var static
+     */
+    protected $parent;
 
     /**
      * @var RouteBlueprint
@@ -27,12 +29,12 @@ class RouteGroup
 
 
     public function __construct(
-        RouterInterface $router,
+        RouterFactoryInterface $routerFactory,
         //
         RouteBlueprint $routeBlueprint
     )
     {
-        $this->router = $router;
+        $this->routerFactory = $routerFactory;
 
         $this->routeBlueprint = $routeBlueprint;
     }
@@ -45,13 +47,67 @@ class RouteGroup
 
 
     /**
-     * @return RouteBlueprint[]
+     * @return static
      */
-    public function getRouteList() : array
+    public function reset() // : static
     {
-        return $this->routeList ?? [];
+        $this->routeBlueprint->reset();
+
+        $this->routeList = [];
+
+        return $this;
     }
 
+
+    public function group(RouteBlueprint $from = null) : RouteGroup
+    {
+        $routeBlueprint = $this->routerFactory->newRouteBlueprint($from);
+
+        $routeGroup = $this->routerFactory->newRouteGroup($routeBlueprint);
+
+        $routeGroup->parent = $this;
+
+        return $routeGroup;
+    }
+
+
+    /**
+     * @return RouteBlueprint[]
+     */
+    public function getRoutes() : array
+    {
+        return $this->routeList;
+    }
+
+    /**
+     * @param string                                    $path
+     * @param string|string[]                           $httpMethods
+     * @param callable|object|array|class-string|string $action
+     *
+     * @param string|null                               $name
+     * @param string|string[]|null                      $tags
+     */
+    public function route(
+        $path, $httpMethods, $action,
+        $name = null, $tags = null
+    ) : RouteBlueprint
+    {
+        $_httpMethods = $httpMethods ?? [ 'GET' ];
+        $_httpMethods = (array) $_httpMethods;
+
+        $blueprint = $this->blueprint(
+            null,
+            $path, $_httpMethods, $action, $name, $tags
+        );
+
+        $this->routeList[] = $blueprint;
+
+        return $blueprint;
+    }
+
+    /**
+     * @return static
+     */
     public function addRoute(RouteBlueprint $routeBlueprint) // : static
     {
         $this->routeList[] = $routeBlueprint;
@@ -60,73 +116,239 @@ class RouteGroup
     }
 
 
-    public function httpMethodList($httpMethods) // : static
+    public function newBlueprint(RouteBlueprint $from = null) : RouteBlueprint
     {
-        $this->routeBlueprint->httpMethodList($httpMethods);
+        $routeBlueprint = $this->routerFactory->newRouteBlueprint($from);
+
+        return $routeBlueprint;
+    }
+
+    /**
+     * @param string|null                                    $path
+     * @param string|string[]|null                           $httpMethods
+     * @param callable|object|array|class-string|string|null $action
+     * @param string|null                                    $name
+     * @param string|string[]|null                           $tags
+     */
+    public function blueprint(
+        RouteBlueprint $from = null,
+        $path = null, $httpMethods = null, $action = null, $name = null, $tags = null
+    ) : RouteBlueprint
+    {
+        $blueprint = $this->newBlueprint($from);
+
+        if (null !== $path) {
+            $blueprint->path($path);
+        }
+
+        if (null !== $httpMethods) {
+            $blueprint->setHttpMethods($httpMethods);
+        }
+
+        if (null !== $action) {
+            $blueprint->action($action);
+        }
+
+        if (null !== $name) {
+            $blueprint->name($name);
+        }
+
+        if (null !== $tags) {
+            $blueprint->setTags((array) $tags);
+        }
+
+        return $blueprint;
+    }
+
+
+    /**
+     * @return static
+     */
+    public function path($path) // : static
+    {
+        $this->routeBlueprint->path($path);
 
         return $this;
     }
 
-    public function httpMethod($httpMethods) // : static
+    /**
+     * @return static
+     */
+    public function name($name) // : static
     {
-        $this->routeBlueprint->httpMethod($httpMethods);
+        $this->routeBlueprint->name($name);
 
         return $this;
     }
 
 
-    public function tagList($tags) // : static
+    /**
+     * @return static
+     */
+    public function setHttpMethods(array $httpMethods) // : static
     {
-        $this->routeBlueprint->tagList($tags);
+        $this->routeBlueprint->setHttpMethods($httpMethods);
 
         return $this;
     }
 
-    public function tag($tags) // : static
+    /**
+     * @return static
+     */
+    public function httpMethods(array $httpMethods) // : static
     {
-        $this->routeBlueprint->tag($tags);
+        $this->routeBlueprint->httpMethods($httpMethods);
 
         return $this;
     }
 
-
-    public function middlewareList($middlewares) // : static
+    /**
+     * @return static
+     */
+    public function httpMethod($httpMethod) // : static
     {
-        $this->routeBlueprint->middlewareList($middlewares);
-
-        return $this;
-    }
-
-    public function middleware($middlewares) // : static
-    {
-        $this->routeBlueprint->middleware($middlewares);
-
-        return $this;
-    }
-
-
-    public function fallbackList($fallbacks) // : static
-    {
-        $this->routeBlueprint->fallbackList($fallbacks);
-
-        return $this;
-    }
-
-    public function fallback($fallbacks) // : static
-    {
-        $this->routeBlueprint->fallback($fallbacks);
+        $this->routeBlueprint->httpMethod($httpMethod);
 
         return $this;
     }
 
 
+    /**
+     * @return static
+     */
+    public function setTags(array $tags) // : static
+    {
+        $this->routeBlueprint->setTags($tags);
+
+        return $this;
+    }
+
+    /**
+     * @return static
+     */
+    public function tags(array $tags) // : static
+    {
+        $this->routeBlueprint->tags($tags);
+
+        return $this;
+    }
+
+    /**
+     * @return static
+     */
+    public function tag($tag) // : static
+    {
+        $this->routeBlueprint->tag($tag);
+
+        return $this;
+    }
+
+
+    /**
+     * @return static
+     */
+    public function setMiddlewares(array $middlewares) // : static
+    {
+        $this->routeBlueprint->setMiddlewares($middlewares);
+
+        return $this;
+    }
+
+    /**
+     * @return static
+     */
+    public function middlewares(array $middlewares) // : static
+    {
+        $this->routeBlueprint->middlewares($middlewares);
+
+        return $this;
+    }
+
+    /**
+     * @return static
+     */
+    public function middleware($middleware) // : static
+    {
+        $this->routeBlueprint->middleware($middleware);
+
+        return $this;
+    }
+
+
+    /**
+     * @return static
+     */
+    public function setFallbacks(array $fallbacks) // : static
+    {
+        $this->routeBlueprint->setFallbacks($fallbacks);
+
+        return $this;
+    }
+
+    /**
+     * @return static
+     */
+    public function fallbacks(array $fallbacks) // : static
+    {
+        $this->routeBlueprint->fallbacks($fallbacks);
+
+        return $this;
+    }
+
+    /**
+     * @return static
+     */
+    public function fallback($fallback) // : static
+    {
+        $this->routeBlueprint->fallback($fallback);
+
+        return $this;
+    }
+
+
+    /**
+     * @param callable $fn
+     *
+     * @return static
+     */
     public function register($fn) // : static
     {
-        $fn($this->router);
+        $fn($this);
 
-        (function (RouteGroup $routeGroup) {
-            $this->{'registerRouteGroup'}($routeGroup);
-        })->call($this->router, $this);
+        if (null === $this->parent) {
+            return $this;
+        }
+
+        foreach ( $this->routeList as $routeBlueprint ) {
+            $path = $this->routeBlueprint->path . $routeBlueprint->path;
+            $name = $this->routeBlueprint->name . $routeBlueprint->name;
+
+            $tagsIndex = array_replace(
+                $routeBlueprint->tagIndex,
+                $this->routeBlueprint->tagIndex
+            );
+
+            $middlewaresDict = array_replace(
+                $routeBlueprint->middlewareDict,
+                $this->routeBlueprint->middlewareDict
+            );
+
+            $fallbacksDict = array_replace(
+                $routeBlueprint->fallbackDict,
+                $this->routeBlueprint->fallbackDict
+            );
+
+            $routeBlueprint->path($path);
+            $routeBlueprint->name($name);
+
+            $routeBlueprint->setTags(array_keys($tagsIndex));
+            $routeBlueprint->setMiddlewares($middlewaresDict);
+            $routeBlueprint->setFallbacks($fallbacksDict);
+
+            $this->parent->addRoute($routeBlueprint);
+        }
+
+        $this->routeList = [];
 
         return $this;
     }

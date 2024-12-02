@@ -33,7 +33,7 @@ class RouterCache implements RouterCacheInterface
     /**
      * @var string
      */
-    protected $cacheDirpath = __DIR__ . '/../var/cache/app.router';
+    protected $cacheDirpath = __DIR__ . '/../var/cache/gzhegow.router';
     /**
      * @var string
      */
@@ -75,13 +75,13 @@ class RouterCache implements RouterCacheInterface
             );
         }
 
-        if ((null !== $cacheDirpath) && (null === Lib::filter_dirpath($cacheDirpath))) {
+        if ((null !== $cacheDirpath) && (null === Lib::parse_dirpath($cacheDirpath))) {
             throw new LogicException(
                 'The `cacheDirpath` should be valid directory path: ' . $cacheDirpath
             );
         }
 
-        if ((null !== $cacheFilename) && (null === Lib::filter_filename($cacheFilename))) {
+        if ((null !== $cacheFilename) && (null === Lib::parse_filename($cacheFilename))) {
             throw new LogicException(
                 'The `cacheFilename` should be valid filename: ' . $cacheFilename
             );
@@ -89,7 +89,7 @@ class RouterCache implements RouterCacheInterface
 
         $this->cacheMode = $cacheMode ?? static::CACHE_MODE_NO_CACHE;
         $this->cacheAdapter = $cacheAdapter;
-        $this->cacheDirpath = $cacheDirpath ?? __DIR__ . '/../../var/cache/app.router';
+        $this->cacheDirpath = $cacheDirpath ?? __DIR__ . '/../../var/cache/gzhegow.router';
         $this->cacheFilename = $cacheFilename ?? 'router.cache';
 
         return $this;
@@ -128,7 +128,6 @@ class RouterCache implements RouterCacheInterface
                     }
                 }
                 catch ( \Throwable $e ) {
-                    $cacheData = null;
                 }
 
             } elseif ($this->cacheDirpath) {

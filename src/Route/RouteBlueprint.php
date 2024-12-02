@@ -2,14 +2,13 @@
 
 namespace Gzhegow\Router\Route;
 
-use Gzhegow\Router\Lib;
 use Gzhegow\Router\Route\Struct\Tag;
 use Gzhegow\Router\Route\Struct\Name;
 use Gzhegow\Router\Route\Struct\Path;
 use Gzhegow\Router\Route\Struct\HttpMethod;
-use Gzhegow\Router\Handler\Action\GenericAction;
-use Gzhegow\Router\Handler\Fallback\GenericFallback;
-use Gzhegow\Router\Handler\Middleware\GenericMiddleware;
+use Gzhegow\Router\Handler\Action\GenericHandlerAction;
+use Gzhegow\Router\Handler\Fallback\GenericHandlerFallback;
+use Gzhegow\Router\Handler\Middleware\GenericHandlerMiddleware;
 
 
 class RouteBlueprint
@@ -19,7 +18,7 @@ class RouteBlueprint
      */
     public $path;
     /**
-     * @var GenericAction
+     * @var GenericHandlerAction
      */
     public $action;
     /**
@@ -30,22 +29,67 @@ class RouteBlueprint
     /**
      * @var array<string, bool>
      */
-    public $httpMethodIndex; // = [];
+    public $httpMethodIndex = [];
     /**
      * @var array<string, bool>
      */
-    public $tagIndex; // = [];
+    public $tagIndex = [];
 
     /**
-     * @var array<string, GenericMiddleware>
+     * @var array<string, GenericHandlerMiddleware>
      */
-    public $middlewareDict; // = [];
+    public $middlewareDict = [];
     /**
-     * @var array<string, GenericFallback>
+     * @var array<string, GenericHandlerFallback>
      */
-    public $fallbackDict; // = [];
+    public $fallbackDict = [];
 
 
+    /**
+     * @return static
+     */
+    public function reset() // : static
+    {
+        $this->path = null;
+        $this->action = null;
+        $this->name = null;
+
+        $this->httpMethodIndex = [];
+        $this->tagIndex = [];
+
+        $this->middlewareDict = [];
+        $this->fallbackDict = [];
+
+        return $this;
+    }
+
+
+    /**
+     * @return static
+     */
+    public function action($action) // : static
+    {
+        $actionObject = GenericHandlerAction::from($action);
+
+        $this->action = $actionObject;
+
+        return $this;
+    }
+
+    /**
+     * @return static
+     */
+    public function resetAction() // : static
+    {
+        $this->action = null;
+
+        return $this;
+    }
+
+
+    /**
+     * @return static
+     */
     public function path($path) // : static
     {
         $pathObject = Path::from($path);
@@ -55,15 +99,9 @@ class RouteBlueprint
         return $this;
     }
 
-    public function action($action) // : static
-    {
-        $actionObject = GenericAction::from($action);
-
-        $this->action = $actionObject;
-
-        return $this;
-    }
-
+    /**
+     * @return static
+     */
     public function name($name) // : static
     {
         $nameObject = Name::from($name);
@@ -74,170 +112,149 @@ class RouteBlueprint
     }
 
 
-    public function httpMethodList($httpMethods) // : static
+    /**
+     * @return static
+     */
+    public function setHttpMethods(array $httpMethods) // : static
     {
-        $httpMethods = $httpMethods ?? [];
-        $httpMethods = (array) $httpMethods;
+        $this->httpMethodIndex = [];
 
-        $index = [];
-        if ($httpMethods) {
-            $index = Lib::array_string_index($httpMethods);
-        }
-
-        $httpMethodIndex = [];
-
-        foreach ( $index as $httpMethod => $bool ) {
-            $httpMethodObject = HttpMethod::from($httpMethod);
-
-            $httpMethodIndex[ $httpMethodObject->getValue() ] = true;
-        }
-
-        $this->httpMethodIndex = $httpMethodIndex;
+        $this->httpMethods($httpMethods);
 
         return $this;
     }
 
-    public function httpMethod($httpMethods) // : static
+    /**
+     * @return static
+     */
+    public function httpMethods(array $httpMethods) // : static
     {
-        $httpMethods = $httpMethods ?? [];
-        $httpMethods = (array) $httpMethods;
-
-        if (! $httpMethods) {
-            return $this;
+        foreach ( $httpMethods as $httpMethod ) {
+            $this->httpMethod($httpMethod);
         }
 
-        $index = Lib::array_string_index($this->httpMethodIndex ?? [], $httpMethods);
+        return $this;
+    }
 
-        $httpMethodIndex = [];
+    /**
+     * @return static
+     */
+    public function httpMethod($httpMethod) // : static
+    {
+        $_httpMethod = HttpMethod::from($httpMethod);
 
-        foreach ( $index as $httpMethod => $bool ) {
-            $httpMethodObject = HttpMethod::from($httpMethod);
-
-            $httpMethodIndex[ $httpMethodObject->getValue() ] = true;
-        }
-
-        $this->httpMethodIndex = $httpMethodIndex;
+        $this->httpMethodIndex[ $_httpMethod->getValue() ] = true;
 
         return $this;
     }
 
 
-    public function tagList($tags) // : static
+    /**
+     * @return static
+     */
+    public function setTags(array $tags) // : static
     {
-        $tags = $tags ?? [];
-        $tags = (array) $tags;
+        $this->tagIndex = [];
 
-        $index = [];
-        if ($tags) {
-            $index = Lib::array_string_index($tags);
-        }
-
-        $tagIndex = [];
-
-        foreach ( $index as $httpMethod => $bool ) {
-            $tagObject = Tag::from($httpMethod);
-
-            $tagIndex[ $tagObject->getValue() ] = true;
-        }
-
-        $this->tagIndex = $tagIndex;
+        $this->tags($tags);
 
         return $this;
     }
 
-    public function tag($tags) // : static
+    /**
+     * @return static
+     */
+    public function tags(array $tags) // : static
     {
-        $tags = $tags ?? [];
-        $tags = (array) $tags;
-
-        if (! $tags) {
-            return $this;
+        foreach ( $tags as $tag ) {
+            $this->tag($tag);
         }
 
-        $index = Lib::array_string_index($this->tagIndex ?? [], $tags);
+        return $this;
+    }
 
-        $tagIndex = [];
-        foreach ( $index as $httpMethod => $bool ) {
-            $tagObject = Tag::from($httpMethod);
+    /**
+     * @return static
+     */
+    public function tag($tag) // : static
+    {
+        $_tag = Tag::from($tag);
 
-            $tagIndex[ $tagObject->getValue() ] = true;
-        }
-
-        $this->tagIndex = $tagIndex;
+        $this->tagIndex[ $_tag->getValue() ] = true;
 
         return $this;
     }
 
 
-    public function middlewareList($middlewares) // : static
+    /**
+     * @return static
+     */
+    public function setMiddlewares(array $middlewares) // : static
     {
-        $middlewares = $middlewares ?? [];
-        $middlewares = (array) $middlewares;
+        $this->middlewareDict = [];
 
-        $middlewareDict = [];
+        $this->middlewares($middlewares);
 
+        return $this;
+    }
+
+    /**
+     * @return static
+     */
+    public function middlewares(array $middlewares) // : static
+    {
         foreach ( $middlewares as $middleware ) {
-            $middlewareObject = GenericMiddleware::from($middleware);
-
-            $middlewareDict[ $middlewareObject->getKey() ] = $middlewareObject;
-        }
-
-        $this->middlewareDict = $middlewareDict;
-
-        return $this;
-    }
-
-    public function middleware($middlewares) // : static
-    {
-        $middlewares = $middlewares ?? [];
-        $middlewares = (array) $middlewares;
-
-        if (! $middlewares) {
-            return $this;
-        }
-
-        foreach ( $middlewares as $middleware ) {
-            $middlewareObject = GenericMiddleware::from($middleware);
-
-            $this->middlewareDict[ $middlewareObject->getKey() ] = $middlewareObject;
+            $this->middleware($middleware);
         }
 
         return $this;
     }
 
-
-    public function fallbackList($fallbacks) // : static
+    /**
+     * @return static
+     */
+    public function middleware($middleware) // : static
     {
-        $fallbacks = $fallbacks ?? [];
-        $fallbacks = (array) $fallbacks;
+        $_middleware = GenericHandlerMiddleware::from($middleware);
 
-        $fallbackDict = [];
-
-        foreach ( $fallbacks as $middleware ) {
-            $fallbackObject = GenericFallback::from($middleware);
-
-            $fallbackDict[ $fallbackObject->getKey() ] = $fallbackObject;
-        }
-
-        $this->fallbackDict = $fallbackDict;
+        $this->middlewareDict[ $_middleware->getKey() ] = $_middleware;
 
         return $this;
     }
 
-    public function fallback($fallbacks) // : static
+
+    /**
+     * @return static
+     */
+    public function setFallbacks(array $fallbacks) // : static
     {
-        $fallbacks = $fallbacks ?? [];
-        $fallbacks = (array) $fallbacks;
+        $this->fallbackDict = [];
 
-        if (! $fallbacks) {
-            return $this;
-        }
+        $this->fallbacks($fallbacks);
 
+        return $this;
+    }
+
+    /**
+     * @return static
+     */
+    public function fallbacks(array $fallbacks) // : static
+    {
         foreach ( $fallbacks as $fallback ) {
-            $fallbackObject = GenericFallback::from($fallback);
-
-            $this->fallbackDict[ $fallbackObject->getKey() ] = $fallbackObject;
+            $this->fallback($fallback);
         }
+
+        return $this;
+    }
+
+    /**
+     * @return static
+     */
+    public function fallback($fallback) // : static
+    {
+        $_fallback = GenericHandlerFallback::from($fallback);
+
+        $this->fallbackDict[ $_fallback->getKey() ] = $_fallback;
 
         return $this;
     }

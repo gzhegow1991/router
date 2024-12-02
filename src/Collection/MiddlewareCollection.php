@@ -4,7 +4,7 @@ namespace Gzhegow\Router\Collection;
 
 use Gzhegow\Router\Route\Struct\Tag;
 use Gzhegow\Router\Route\Struct\Path;
-use Gzhegow\Router\Handler\Middleware\GenericMiddleware;
+use Gzhegow\Router\Handler\Middleware\GenericHandlerMiddleware;
 
 
 class MiddlewareCollection
@@ -15,18 +15,18 @@ class MiddlewareCollection
     protected $id = 0;
 
     /**
-     * @var GenericMiddleware[]
+     * @var GenericHandlerMiddleware[]
      */
     public $middlewareList = [];
 
     /**
      * @var array<string, array<int, bool>>
      */
-    public $middlewareIndexByPath;
+    public $middlewareIndexByPath = [];
     /**
      * @var array<string, array<int, bool>>
      */
-    public $middlewareIndexByTag;
+    public $middlewareIndexByTag = [];
 
     /**
      * @var array<string, int>
@@ -34,24 +34,24 @@ class MiddlewareCollection
     public $middlewareMapKeyToId;
 
 
-    public function getMiddleware(int $id) : GenericMiddleware
+    public function getMiddleware(int $id) : GenericHandlerMiddleware
     {
         return $this->middlewareList[ $id ];
     }
 
 
-    public function addPathMiddleware(Path $path, GenericMiddleware $fallback) : int
+    public function addPathMiddleware(Path $path, GenericHandlerMiddleware $middleware) : int
     {
-        $id = $this->registerMiddleware($fallback);
+        $id = $this->registerMiddleware($middleware);
 
         $this->middlewareIndexByPath[ $path->getValue() ][ $id ] = true;
 
         return $id;
     }
 
-    public function addTagMiddleware(Tag $tag, GenericMiddleware $fallback) : int
+    public function addTagMiddleware(Tag $tag, GenericHandlerMiddleware $middleware) : int
     {
-        $id = $this->registerMiddleware($fallback);
+        $id = $this->registerMiddleware($middleware);
 
         $this->middlewareIndexByTag[ $tag->getValue() ][ $id ] = true;
 
@@ -59,7 +59,7 @@ class MiddlewareCollection
     }
 
 
-    public function registerMiddleware(GenericMiddleware $middleware) : int
+    public function registerMiddleware(GenericHandlerMiddleware $middleware) : int
     {
         $key = $middleware->getKey();
 

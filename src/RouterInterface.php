@@ -7,10 +7,13 @@
 namespace Gzhegow\Router;
 
 use Gzhegow\Router\Route\Route;
+use Gzhegow\Router\Pattern\Pattern;
 use Gzhegow\Router\Route\RouteGroup;
 use Gzhegow\Router\Route\RouteBlueprint;
 use Gzhegow\Router\Contract\RouterMatchContract;
 use Gzhegow\Router\Contract\RouterDispatchContract;
+use Gzhegow\Router\Handler\Fallback\GenericHandlerFallback;
+use Gzhegow\Router\Handler\Middleware\GenericHandlerMiddleware;
 
 
 interface RouterInterface
@@ -46,44 +49,41 @@ interface RouterInterface
     public function cacheRemember($fn);
 
 
+    public function group(RouteBlueprint $from = null) : RouteGroup;
+
+
     /**
-     * @param string[] $names
+     * @param string                                    $path
+     * @param string|string[]                           $httpMethods
+     * @param callable|object|array|class-string|string $action
      *
-     * @return Route[][]
+     * @param string|null                               $name
+     * @param string|string[]|null                      $tags
      */
-    public function matchAllByNames(array $names) : array;
-
-    public function matchFirstByName(string $name, array $optional = [], array &$routes = null) : ?Route;
-
+    public function route(
+        $path, $httpMethods, $action,
+        $name = null, $tags = null
+    ) : RouteBlueprint;
 
     /**
-     * @param string[] $tags
-     *
-     * @return Route[][]
+     * @return static
      */
-    public function matchAllByTags(array $tags) : array;
+    public function addRoute(RouteBlueprint $routeBlueprint); // : static
 
-    public function matchFirstByTag(string $tag, array $optional = [], array &$routes = null) : ?Route;
 
+    public function newBlueprint(RouteBlueprint $from = null) : RouteBlueprint;
 
     /**
-     * @return Route[]
+     * @param string|null                                    $path
+     * @param string|string[]|null                           $httpMethods
+     * @param callable|object|array|class-string|string|null $action
+     * @param string|null                                    $name
+     * @param string|string[]|null                           $tags
      */
-    public function matchByContract(RouterMatchContract $contract) : array;
-
-
-    /**
-     * @throws \Throwable
-     */
-    public function dispatch(RouterDispatchContract $contract, $input = null, $context = null);
-
-
-    /**
-     * @param Route|Route[]|string|string[] $routes
-     *
-     * @return string[]
-     */
-    public function urls($routes, array $attributes = []) : array;
+    public function blueprint(
+        RouteBlueprint $from = null,
+        $path = null, $httpMethods = null, $action = null, $name = null, $tags = null
+    ) : RouteBlueprint;
 
 
     /**
@@ -119,17 +119,72 @@ interface RouterInterface
     public function fallbackOnTag($tag, $fallback);
 
 
-    public function blueprint(RouteBlueprint $from = null) : RouteBlueprint;
-
-    public function group(RouteBlueprint $from = null) : RouteGroup;
+    /**
+     * @return static
+     */
+    public function commit(); // : static
 
 
     /**
-     * @param string                                    $path
-     * @param string|string[]                           $httpMethods
-     * @param callable|object|array|class-string|string $action
+     * @param int|int[] $ids
+     *
+     * @return Route[]
      */
-    public function route($path, $httpMethods, $action, $name = null) : RouteBlueprint;
+    public function matchAllByIds($ids) : array;
 
-    public function routeAdd($pathOrBlueprint, ...$arguments);
+    public function matchFirstByIds($ids) : ?Route;
+
+
+    /**
+     * @param string|string[] $names
+     *
+     * @return Route[]|Route[][]
+     */
+    public function matchAllByNames($names, bool $unique = null) : array;
+
+    public function matchFirstByNames($names) : ?Route;
+
+
+    /**
+     * @param string|string[] $tags
+     *
+     * @return Route[]|Route[][]
+     */
+    public function matchAllByTags($tags, bool $unique = null) : array;
+
+    public function matchFirstByTags($tags) : ?Route;
+
+
+    /**
+     * @return Route[]
+     */
+    public function matchByContract(RouterMatchContract $contract) : array;
+
+
+    /**
+     * @throws \Throwable
+     */
+    public function dispatch(RouterDispatchContract $contract, $input = null, $context = null);
+
+
+    /**
+     * @param Route|Route[]|string|string[] $routes
+     *
+     * @return string[]
+     */
+    public function urls($routes, array $attributes = []) : array;
+
+
+    /**
+     * @return int[]
+     */
+    public function registerRouteGroup(RouteGroup $routeGroup) : array;
+
+    public function registerRoute(Route $route) : int;
+
+    public function registerPattern(Pattern $pattern) : string;
+
+    public function registerMiddleware(GenericHandlerMiddleware $middleware) : int;
+
+    public function registerFallback(GenericHandlerFallback $fallback) : int;
 }

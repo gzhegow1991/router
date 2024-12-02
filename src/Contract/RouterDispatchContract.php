@@ -23,15 +23,16 @@ class RouterDispatchContract
     {
     }
 
+
     /**
      * @return static
      */
-    public static function from($from) : object
+    public static function from($from) : self
     {
-        if (null === ($instance = static::tryFrom($from))) {
-            throw new LogicException([
-                'Unknown `from`: ' . Lib::php_dump($from),
-            ]);
+        $instance = static::tryFrom($from, $error);
+
+        if (null === $instance) {
+            throw $error;
         }
 
         return $instance;
@@ -40,11 +41,38 @@ class RouterDispatchContract
     /**
      * @return static|null
      */
-    public static function tryFrom($from) : ?object
+    public static function tryFrom($from, \Throwable &$last = null) : ?self
     {
+        $last = null;
+
+        Lib::php_errors_start($b);
+
         $instance = null
-            ?? static::fromStatic($from)
-            ?? static::fromArray($from);
+            ?? static::tryFromInstance($from)
+            ?? static::tryFromArray($from);
+
+        $errors = Lib::php_errors_end($b);
+
+        if (null === $instance) {
+            foreach ( $errors as $error ) {
+                $last = new LogicException($error, null, $last);
+            }
+        }
+
+        return $instance;
+    }
+
+
+    /**
+     * @return static|null
+     */
+    protected static function tryFromInstance($instance) : ?self
+    {
+        if (! is_a($instance, static::class)) {
+            return Lib::php_error(
+                [ 'The `from` should be instance of: ' . static::class, $instance ]
+            );
+        }
 
         return $instance;
     }
@@ -52,38 +80,32 @@ class RouterDispatchContract
     /**
      * @return static|null
      */
-    protected static function fromStatic($static) : ?object
-    {
-        if (! is_a($static, static::class)) {
-            return Lib::php_trigger_error([ 'The `from` should be instance of: ' . static::class, $static ]);
-        }
-
-        return $static;
-    }
-
-    /**
-     * @return static|null
-     */
-    protected static function fromArray($array) : ?object
+    protected static function tryFromArray($array) : ?self
     {
         if (! is_array($array)) {
-            return Lib::php_trigger_error([ 'The `from` should be array', $array ]);
+            return Lib::php_error(
+                [ 'The `from` should be array', $array ]
+            );
         }
 
         [ $httpMethod, $requestUri ] = $array;
 
         if (null === ($_httpMethod = HttpMethod::tryFrom($httpMethod))) {
-            return Lib::php_trigger_error([
-                'The `from[0]` should be valid `httpMethod`: ' . Lib::php_dump($httpMethod),
-                $array,
-            ]);
+            return Lib::php_error(
+                [
+                    'The `from[0]` should be valid `httpMethod`: ' . Lib::php_dump($httpMethod),
+                    $array,
+                ]
+            );
         }
 
-        if (null === ($_requestUri = Lib::filter_path($requestUri))) {
-            return Lib::php_trigger_error([
-                'The `from[0]` should be valid `path`: ' . Lib::php_dump($requestUri),
-                $array,
-            ]);
+        if (null === ($_requestUri = Lib::parse_path($requestUri))) {
+            return Lib::php_error(
+                [
+                    'The `from[0]` should be valid `path`: ' . Lib::php_dump($requestUri),
+                    $array,
+                ]
+            );
         }
 
         $instance = new static();

@@ -27,15 +27,16 @@ class Pattern implements \Serializable
     {
     }
 
+
     /**
      * @return static
      */
-    public static function from($from) : object
+    public static function from($from) : self
     {
-        if (null === ($instance = static::tryFrom($from))) {
-            throw new LogicException([
-                'Unknown `from`: ' . Lib::php_dump($from),
-            ]);
+        $instance = static::tryFrom($from, $error);
+
+        if (null === $instance) {
+            throw $error;
         }
 
         return $instance;
@@ -44,11 +45,38 @@ class Pattern implements \Serializable
     /**
      * @return static|null
      */
-    public static function tryFrom($from) : ?object
+    public static function tryFrom($from, \Throwable &$last = null) : ?self
     {
+        $last = null;
+
+        Lib::php_errors_start($b);
+
         $instance = null
-            ?? static::fromStatic($from)
-            ?? static::fromArray($from);
+            ?? static::tryFromInstance($from)
+            ?? static::tryFromArray($from);
+
+        $errors = Lib::php_errors_end($b);
+
+        if (null === $instance) {
+            foreach ( $errors as $error ) {
+                $last = new LogicException($error, null, $last);
+            }
+        }
+
+        return $instance;
+    }
+
+
+    /**
+     * @return static|null
+     */
+    protected static function tryFromInstance($instance) : ?self
+    {
+        if (! is_a($instance, static::class)) {
+            return Lib::php_error(
+                [ 'The `from` should be instance of: ' . static::class, $instance ]
+            );
+        }
 
         return $instance;
     }
@@ -56,62 +84,60 @@ class Pattern implements \Serializable
     /**
      * @return static|null
      */
-    protected static function fromStatic($static) : ?object
-    {
-        if (! is_a($static, static::class)) {
-            return Lib::php_trigger_error([ 'The `from` should be instance of: ' . static::class, $static ]);
-        }
-
-        return $static;
-    }
-
-    /**
-     * @return static|null
-     */
-    protected static function fromArray($array) : ?object
+    protected static function tryFromArray($array) : ?self
     {
         if (! is_array($array)) {
-            return Lib::php_trigger_error([
-                'The `from` should be array',
-                $array,
-            ]);
+            return Lib::php_error(
+                [
+                    'The `from` should be array',
+                    $array,
+                ]
+            );
         }
 
         [ $pattern, $regex ] = $array + [ null, null ];
 
-        if (null === ($_pattern = Lib::filter_string($pattern))) {
-            return Lib::php_trigger_error([
-                'The `from[0]` should be non-empty string',
-                $array,
-            ]);
+        if (null === ($_pattern = Lib::parse_astring($pattern))) {
+            return Lib::php_error(
+                [
+                    'The `from[0]` should be non-empty string',
+                    $array,
+                ]
+            );
         }
 
-        if (null === ($_regex = Lib::filter_string($regex))) {
-            return Lib::php_trigger_error([
-                'The `from[1]` should be non-empty string',
-                $array,
-            ]);
+        if (null === ($_regex = Lib::parse_astring($regex))) {
+            return Lib::php_error(
+                [
+                    'The `from[1]` should be non-empty string',
+                    $array,
+                ]
+            );
         }
 
         if (! (true
             && (Router::PATTERN_ENCLOSURE[ 0 ] === $_pattern[ 0 ])
             && (Router::PATTERN_ENCLOSURE[ 1 ] === $_pattern[ strlen($_pattern) - 1 ])
         )) {
-            return Lib::php_trigger_error([
-                'The `from[0]` should be wrapped with signs: '
-                . '`' . Router::PATTERN_ENCLOSURE[ 0 ] . '`'
-                . ' `' . Router::PATTERN_ENCLOSURE[ 1 ] . '`',
-                $array,
-            ]);
+            return Lib::php_error(
+                [
+                    'The `from[0]` should be wrapped with signs: '
+                    . '`' . Router::PATTERN_ENCLOSURE[ 0 ] . '`'
+                    . ' `' . Router::PATTERN_ENCLOSURE[ 1 ] . '`',
+                    $array,
+                ]
+            );
         }
 
         $_attribute = substr($_pattern, 1, -1);
 
         if (! preg_match($var = '/[a-z][a-z0-9_]*/', $_attribute)) {
-            return Lib::php_trigger_error([
-                'The `from[0]` should match regex: ' . $var . ' / ' . $_attribute,
-                $array,
-            ]);
+            return Lib::php_error(
+                [
+                    'The `from[0]` should match regex: ' . $var . ' / ' . $_attribute,
+                    $array,
+                ]
+            );
         }
 
         $symbols = [ '/', '|', '(', ')' ];
@@ -124,17 +150,21 @@ class Pattern implements \Serializable
                 $vars[ $i ] = "`{$symbol}`";
             }
 
-            return Lib::php_trigger_error([
-                'The `from[1]` should not contain symbols: ' . implode(',', $vars),
-                $array,
-            ]);
+            return Lib::php_error(
+                [
+                    'The `from[1]` should not contain symbols: ' . implode(',', $vars),
+                    $array,
+                ]
+            );
         }
 
-        if (null === Lib::filter_regex($var = "/{$_regex}/")) {
-            return Lib::php_trigger_error([
-                'The `from[1]` caused invalid regex: ' . $var,
-                $array,
-            ]);
+        if (null === Lib::parse_regex($var = "/{$_regex}/")) {
+            return Lib::php_error(
+                [
+                    'The `from[1]` caused invalid regex: ' . $var,
+                    $array,
+                ]
+            );
         }
 
         $_regex = "(?<{$_attribute}>{$_regex})";

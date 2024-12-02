@@ -2,9 +2,10 @@
 
 namespace Gzhegow\Router\Handler\Action;
 
+
 class CorsAction
 {
-    public function __invoke()
+    public function __invoke($input = null, $context = null, $state = null)
     {
         if ('OPTIONS' === strtoupper($_SERVER[ 'REQUEST_METHOD' ] ?? null)) {
             if (isset($_SERVER[ 'HTTP_ACCESS_CONTROL_REQUEST_METHOD' ])) {
