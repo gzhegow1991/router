@@ -107,14 +107,6 @@ function _assert_call(\Closure $fn, array $exResult = null, string $exOutput = n
     echo 'Test OK - ' . $mtDiffSeconds . "\n\n";
 }
 
-function _cli_pause()
-{
-    echo '> Press ENTER to continue...' . PHP_EOL;
-    $h = fopen('php://stdin', 'r');
-    fgets($h);
-    fclose($h);
-}
-
 
 // >>> ЗАПУСКАЕМ!
 
