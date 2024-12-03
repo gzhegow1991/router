@@ -34,6 +34,8 @@ interface RouterInterface
     );
 
     /**
+     * @noinspection PhpFullyQualifiedNameUsageInspection
+     *
      * @param array{
      *     cacheMode: string|null,
      *     cacheAdapter: object|\Psr\Cache\CacheItemPoolInterface|null,

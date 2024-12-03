@@ -196,6 +196,8 @@ class Router implements RouterInterface
     }
 
     /**
+     * @noinspection PhpFullyQualifiedNameUsageInspection
+     *
      * @param array{
      *     cacheMode: string|null,
      *     cacheAdapter: object|\Psr\Cache\CacheItemPoolInterface|null,
@@ -983,7 +985,7 @@ class Router implements RouterInterface
             $chain->fallback($fallback);
         }
 
-        foreach ( $middlewareList as $middleware ) {
+        for ( $i = 0; $i < count($middlewareList); $i++ ) {
             $chain = $chain->endMiddleware();
         }
 

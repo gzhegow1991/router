@@ -27,6 +27,8 @@ class RouterCache implements RouterCacheInterface
      */
     protected $cacheMode = self::CACHE_MODE_NO_CACHE;
     /**
+     * @noinspection PhpFullyQualifiedNameUsageInspection
+     *
      * @var object|\Psr\Cache\CacheItemPoolInterface
      */
     protected $cacheAdapter;
@@ -40,12 +42,16 @@ class RouterCache implements RouterCacheInterface
     protected $cacheFilename = 'router.cache';
 
     /**
+     * @noinspection PhpFullyQualifiedNameUsageInspection
+     *
      * @var object|\Psr\Cache\CacheItemInterface
      */
     protected $cacheAdapterItem;
 
 
     /**
+     * @noinspection PhpFullyQualifiedNameUsageInspection
+     *
      * @param string|null                                   $cacheMode @see \Gzhegow\Router\Cache\RouterCache::LIST_CACHE_MODE
      * @param object|\Psr\Cache\CacheItemPoolInterface|null $cacheAdapter
      * @param string|null                                   $cacheDirpath
@@ -96,6 +102,9 @@ class RouterCache implements RouterCacheInterface
     }
 
 
+    /**
+     * @noinspection PhpFullyQualifiedNameUsageInspection
+     */
     public function initCache() // : static
     {
         if ($this->cacheMode !== static::CACHE_MODE_STORAGE) return $this;

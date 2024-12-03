@@ -9,6 +9,8 @@ namespace Gzhegow\Router\Cache;
 interface RouterCacheInterface
 {
     /**
+     * @noinspection PhpFullyQualifiedNameUsageInspection
+     *
      * @param string|null                                   $cacheMode @see \Gzhegow\Router\Cache\RouterCache::LIST_CACHE_MODE
      * @param object|\Psr\Cache\CacheItemPoolInterface|null $cacheAdapter
      * @param string|null                                   $cacheDirpath

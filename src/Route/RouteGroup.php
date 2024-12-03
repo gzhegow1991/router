@@ -132,7 +132,8 @@ class RouteGroup
      */
     public function blueprint(
         RouteBlueprint $from = null,
-        $path = null, $httpMethods = null, $action = null, $name = null, $tags = null
+        $path = null, $httpMethods = null, $action = null,
+        $name = null, $tags = null
     ) : RouteBlueprint
     {
         $blueprint = $this->newBlueprint($from);
@@ -327,6 +328,7 @@ class RouteGroup
                 $routeBlueprint->tagIndex,
                 $this->routeBlueprint->tagIndex
             );
+            $tagsList = array_keys($tagsIndex);
 
             $middlewaresDict = array_replace(
                 $routeBlueprint->middlewareDict,
@@ -338,10 +340,15 @@ class RouteGroup
                 $this->routeBlueprint->fallbackDict
             );
 
-            $routeBlueprint->path($path);
-            $routeBlueprint->name($name);
+            if ('' !== $path) {
+                $routeBlueprint->path($path);
+            }
 
-            $routeBlueprint->setTags(array_keys($tagsIndex));
+            if ('' !== $path) {
+                $routeBlueprint->name($name);
+            }
+
+            $routeBlueprint->setTags($tagsList);
             $routeBlueprint->setMiddlewares($middlewaresDict);
             $routeBlueprint->setFallbacks($fallbacksDict);
 
