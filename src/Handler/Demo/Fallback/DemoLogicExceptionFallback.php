@@ -2,10 +2,10 @@
 
 namespace Gzhegow\Router\Handler\Demo\Fallback;
 
-use Gzhegow\Pipeline\Handler\Demo\Fallback\DemoLogicExceptionFallback as PipelineDemoLogicExceptionFallback;
+use Gzhegow\Pipeline\Handler\Demo\Fallback\DemoLogicExceptionFallback as DemoLogicExceptionFallbackBase;
 
 
-class DemoLogicExceptionFallback extends PipelineDemoLogicExceptionFallback
+class DemoLogicExceptionFallback extends DemoLogicExceptionFallbackBase
 {
     // public function __invoke(\Throwable $e, $input = null, $context = null, $state = null)
     // {

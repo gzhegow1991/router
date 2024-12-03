@@ -2,10 +2,10 @@
 
 namespace Gzhegow\Router\Handler\Action;
 
-use Gzhegow\Pipeline\Handler\Action\GenericHandlerAction as PipelineGenericHandlerAction;
+use Gzhegow\Pipeline\Handler\Action\GenericHandlerAction as GenericHandlerActionBase;
 
 
-class GenericHandlerAction extends PipelineGenericHandlerAction
+class GenericHandlerAction extends GenericHandlerActionBase
 {
 
 }

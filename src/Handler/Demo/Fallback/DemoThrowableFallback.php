@@ -2,10 +2,10 @@
 
 namespace Gzhegow\Router\Handler\Demo\Fallback;
 
-use Gzhegow\Pipeline\Handler\Demo\Fallback\DemoThrowableFallback as PipelineDemoThrowableFallback;
+use Gzhegow\Pipeline\Handler\Demo\Fallback\DemoThrowableFallback as DemoThrowableFallbackBase;
 
 
-class DemoThrowableFallback extends PipelineDemoThrowableFallback
+class DemoThrowableFallback extends DemoThrowableFallbackBase
 {
     // public function __invoke(\Throwable $e, $input = null, $context = null, $state = null)
     // {

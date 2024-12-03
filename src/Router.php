@@ -29,6 +29,7 @@ use Gzhegow\Router\Exception\Exception\DispatchException;
 use Gzhegow\Pipeline\Exception\Runtime\PipelineException;
 use Gzhegow\Router\Handler\Fallback\GenericHandlerFallback;
 use Gzhegow\Router\Handler\Middleware\GenericHandlerMiddleware;
+use Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineFactoryInterface;
 
 
 class Router implements RouterInterface

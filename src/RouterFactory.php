@@ -12,6 +12,8 @@ use Gzhegow\Router\Cache\RouterCacheInterface;
 use Gzhegow\Router\Collection\PatternCollection;
 use Gzhegow\Router\Collection\FallbackCollection;
 use Gzhegow\Router\Collection\MiddlewareCollection;
+use Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineFactory;
+use Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineFactoryInterface;
 
 
 class RouterFactory implements RouterFactoryInterface

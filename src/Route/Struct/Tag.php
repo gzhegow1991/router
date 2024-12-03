@@ -61,7 +61,7 @@ class Tag
     /**
      * @return static|null
      */
-    protected static function tryFromInstance($instance) : ?self
+    public static function tryFromInstance($instance) : ?self
     {
         if (! is_a($instance, static::class)) {
             return Lib::php_error(
@@ -75,7 +75,7 @@ class Tag
     /**
      * @return static|null
      */
-    protected static function tryFromString($string) : ?self
+    public static function tryFromString($string) : ?self
     {
         if (null === ($tag = Lib::parse_astring($string))) {
             return Lib::php_error(

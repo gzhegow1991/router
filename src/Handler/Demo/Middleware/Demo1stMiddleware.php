@@ -2,6 +2,9 @@
 
 namespace Gzhegow\Router\Handler\Demo\Middleware;
 
-class Demo1stMiddleware extends \Gzhegow\Pipeline\Handler\Demo\Middleware\Demo1stMiddleware
+use Gzhegow\Pipeline\Handler\Demo\Middleware\Demo1stMiddleware as Demo1stMiddlewareBase;
+
+
+class Demo1stMiddleware extends Demo1stMiddlewareBase
 {
 }

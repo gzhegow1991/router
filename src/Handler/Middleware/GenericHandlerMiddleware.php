@@ -2,10 +2,10 @@
 
 namespace Gzhegow\Router\Handler\Middleware;
 
-use Gzhegow\Pipeline\Handler\Middleware\GenericHandlerMiddleware as PipelineGenericHandlerMiddleware;
+use Gzhegow\Pipeline\Handler\Middleware\GenericHandlerMiddleware as GenericHandlerMiddlewareBase;
 
 
-class GenericHandlerMiddleware extends PipelineGenericHandlerMiddleware
+class GenericHandlerMiddleware extends GenericHandlerMiddlewareBase
 {
 
 }

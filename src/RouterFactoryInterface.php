@@ -11,6 +11,7 @@ use Gzhegow\Router\Collection\RouteCollection;
 use Gzhegow\Router\Collection\PatternCollection;
 use Gzhegow\Router\Collection\FallbackCollection;
 use Gzhegow\Router\Collection\MiddlewareCollection;
+use Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineFactoryInterface;
 
 
 interface RouterFactoryInterface
