@@ -13,7 +13,7 @@ use Gzhegow\Router\Route\Struct\Tag;
 use Gzhegow\Router\Route\RouteGroup;
 use Gzhegow\Router\Route\Struct\Path;
 use Gzhegow\Router\Route\RouteBlueprint;
-use Gzhegow\Router\Route\Struct\HttpMethod;
+use Gzhegow\Router\Cache\RouterCacheConfig;
 use Gzhegow\Router\Exception\LogicException;
 use Gzhegow\Router\Exception\RuntimeException;
 use Gzhegow\Router\Collection\RouteCollection;
@@ -62,35 +62,9 @@ class Router implements RouterInterface
     protected $cache;
 
     /**
-     * > gzhegow, false -> чтобы работал кеш (т.к. объекты runtime и замыкания нельзя сохранить в файл)
-     *
-     * @var bool
+     * @var RouterConfig
      */
-    protected $registerAllowObjectsAndClosures = false;
-    /**
-     * > gzhegow, -1/1 -> чтобы бросать исключение при попытке зарегистрировать роут без/с trailing-slash
-     *
-     * @var int
-     */
-    protected $compileTrailingSlashMode = self::TRAILING_SLASH_AS_IS;
-    /**
-     * > gzhegow, true -> чтобы не учитывать метод запроса при выполнении маршрута, удобно тестировать POST/OPTIONS/HEAD запросы в браузере (сработает первый зарегистрированный!)
-     *
-     * @var bool
-     */
-    protected $dispatchIgnoreMethod = false;
-    /**
-     * > gzhegow, 'GET|POST|PUT|OPTIONS' etc, чтобы принудительно установить метод запроса при выполнении действия
-     *
-     * @var string
-     */
-    protected $dispatchForceMethod = null;
-    /**
-     * > gzhegow, -1/1 -> чтобы автоматически доставлять или убирать trailing-slash на этапе выполнения
-     *
-     * @var bool
-     */
-    protected $dispatchTrailingSlashMode = self::TRAILING_SLASH_AS_IS;
+    protected $config;
 
     /**
      * @var bool
@@ -146,83 +120,52 @@ class Router implements RouterInterface
         $this->routerNodeRoot = $routerNodeRoot;
 
         $this->routeGroupRoot = $this->routerFactory->newRouteGroup();
+
+        $this->resetConfig();
     }
 
 
-    /**
-     * @param bool|null   $registerAllowObjectsAndClosures
-     * @param int|null    $compileTrailingSlashMode  @see \Gzhegow\Router\Router::LIST_TRAILING_SLASH
-     * @param bool|null   $dispatchIgnoreMethod
-     * @param string|null $dispatchForceMethod       @see \Gzhegow\Router\Route\Struct\HttpMethod::LIST_METHOD
-     * @param int|null    $dispatchTrailingSlashMode @see \Gzhegow\Router\Router::LIST_TRAILING_SLASH
-     */
-    public function setSettings(
-        bool $registerAllowObjectsAndClosures = null,
-        int $compileTrailingSlashMode = null,
-        bool $dispatchIgnoreMethod = null,
-        string $dispatchForceMethod = null,
-        int $dispatchTrailingSlashMode = null
-    ) // : static
+    public function getConfig() : RouterConfig
     {
-        $registerAllowObjectsAndClosures = $registerAllowObjectsAndClosures ?? false;
-        $compileTrailingSlashMode = $compileTrailingSlashMode ?? self::TRAILING_SLASH_AS_IS;
-        $dispatchIgnoreMethod = $dispatchIgnoreMethod ?? false;
-        $dispatchForceMethod = $dispatchForceMethod ?? null;
-        $dispatchTrailingSlashMode = $dispatchTrailingSlashMode ?? self::TRAILING_SLASH_AS_IS;
-
-        if (! isset(static::LIST_TRAILING_SLASH[ $compileTrailingSlashMode ])) {
-            throw new LogicException(
-                'The `compileTrailingSlashMode` should be one of: ' . implode(',', array_keys(static::LIST_TRAILING_SLASH))
-            );
-        }
-
-        if (! isset(static::LIST_TRAILING_SLASH[ $dispatchTrailingSlashMode ])) {
-            throw new LogicException(
-                'The `dispatchTrailingSlashMode` should be one of: ' . implode(',', array_keys(static::LIST_TRAILING_SLASH))
-            );
-        }
-
-        if (null !== $dispatchForceMethod) {
-            $dispatchForceMethod = HttpMethod::from($dispatchForceMethod)->getValue();
-        }
-
-        $this->registerAllowObjectsAndClosures = $registerAllowObjectsAndClosures;
-        $this->compileTrailingSlashMode = $compileTrailingSlashMode;
-        $this->dispatchIgnoreMethod = $dispatchIgnoreMethod;
-        $this->dispatchForceMethod = $dispatchForceMethod;
-        $this->dispatchTrailingSlashMode = $dispatchTrailingSlashMode;
-
-        return $this;
+        return $this->config;
     }
 
     /**
-     * @noinspection PhpFullyQualifiedNameUsageInspection
+     * @param callable $fn
      *
-     * @param array{
-     *     cacheMode: string|null,
-     *     cacheAdapter: object|\Psr\Cache\CacheItemPoolInterface|null,
-     *     cacheDirpath: string|null,
-     *     cacheFilename: string|null,
-     * }|null $settings
+     * @return static
      */
-    public function setCacheSettings(array $settings = null) // : static
+    public function setConfig($fn) // : static
     {
-        $cacheMode = $settings[ 'cacheMode' ] ?? $settings[ 0 ] ?? null;
-        $cacheAdapter = $settings[ 'cacheAdapter' ] ?? $settings[ 1 ] ?? null;
-        $cacheDirpath = $settings[ 'cacheDirpath' ] ?? $settings[ 2 ] ?? null;
-        $cacheFilename = $settings[ 'cacheFilename' ] ?? $settings[ 3 ] ?? null;
+        $fn($this->config);
 
-        $this->cache->setCacheSettings(
-            $cacheMode,
-            $cacheAdapter,
-            $cacheDirpath,
-            $cacheFilename
-        );
+        $this->cache
+            ->setConfig(function (RouterCacheConfig $config) {
+                foreach ( get_object_vars($this->config->cache) as $key => $value ) {
+                    $config->{$key} = $value;
+                }
+            })
+        ;
+
+        $this->config->validate();
+
+        return $this;
+    }
+
+    /**
+     * @return static
+     */
+    public function resetConfig() // : static
+    {
+        $this->config = new RouterConfig();
 
         return $this;
     }
 
 
+    /**
+     * @return static
+     */
     public function cacheClear() // : static
     {
         $this->cache->clearCache();
@@ -230,6 +173,11 @@ class Router implements RouterInterface
         return $this;
     }
 
+    /**
+     * @param callable $fn
+     *
+     * @return static
+     */
     public function cacheRemember($fn) // : static
     {
         if ($this->cacheLoad()) {
@@ -279,7 +227,7 @@ class Router implements RouterInterface
     protected function cacheSave() // : static
     {
         if (! $this->isRouterChanged) return $this;
-        if ($this->registerAllowObjectsAndClosures) return $this;
+        if ($this->config->registerAllowObjectsAndClosures) return $this;
 
         $cacheData = [
             'routeCollection'      => $this->routeCollection,
@@ -389,17 +337,17 @@ class Router implements RouterInterface
         $path = Path::from($path);
         $middleware = GenericHandlerMiddleware::from($middleware);
 
-        if ($this->compileTrailingSlashMode) {
+        if ($this->config->compileTrailingSlashMode) {
             $pathValue = $path->getValue();
 
             $isEndsWithSlash = ('/' === $pathValue[ strlen($pathValue) - 1 ]);
 
-            if ($isEndsWithSlash && ($this->compileTrailingSlashMode === static::TRAILING_SLASH_NEVER)) {
+            if ($isEndsWithSlash && ($this->config->compileTrailingSlashMode === static::TRAILING_SLASH_NEVER)) {
                 throw new RuntimeException(
                     'The `path` must not end with `/` sign: ' . $pathValue
                 );
 
-            } elseif (! $isEndsWithSlash && ($this->compileTrailingSlashMode === static::TRAILING_SLASH_ALWAYS)) {
+            } elseif (! $isEndsWithSlash && ($this->config->compileTrailingSlashMode === static::TRAILING_SLASH_ALWAYS)) {
                 throw new RuntimeException(
                     'The `path` must end with `/` sign: ' . $pathValue
                 );
@@ -439,17 +387,17 @@ class Router implements RouterInterface
         $path = Path::from($path);
         $fallback = GenericHandlerFallback::from($fallback);
 
-        if (! $this->compileTrailingSlashMode) {
+        if (! $this->config->compileTrailingSlashMode) {
             $pathValue = $path->getValue();
 
             $isEndsWithSlash = ('/' === $pathValue[ strlen($pathValue) - 1 ]);
 
-            if ($isEndsWithSlash && ($this->compileTrailingSlashMode === static::TRAILING_SLASH_NEVER)) {
+            if ($isEndsWithSlash && ($this->config->compileTrailingSlashMode === static::TRAILING_SLASH_NEVER)) {
                 throw new RuntimeException(
                     'The `path` must not end with `/` sign: ' . $pathValue
                 );
 
-            } elseif (! $isEndsWithSlash && ($this->compileTrailingSlashMode === static::TRAILING_SLASH_ALWAYS)) {
+            } elseif (! $isEndsWithSlash && ($this->config->compileTrailingSlashMode === static::TRAILING_SLASH_ALWAYS)) {
                 throw new RuntimeException(
                     'The `path` must end with `/` sign: ' . $pathValue
                 );
@@ -768,15 +716,15 @@ class Router implements RouterInterface
         $contractRequestUri = $contract->requestUri;
 
         $dispatchHttpMethod = $contractHttpMethod;
-        if ($this->dispatchForceMethod) {
-            $dispatchHttpMethod = $this->dispatchForceMethod;
+        if ($this->config->dispatchForceMethod) {
+            $dispatchHttpMethod = $this->config->dispatchForceMethod;
         }
 
         $dispatchRequestUri = $contractRequestUri;
-        if ($this->dispatchTrailingSlashMode) {
+        if ($this->config->dispatchTrailingSlashMode) {
             $dispatchRequestUri = rtrim($dispatchRequestUri, '/');
 
-            if ($this->dispatchTrailingSlashMode === static::TRAILING_SLASH_ALWAYS) {
+            if ($this->config->dispatchTrailingSlashMode === static::TRAILING_SLASH_ALWAYS) {
                 $dispatchRequestUri = $dispatchRequestUri . '/';
             }
         }
@@ -875,7 +823,7 @@ class Router implements RouterInterface
 
             $intersect[] = $indexMatch;
 
-            if (! $this->dispatchIgnoreMethod) {
+            if (! $this->config->dispatchIgnoreMethod) {
                 $intersect[] = $routeNodeCurrent->routeIndexByMethod[ $dispatchHttpMethod ] ?? [];
             }
 
@@ -1123,7 +1071,7 @@ class Router implements RouterInterface
     {
         $this->isRouterChanged = true;
 
-        if (! $this->registerAllowObjectsAndClosures) {
+        if (! $this->config->registerAllowObjectsAndClosures) {
             $runtimeAction = null
                 ?? $route->action->closure
                 ?? $route->action->methodObject
@@ -1218,7 +1166,7 @@ class Router implements RouterInterface
     {
         $this->isRouterChanged = true;
 
-        if (! $this->registerAllowObjectsAndClosures) {
+        if (! $this->config->registerAllowObjectsAndClosures) {
             if ($middleware->closure || $middleware->methodObject || $middleware->invokableObject) {
                 throw new RuntimeException(
                     'This `middleware` should not be runtime object or \Closure: ' . Lib::php_dump($middleware)
@@ -1235,7 +1183,7 @@ class Router implements RouterInterface
     {
         $this->isRouterChanged = true;
 
-        if (! $this->registerAllowObjectsAndClosures) {
+        if (! $this->config->registerAllowObjectsAndClosures) {
             if ($fallback->closure || $fallback->methodObject || $fallback->invokableObject) {
                 throw new RuntimeException(
                     'This `fallback` should not be runtime object or \Closure: ' . Lib::php_dump($fallback)
@@ -1271,15 +1219,15 @@ class Router implements RouterInterface
 
         $pathValue = $path->getValue();
 
-        if (! $this->compileTrailingSlashMode) {
+        if (! $this->config->compileTrailingSlashMode) {
             $isEndsWithSlash = ('/' === $pathValue[ strlen($pathValue) - 1 ]);
 
-            if ($isEndsWithSlash && ($this->compileTrailingSlashMode === static::TRAILING_SLASH_NEVER)) {
+            if ($isEndsWithSlash && ($this->config->compileTrailingSlashMode === static::TRAILING_SLASH_NEVER)) {
                 throw new RuntimeException(
                     'The `path` must not end with `/` sign: ' . $pathValue
                 );
 
-            } elseif (! $isEndsWithSlash && ($this->compileTrailingSlashMode === static::TRAILING_SLASH_ALWAYS)) {
+            } elseif (! $isEndsWithSlash && ($this->config->compileTrailingSlashMode === static::TRAILING_SLASH_ALWAYS)) {
                 throw new RuntimeException(
                     'The `path` must end with `/` sign: ' . $pathValue
                 );

@@ -18,37 +18,32 @@ use Gzhegow\Router\Handler\Middleware\GenericHandlerMiddleware;
 
 interface RouterInterface
 {
-    /**
-     * @param bool|null   $registerAllowObjectsAndClosures
-     * @param int|null    $compileTrailingSlashMode  @see \Gzhegow\Router\Router::LIST_TRAILING_SLASH
-     * @param bool|null   $dispatchIgnoreMethod
-     * @param string|null $dispatchForceMethod       @see \Gzhegow\Router\Route\Struct\HttpMethod::LIST_METHOD
-     * @param int|null    $dispatchTrailingSlashMode @see \Gzhegow\Router\Router::LIST_TRAILING_SLASH
-     */
-    public function setSettings(
-        bool $registerAllowObjectsAndClosures = null,
-        int $compileTrailingSlashMode = null,
-        bool $dispatchIgnoreMethod = null,
-        string $dispatchForceMethod = null,
-        int $dispatchTrailingSlashMode = null
-    );
+    public function getConfig() : RouterConfig;
 
     /**
-     * @noinspection PhpFullyQualifiedNameUsageInspection
+     * @param callable $fn
      *
-     * @param array{
-     *     cacheMode: string|null,
-     *     cacheAdapter: object|\Psr\Cache\CacheItemPoolInterface|null,
-     *     cacheDirpath: string|null,
-     *     cacheFilename: string|null,
-     * }|null $settings
+     * @return static
      */
-    public function setCacheSettings(array $settings = null);
+    public function setConfig($fn); // : static
+
+    /**
+     * @return static
+     */
+    public function resetConfig(); // : static
 
 
-    public function cacheClear();
+    /**
+     * @return static
+     */
+    public function cacheClear(); // : static
 
-    public function cacheRemember($fn);
+    /**
+     * @param callable $fn
+     *
+     * @return static
+     */
+    public function cacheRemember($fn); // : static
 
 
     public function group(RouteBlueprint $from = null) : RouteGroup;

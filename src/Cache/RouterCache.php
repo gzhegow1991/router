@@ -6,8 +6,6 @@
 
 namespace Gzhegow\Router\Cache;
 
-use Gzhegow\Router\Lib;
-use Gzhegow\Router\Exception\LogicException;
 use Gzhegow\Router\Exception\RuntimeException;
 
 
@@ -23,80 +21,47 @@ class RouterCache implements RouterCacheInterface
 
 
     /**
-     * @var string @see \Gzhegow\Router\Cache\RouterCache::LIST_CACHE_MODE
+     * @var RouterCacheConfig
      */
-    protected $cacheMode = self::CACHE_MODE_NO_CACHE;
-    /**
-     * @noinspection PhpFullyQualifiedNameUsageInspection
-     *
-     * @var object|\Psr\Cache\CacheItemPoolInterface
-     */
-    protected $cacheAdapter;
-    /**
-     * @var string
-     */
-    protected $cacheDirpath = __DIR__ . '/../var/cache/gzhegow.router';
-    /**
-     * @var string
-     */
-    protected $cacheFilename = 'router.cache';
+    protected $config;
 
     /**
-     * @noinspection PhpFullyQualifiedNameUsageInspection
-     *
      * @var object|\Psr\Cache\CacheItemInterface
      */
     protected $cacheAdapterItem;
 
 
-    /**
-     * @noinspection PhpFullyQualifiedNameUsageInspection
-     *
-     * @param string|null                                   $cacheMode @see \Gzhegow\Router\Cache\RouterCache::LIST_CACHE_MODE
-     * @param object|\Psr\Cache\CacheItemPoolInterface|null $cacheAdapter
-     * @param string|null                                   $cacheDirpath
-     * @param string|null                                   $cacheFilename
-     *
-     * @noinspection PhpUndefinedNamespaceInspection
-     * @noinspection PhpUndefinedClassInspection
-     */
-    public function setCacheSettings(
-        string $cacheMode = null,
-        object $cacheAdapter = null,
-        string $cacheDirpath = null,
-        string $cacheFilename = null
-    ) // : static
+    public function __construct()
     {
-        if ((null !== $cacheMode) && ! isset(static::LIST_CACHE_MODE[ $cacheMode ])) {
-            throw new LogicException(
-                'The `cacheMode` should be one of: ' . implode('|', array_keys(static::LIST_CACHE_MODE))
-                . ' / ' . $cacheMode
-            );
-        }
+        $this->resetConfig();
+    }
 
-        if ((null !== $cacheAdapter) && ! is_a($cacheAdapter, $class = '\Psr\Cache\CacheItemPoolInterface')) {
-            throw new LogicException(
-                'The `cacheAdapter` should be instance of: ' . $class
-                . ' / ' . Lib::php_dump($cacheAdapter)
-            );
-        }
 
-        if ((null !== $cacheDirpath) && (null === Lib::parse_dirpath($cacheDirpath))) {
-            throw new LogicException(
-                'The `cacheDirpath` should be valid directory path: ' . $cacheDirpath
-            );
-        }
+    public function getConfig() : RouterCacheConfig
+    {
+        return $this->config;
+    }
 
-        if ((null !== $cacheFilename) && (null === Lib::parse_filename($cacheFilename))) {
-            throw new LogicException(
-                'The `cacheFilename` should be valid filename: ' . $cacheFilename
-            );
-        }
+    /**
+     * @param callable $fn
+     *
+     * @return static
+     */
+    public function setConfig($fn) // : static
+    {
+        $fn($this->config);
 
-        $this->cacheMode = $cacheMode ?? static::CACHE_MODE_NO_CACHE;
-        $this->cacheAdapter = $cacheAdapter;
-        $this->cacheDirpath = $cacheDirpath ?? __DIR__ . '/../../var/cache/gzhegow.router';
-        $this->cacheFilename = $cacheFilename ?? 'router.cache';
+        $this->config->validate();
+
+        return $this;
+    }
+
+    /**
+     * @return static
+     */
+    public function resetConfig() // : static
+    {
+        $this->config = new RouterCacheConfig();
 
         return $this;
     }
@@ -107,12 +72,12 @@ class RouterCache implements RouterCacheInterface
      */
     public function initCache() // : static
     {
-        if ($this->cacheMode !== static::CACHE_MODE_STORAGE) return $this;
-        if (! $this->cacheAdapter) return $this;
+        if ($this->config->cacheMode !== static::CACHE_MODE_STORAGE) return $this;
+        if (! $this->config->cacheAdapter) return $this;
         if ($this->cacheAdapterItem) return $this;
 
         try {
-            $cacheItem = $this->cacheAdapter->getItem(__CLASS__);
+            $cacheItem = $this->config->cacheAdapter->getItem(__CLASS__);
         }
         catch ( \Psr\Cache\InvalidArgumentException $e ) {
             throw new RuntimeException($e->getMessage(), $e->getCode(), $e);
@@ -129,8 +94,8 @@ class RouterCache implements RouterCacheInterface
 
         $cacheData = null;
 
-        if ($this->cacheMode === static::CACHE_MODE_STORAGE) {
-            if ($this->cacheAdapter) {
+        if ($this->config->cacheMode === static::CACHE_MODE_STORAGE) {
+            if ($this->config->cacheAdapter) {
                 try {
                     if ($this->cacheAdapterItem->isHit()) {
                         $cacheData = $this->cacheAdapterItem->get();
@@ -139,8 +104,8 @@ class RouterCache implements RouterCacheInterface
                 catch ( \Throwable $e ) {
                 }
 
-            } elseif ($this->cacheDirpath) {
-                $cacheFilepath = "{$this->cacheDirpath}/{$this->cacheFilename}";
+            } elseif ($this->config->cacheDirpath) {
+                $cacheFilepath = "{$this->config->cacheDirpath}/{$this->config->cacheFilename}";
 
                 $before = error_reporting(0);
                 if (@is_file($cacheFilepath)) {
@@ -171,14 +136,14 @@ class RouterCache implements RouterCacheInterface
 
     public function clearCache() // : static
     {
-        if ($this->cacheMode === static::CACHE_MODE_STORAGE) {
-            if ($this->cacheAdapter) {
-                $cacheAdapter = $this->cacheAdapter;
+        if ($this->config->cacheMode === static::CACHE_MODE_STORAGE) {
+            if ($this->config->cacheAdapter) {
+                $cacheAdapter = $this->config->cacheAdapter;
 
                 $cacheAdapter->clear();
 
-            } elseif ($this->cacheDirpath) {
-                $cacheFilepath = "{$this->cacheDirpath}/{$this->cacheFilename}";
+            } elseif ($this->config->cacheDirpath) {
+                $cacheFilepath = "{$this->config->cacheDirpath}/{$this->config->cacheFilename}";
 
                 $before = error_reporting(0);
                 $status = true;
@@ -202,19 +167,20 @@ class RouterCache implements RouterCacheInterface
     {
         $this->initCache();
 
-        if ($this->cacheMode === static::CACHE_MODE_STORAGE) {
-            if ($this->cacheAdapter) {
+        if ($this->config->cacheMode === static::CACHE_MODE_STORAGE) {
+            if ($this->config->cacheAdapter) {
                 $this->cacheAdapterItem->set($cacheData);
-                $this->cacheAdapter->save($this->cacheAdapterItem);
 
-            } elseif ($this->cacheDirpath) {
-                $cacheFilepath = "{$this->cacheDirpath}/{$this->cacheFilename}";
+                $this->config->cacheAdapter->save($this->cacheAdapterItem);
+
+            } elseif ($this->config->cacheDirpath) {
+                $cacheFilepath = "{$this->config->cacheDirpath}/{$this->config->cacheFilename}";
 
                 $content = $this->serializeCacheData($cacheData);
 
                 $before = error_reporting(0);
-                if (! @is_dir($this->cacheDirpath)) {
-                    @mkdir($this->cacheDirpath, 0775, true);
+                if (! @is_dir($this->config->cacheDirpath)) {
+                    @mkdir($this->config->cacheDirpath, 0775, true);
                 }
                 $status = @file_put_contents($cacheFilepath, $content);
                 error_reporting($before);

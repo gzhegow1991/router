@@ -134,59 +134,36 @@ $factory = new \Gzhegow\Router\RouterFactory();
 $router = $factory->newRouter();
 
 // >>> настраиваем роутер
-$settings = [
-    // > позволить регистрировать callable с объектами и \Closure, кеш в этом случае работать не будет
-    $registerAllowObjectsAndClosures = false,
-    //
-    // > работа с trailing-slash при регистрации маршрута (бросить исключение)
-    $compileTrailingSlashMode = \Gzhegow\Router\Router::TRAILING_SLASH_AS_IS,
-    // Router::TRAILING_SLASH_AS_IS // > оставить как есть
-    // Router::TRAILING_SLASH_ALWAYS, // > добавлять trailing-slash
-    // Router::TRAILING_SLASH_NEVER, // > удалить trailing-slash
-    //
-    // > не учитывать метод при вызове dispatch(), в этом случае POST действия будут отрабатывать даже на запросы из браузера (однако порядок регистрации важен, если на том же маршруте GET/POST, то отработает тот что раньше зарегистрирован)
-    $dispatchIgnoreMethod = false,
-    //
-    // > подменить метод при вызове dispatch(), например, несмотря на GET запрос выполнить действие, зарегистрированное на POST
-    $dispatchForceMethod = null, // HttpMethod::METHOD_POST | HttpMethod::METHOD_GET | HttpMethod::METHOD_PUT | HttpMethod::METHOD_OPTIONS | etc.
-    //
-    // > работа с trailing-slash при вызове dispatch() (обеспечив совпадение или 404 exception)
-    $dispatchTrailingSlashMode = \Gzhegow\Router\Router::TRAILING_SLASH_AS_IS,  // TRAILING_SLASH_ALWAYS | TRAILING_SLASH_NEVER
-    // Router::TRAILING_SLASH_AS_IS // > оставить как есть
-    // Router::TRAILING_SLASH_ALWAYS, // > добавлять trailing-slash
-    // Router::TRAILING_SLASH_NEVER, // > удалить trailing-slash
-];
-$router->setSettings(...$settings);
+$config = $router->getConfig();
+$router->setConfig(function (\Gzhegow\Router\RouterConfig $config) {
+    $config->registerAllowObjectsAndClosures = false;
+    $config->compileTrailingSlashMode = \Gzhegow\Router\Router::TRAILING_SLASH_AS_IS;
+    $config->dispatchIgnoreMethod = false;
+    $config->dispatchForceMethod = null; // HttpMethod::METHOD_POST | HttpMethod::METHOD_GET | HttpMethod::METHOD_PUT | HttpMethod::METHOD_OPTIONS | etc.
+    $config->dispatchTrailingSlashMode = \Gzhegow\Router\Router::TRAILING_SLASH_AS_IS;
 
-// >>> настраиваем кеш роутера
-$cacheDir = __DIR__ . '/var/cache';
-$cacheNamespace = 'gzhegow.router';
-
-// >>> для кэша можно использовать путь к файлу, в этом случае кеш будет сделан через file_{get|put}_contents() + (un)serialize()
-$cacheDirpath = "{$cacheDir}/{$cacheNamespace}";
-$cacheFilename = "router.cache";
-$router->setCacheSettings([
-    // 'cacheMode'     => Reflector::CACHE_MODE_NO_CACHE, // > не использовать кеш совсем
-    'cacheMode'     => \Gzhegow\Router\Cache\RouterCache::CACHE_MODE_STORAGE, // > использовать файловую систему или адаптер (хранилище)
-    //
-    'cacheDirpath'  => $cacheDirpath,
-    'cacheFilename' => $cacheFilename,
-]);
-
-// >>> либо можно установить пакет `composer require symfony/cache` и использовать адаптер, чтобы хранить кэш в redis или любым другим способом
-// $symfonyCacheAdapter = new \Symfony\Component\Cache\Adapter\FilesystemAdapter(
-//     $cacheNamespace, $defaultLifetime = 0, $cacheDir
-// );
-// $redisClient = \Symfony\Component\Cache\Adapter\RedisAdapter::createConnection('redis://localhost');
-// $symfonyCacheAdapter = new \Symfony\Component\Cache\Adapter\RedisAdapter(
-//     $redisClient,
-//     $cacheNamespace = '',
-//     $defaultLifetime = 0
-// );
-// $router->setCacheSettings([
-//     'cacheMode'    => Reflector::CACHE_MODE_STORAGE,
-//     'cacheAdapter' => $symfonyCacheAdapter,
-// ]);
+    // >>> настраиваем кеш роутера
+    $config->cache->cacheMode = \Gzhegow\Router\Cache\RouterCache::CACHE_MODE_STORAGE;
+    // >>> для кэша можно использовать путь к файлу, в этом случае кеш будет сделан через file_{get|put}_contents() + (un)serialize()
+    $cacheDir = __DIR__ . '/var/cache';
+    $cacheNamespace = 'gzhegow.router';
+    $cacheDirpath = "{$cacheDir}/{$cacheNamespace}";
+    $cacheFilename = "router.cache";
+    $config->cache->cacheDirpath = $cacheDirpath;
+    $config->cache->cacheFilename = $cacheFilename;
+    // >>> либо можно установить пакет `composer require symfony/cache` и использовать адаптер, чтобы хранить кэш в redis или любым другим способом
+    // $symfonyCacheAdapter = new \Symfony\Component\Cache\Adapter\FilesystemAdapter(
+    //     $cacheNamespace, $defaultLifetime = 0, $cacheDir
+    // );
+    // $redisClient = \Symfony\Component\Cache\Adapter\RedisAdapter::createConnection('redis://localhost');
+    // $symfonyCacheAdapter = new \Symfony\Component\Cache\Adapter\RedisAdapter(
+    //     $redisClient,
+    //     $cacheNamespace = '',
+    //     $defaultLifetime = 0
+    // );
+    // $config->cache->cacheMode = \Gzhegow\Router\Cache\RouterCache::CACHE_MODE_STORAGE;
+    // $config->cache->cacheAdapter = $symfonyCacheAdapter;
+});
 
 // >>> вызываем функцию, которая загрузит кеш, и если его нет - выполнит регистрацию маршрутов и сохранение их в кэш (не обязательно)
 $router->cacheRemember(static function (\Gzhegow\Router\RouterInterface $router) {
@@ -329,7 +306,7 @@ $fn = function () use ($router) {
 
     $routes = $router->matchAllByIds($ids);
     _dump('[ RESULT ]', $routes);
-    
+
 
     $batch = $router->matchAllByNames($names);
     foreach ( $batch as $i => $routes ) {
@@ -355,8 +332,7 @@ $fn = function () use ($router) {
 };
 _assert_call($fn, [], <<<HEREDOC
 "TEST 1"
-"[ RESULT ]" | 1 | { object(Gzhegow\Router\Route\Route) }
-"[ RESULT ]" | 2 | { object(Gzhegow\Router\Route\Route) }
+"[ RESULT ]" | [ 1 => { object(Gzhegow\Router\Route\Route) }, 2 => { object(Gzhegow\Router\Route\Route) } ]
 "[ RESULT ]" | 0 | [ 1 => { object(Gzhegow\Router\Route\Route) }, 2 => { object(Gzhegow\Router\Route\Route) }, 3 => { object(Gzhegow\Router\Route\Route) } ]
 "[ RESULT ]" | 0 | [ 1 => { object(Gzhegow\Router\Route\Route) }, 2 => { object(Gzhegow\Router\Route\Route) }, 3 => { object(Gzhegow\Router\Route\Route) }, 4 => { object(Gzhegow\Router\Route\Route) }, 5 => { object(Gzhegow\Router\Route\Route) } ]
 "[ RESULT ]" | { object(Gzhegow\Router\Route\Route) }

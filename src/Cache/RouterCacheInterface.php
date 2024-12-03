@@ -6,22 +6,22 @@
 
 namespace Gzhegow\Router\Cache;
 
+
 interface RouterCacheInterface
 {
+    public function getConfig() : RouterCacheConfig;
+
     /**
-     * @noinspection PhpFullyQualifiedNameUsageInspection
+     * @param callable $fn
      *
-     * @param string|null                                   $cacheMode @see \Gzhegow\Router\Cache\RouterCache::LIST_CACHE_MODE
-     * @param object|\Psr\Cache\CacheItemPoolInterface|null $cacheAdapter
-     * @param string|null                                   $cacheDirpath
-     * @param string|null                                   $cacheFilename
+     * @return static
      */
-    public function setCacheSettings(
-        string $cacheMode = null,
-        object $cacheAdapter = null,
-        string $cacheDirpath = null,
-        string $cacheFilename = null
-    );
+    public function setConfig($fn); // : static
+
+    /**
+     * @return static
+     */
+    public function resetConfig(); // : static
 
 
     public function initCache();
