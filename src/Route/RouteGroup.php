@@ -344,7 +344,7 @@ class RouteGroup
                 $routeBlueprint->path($path);
             }
 
-            if ('' !== $path) {
+            if ('' !== $name) {
                 $routeBlueprint->name($name);
             }
 
