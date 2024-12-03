@@ -327,10 +327,9 @@ $fn = function () use ($router) {
     $tags = [ 'user' ];
 
 
-    $batch = $router->matchAllByIds($ids);
-    foreach ( $batch as $i => $routes ) {
-        _dump('[ RESULT ]', $i, $routes);
-    }
+    $routes = $router->matchAllByIds($ids);
+    _dump('[ RESULT ]', $routes);
+    
 
     $batch = $router->matchAllByNames($names);
     foreach ( $batch as $i => $routes ) {

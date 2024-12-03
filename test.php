@@ -310,10 +310,9 @@ $fn = function () use ($router) {
     $tags = [ 'user' ];
 
 
-    $batch = $router->matchAllByIds($ids);
-    foreach ( $batch as $i => $routes ) {
-        _dump('[ RESULT ]', $i, $routes);
-    }
+    $routes = $router->matchAllByIds($ids);
+    _dump('[ RESULT ]', $routes);
+
 
     $batch = $router->matchAllByNames($names);
     foreach ( $batch as $i => $routes ) {
@@ -339,8 +338,7 @@ $fn = function () use ($router) {
 };
 _assert_call($fn, [], <<<HEREDOC
 "TEST 1"
-"[ RESULT ]" | 1 | { object(Gzhegow\Router\Route\Route) }
-"[ RESULT ]" | 2 | { object(Gzhegow\Router\Route\Route) }
+"[ RESULT ]" | [ 1 => { object(Gzhegow\Router\Route\Route) }, 2 => { object(Gzhegow\Router\Route\Route) } ]
 "[ RESULT ]" | 0 | [ 1 => { object(Gzhegow\Router\Route\Route) }, 2 => { object(Gzhegow\Router\Route\Route) }, 3 => { object(Gzhegow\Router\Route\Route) } ]
 "[ RESULT ]" | 0 | [ 1 => { object(Gzhegow\Router\Route\Route) }, 2 => { object(Gzhegow\Router\Route\Route) }, 3 => { object(Gzhegow\Router\Route\Route) }, 4 => { object(Gzhegow\Router\Route\Route) }, 5 => { object(Gzhegow\Router\Route\Route) } ]
 "[ RESULT ]" | { object(Gzhegow\Router\Route\Route) }
