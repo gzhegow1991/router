@@ -119,14 +119,16 @@ $router = $factory->newRouter();
 // >>> настраиваем роутер
 $config = $router->getConfig();
 $router->setConfig(function (\Gzhegow\Router\RouterConfig $config) {
+    // >>> роутер
     $config->registerAllowObjectsAndClosures = false;
     $config->compileTrailingSlashMode = \Gzhegow\Router\Router::TRAILING_SLASH_AS_IS;
     $config->dispatchIgnoreMethod = false;
-    $config->dispatchForceMethod = null; // HttpMethod::METHOD_POST | HttpMethod::METHOD_GET | HttpMethod::METHOD_PUT | HttpMethod::METHOD_OPTIONS | etc.
+    $config->dispatchForceMethod = null;
     $config->dispatchTrailingSlashMode = \Gzhegow\Router\Router::TRAILING_SLASH_AS_IS;
 
-    // >>> настраиваем кеш роутера
+    // >>> кеш роутера
     $config->cache->cacheMode = \Gzhegow\Router\Cache\RouterCache::CACHE_MODE_STORAGE;
+    //
     // >>> для кэша можно использовать путь к файлу, в этом случае кеш будет сделан через file_{get|put}_contents() + (un)serialize()
     $cacheDir = __DIR__ . '/var/cache';
     $cacheNamespace = 'gzhegow.router';
@@ -134,6 +136,7 @@ $router->setConfig(function (\Gzhegow\Router\RouterConfig $config) {
     $cacheFilename = "router.cache";
     $config->cache->cacheDirpath = $cacheDirpath;
     $config->cache->cacheFilename = $cacheFilename;
+    //
     // >>> либо можно установить пакет `composer require symfony/cache` и использовать адаптер, чтобы хранить кэш в redis или любым другим способом
     // $symfonyCacheAdapter = new \Symfony\Component\Cache\Adapter\FilesystemAdapter(
     //     $cacheNamespace, $defaultLifetime = 0, $cacheDir
