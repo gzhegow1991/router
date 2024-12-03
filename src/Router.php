@@ -139,13 +139,9 @@ class Router implements RouterInterface
     {
         $fn($this->config);
 
-        $this->cache
-            ->setConfig(function (RouterCacheConfig $config) {
-                foreach ( get_object_vars($this->config->cache) as $key => $value ) {
-                    $config->{$key} = $value;
-                }
-            })
-        ;
+        $this->cache->setConfig(function (RouterCacheConfig $config) {
+            $config->fill($this->config->cache);
+        });
 
         $this->config->validate();
 

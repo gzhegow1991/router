@@ -72,6 +72,22 @@ class RouterCacheConfig
     }
 
 
+    /**
+     * @param self $config
+     *
+     * @return static
+     */
+    public function fill(self $config) // : static
+    {
+        $vars = get_object_vars($config);
+
+        foreach ( $vars as $key => $value ) {
+            $this->{$key} = $value;
+        }
+
+        return $this;
+    }
+
     public function validate() : void
     {
         if ((null !== $this->cacheMode)
