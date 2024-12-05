@@ -943,7 +943,7 @@ class Router implements RouterInterface
                 "Unhandled exception occured during dispatch", -1
             );
 
-            foreach ( $throwable->getPreviousStack() as $ee ) {
+            foreach ( $throwable->getPreviousList() as $ee ) {
                 $e->addPrevious($ee);
             }
 

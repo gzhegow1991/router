@@ -3,7 +3,7 @@
 namespace Gzhegow\Router\Exception;
 
 
-class RuntimeException extends \RuntimeException
+class Exception extends \Exception
     implements ExceptionInterface
 {
     /**
