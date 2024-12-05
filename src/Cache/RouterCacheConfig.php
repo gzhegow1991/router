@@ -7,6 +7,7 @@
 namespace Gzhegow\Router\Cache;
 
 use Gzhegow\Router\Lib;
+use Gzhegow\Router\Config\AbstractConfig;
 use Gzhegow\Router\Exception\LogicException;
 
 
@@ -16,7 +17,7 @@ use Gzhegow\Router\Exception\LogicException;
  * @property string|null                                   $cacheDirpath
  * @property string|null                                   $cacheFilename
  */
-class RouterCacheConfig
+class RouterCacheConfig extends AbstractConfig
 {
     /**
      * > тип кеширования - кешировать или не использовать кэш
@@ -52,41 +53,6 @@ class RouterCacheConfig
      */
     protected $cacheFilename = 'router.cache';
 
-
-    public function __get($name)
-    {
-        if (! property_exists($this, $name)) {
-            throw new LogicException('Missing property: ' . $name);
-        }
-
-        return $this->{$name};
-    }
-
-    public function __set($name, $value)
-    {
-        if (! property_exists($this, $name)) {
-            throw new LogicException('Missing property: ' . $name);
-        }
-
-        $this->{$name} = $value;
-    }
-
-
-    /**
-     * @param self $config
-     *
-     * @return static
-     */
-    public function fill(self $config) // : static
-    {
-        $vars = get_object_vars($config);
-
-        foreach ( $vars as $key => $value ) {
-            $this->{$key} = $value;
-        }
-
-        return $this;
-    }
 
     public function validate() : void
     {
