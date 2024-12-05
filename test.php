@@ -19,14 +19,14 @@ set_exception_handler(function (\Throwable $e) {
     do {
         echo "\n";
 
-        echo \Gzhegow\Router\Lib::php_var_dump($current) . "\n";
-        echo $current->getMessage() . "\n";
+        echo \Gzhegow\Router\Lib::php_var_dump($current) . PHP_EOL;
+        echo $current->getMessage() . PHP_EOL;
 
         foreach ( $e->getTrace() as $traceItem ) {
-            echo "{$traceItem['file']} : {$traceItem['line']}" . "\n";
+            echo "{$traceItem['file']} : {$traceItem['line']}" . PHP_EOL;
         }
 
-        echo "\n";
+        echo PHP_EOL;
     } while ( $current = $current->getPrevious() );
 
     die();
@@ -40,71 +40,21 @@ function _dump($value, ...$values) : void
     echo \Gzhegow\Router\Lib::php_dump($value, ...$values) . "\n";
 }
 
-function _eol(string $str) : string
+function _assert_call(\Closure $fn, array $expectResult = [], string $expectOutput = null) : ?float
 {
-    return implode("\n", explode(PHP_EOL, $str));
-}
-
-function _error($message, $code = -1, $previous = null, string $file = null, int $line = null)
-{
-    $e = new \Gzhegow\Pipeline\Exception\RuntimeException($message, $code, $previous);
-
-    if (($file !== null) && ($line !== null)) {
-        (function ($file, $line) {
-            $this->file = $file;
-            $this->line = $line;
-        })->call($e, $file, $line);
-    }
-
-    return $e;
-}
-
-function _assert_call(\Closure $fn, array $exResult = null, string $exOutput = null) : void
-{
-    $exResult = $exResult ?? [];
-
-    $mt = microtime(true);
-
     $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
 
-    ob_start();
-    $result = $fn();
-    $output = ob_get_clean();
+    $expect = (object) [];
 
-    $output = trim($output);
-    $output = str_replace("\r\n", "\n", $output);
-    $output = preg_replace('/' . preg_quote('\\', '/') . '+/', '\\', $output);
-
-    if (count($exResult)) {
-        [ $_exResult ] = $exResult;
-
-        if ($_exResult !== $result) {
-            var_dump($result);
-
-            throw _error(
-                'Test result check failed', -1, null,
-                $trace[ 0 ][ 'file' ], $trace[ 0 ][ 'line' ]
-            );
-        }
+    if (count($expectResult)) {
+        $expect->result = $expectResult[ 0 ];
     }
 
-    if (null !== $exOutput) {
-        if (_eol($exOutput) !== _eol($output)) {
-            print_r($output);
-
-            throw _error(
-                'Test output check failed', -1, null,
-                $trace[ 0 ][ 'file' ], $trace[ 0 ][ 'line' ]
-            );
-        }
-
-        echo $exOutput . "\n";
+    if (null !== $expectOutput) {
+        $expect->output = $expectOutput;
     }
 
-    $mtDiffSeconds = round(microtime(true) - $mt, 6);
-    $mtDiffSeconds .= 's';
-
-    echo 'Test OK - ' . $mtDiffSeconds . "\n\n";
+    return \Gzhegow\Router\Lib::assert_call($trace, $fn, $expect, $error, STDOUT);
 }
 
 

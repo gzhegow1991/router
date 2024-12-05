@@ -421,6 +421,334 @@ class Lib
     }
 
 
+    /**
+     * > gzhegow, строит индекс ключей (int)
+     * > [ 0 => 1, 2 => true, 3 => false ] -> [ 1 => true, 2 => true, 3 => false ]
+     *
+     * @return array<int, bool>
+     */
+    public static function array_index_int(array $array, array ...$arrays) : array
+    {
+        array_unshift($arrays, $array);
+
+        $index = array_merge(...$arrays);
+
+        $result = [];
+
+        foreach ( $index as $k => $v ) {
+            if (is_int($v)) {
+                $key = $v;
+
+                $result[ $key ] = true;
+
+            } elseif (! isset($result[ $k ])) {
+                $key = $k;
+
+                $v = (bool) $v;
+
+                if ($v) {
+                    $result[ $key ] = true;
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * > gzhegow, строит индекс ключей (string)
+     * > [ 0 => 'key1', 'key2' => true, 'key3' => false ] -> [ 'key1' => true, 'key2' => true, 'key3' => false ]
+     *
+     * @return array<string, bool>
+     */
+    public static function array_index_string(array $array, array ...$arrays) : array
+    {
+        array_unshift($arrays, $array);
+
+        $index = array_merge(...$arrays);
+
+        $result = [];
+
+        foreach ( $index as $k => $v ) {
+            if (is_string($k) && ($k !== '')) {
+                $key = $k;
+
+                $v = (bool) $v;
+
+                if ($v) {
+                    $result[ $key ] = true;
+                }
+
+            } elseif (is_string($v) && ! isset($result[ $v ])) {
+                $key = $v;
+
+                $result[ $key ] = true;
+            }
+        }
+
+        return $result;
+    }
+
+
+    /**
+     * > gzhegow, встроенная функция всегда требует два массива на вход, вынуждая разруливать ифами то, что не нужно
+     */
+    public static function array_diff(array ...$arrays) : array
+    {
+        if (! $arrays) {
+            return [];
+        }
+
+        if (count($arrays) === 1) {
+            return $arrays[ 0 ];
+        }
+
+        $result = array_diff(...$arrays);
+
+        return $result;
+    }
+
+    /**
+     * > gzhegow, встроенная функция всегда требует два массива на вход, вынуждая разруливать ифами то, что не нужно
+     */
+    public static function array_diff_key(array ...$arrays) : array
+    {
+        if (! $arrays) {
+            return [];
+        }
+
+        if (count($arrays) === 1) {
+            return $arrays[ 0 ];
+        }
+
+        $result = array_diff_key(...$arrays);
+
+        return $result;
+    }
+
+    /**
+     * > gzhegow, встроенная функция всегда требует два массива на вход, вынуждая разруливать ифами то, что не нужно
+     */
+    public static function array_intersect(array ...$arrays) : array
+    {
+        if (! $arrays) {
+            return [];
+        }
+
+        if (count($arrays) === 1) {
+            return $arrays[ 0 ];
+        }
+
+        $result = array_intersect(...$arrays);
+
+        return $result;
+    }
+
+    /**
+     * > gzhegow, встроенная функция всегда требует два массива на вход, вынуждая разруливать ифами то, что не нужно
+     */
+    public static function array_intersect_key(array ...$arrays) : array
+    {
+        if (! $arrays) {
+            return [];
+        }
+
+        if (count($arrays) === 1) {
+            return $arrays[ 0 ];
+        }
+
+        $result = array_intersect_key(...$arrays);
+
+        return $result;
+    }
+
+
+    /**
+     * @param callable                                                          $fn
+     * @param object{ microtime?: float, output?: string, result?: mixed }|null $except
+     * @param array|null                                                        $error
+     * @param resource|null                                                     $stdout
+     */
+    public static function assert_call(
+        array $trace,
+        $fn, object $except = null, array &$error = null,
+        $stdout = null
+    ) : ?float
+    {
+        $error = null;
+
+        $microtime = microtime(true);
+
+        ob_start();
+        $result = $fn();
+        $output = ob_get_clean();
+
+        $output = trim($output);
+        $output = str_replace("\r\n", "\n", $output);
+        $output = preg_replace('/' . preg_quote('\\', '/') . '+/', '\\', $output);
+
+        if (property_exists($except, 'result')) {
+            if ($except->result !== $result) {
+                $microtime = round(microtime(true) - $microtime, 6);
+
+                $diff = static::debug_diff_var_dump($result, $except->result);
+
+                $error = [
+                    'Test result check failed',
+                    [
+                        'result'    => $result,
+                        'expect'    => $except->result,
+                        'diff'      => $diff,
+                        'microtime' => $microtime,
+                        'file'      => $trace[ 0 ][ 'file' ],
+                        'line'      => $trace[ 0 ][ 'line' ],
+                    ],
+                ];
+
+                if (null !== $stdout) {
+                    fwrite($stdout, '------' . PHP_EOL);
+                    fwrite($stdout, '[ ERROR ] Test result check failed. ' . $microtime . 's' . PHP_EOL);
+                    fwrite($stdout, $trace[ 0 ][ 'file' ] . ' / ' . $trace[ 0 ][ 'line' ] . PHP_EOL);
+                    fwrite($stdout, $diff);
+                    fwrite($stdout, '------' . PHP_EOL);
+                }
+
+                return false;
+            }
+        }
+
+        if (property_exists($except, 'output')) {
+            if (Lib::os_eol($except->output) !== Lib::os_eol($output)) {
+                $microtime = round(microtime(true) - $microtime, 6);
+
+                $diff = static::debug_diff($output, $except->output);
+
+                $error = [
+                    'Test result check failed',
+                    [
+                        'output'    => $output,
+                        'expect'    => $except->output,
+                        'diff'      => $diff,
+                        'microtime' => $microtime,
+                        'file'      => $trace[ 0 ][ 'file' ],
+                        'line'      => $trace[ 0 ][ 'line' ],
+                    ],
+                ];
+
+                if (null !== $stdout) {
+                    fwrite($stdout, '------' . PHP_EOL);
+                    fwrite($stdout, '[ ERROR ] Test output check failed. ' . $microtime . 's' . PHP_EOL);
+                    fwrite($stdout, $trace[ 0 ][ 'file' ] . ' / ' . $trace[ 0 ][ 'line' ] . PHP_EOL);
+                    fwrite($stdout, $diff);
+                    fwrite($stdout, '------' . PHP_EOL);
+                }
+
+                return false;
+            }
+        }
+
+        $microtime = round(microtime(true) - $microtime, 6);;
+
+        if (property_exists($except, 'microtime')) {
+            if ($except->microtime < $microtime) {
+                $diff = $microtime - $except->microtime;
+
+                $error = [
+                    'Test result check failed',
+                    [
+                        'microtime' => $microtime,
+                        'expect'    => $except->microtime,
+                        'diff'      => $diff,
+                        'file'      => $trace[ 0 ][ 'file' ],
+                        'line'      => $trace[ 0 ][ 'line' ],
+                    ],
+                ];
+
+                if (null !== $stdout) {
+                    fwrite($stdout, '------' . PHP_EOL);
+                    fwrite($stdout, '[ ERROR ] Test microtime check failed. ' . $microtime . 's' . PHP_EOL);
+                    fwrite($stdout, $trace[ 0 ][ 'file' ] . ' / ' . $trace[ 0 ][ 'line' ] . PHP_EOL);
+                    fwrite($stdout, $diff);
+                    fwrite($stdout, '------' . PHP_EOL);
+                }
+            }
+        }
+
+        if (null !== $stdout) {
+            fwrite($stdout, '------' . PHP_EOL);
+            fwrite($stdout, '[ OK ] Test success. ' . $microtime . 's' . PHP_EOL);
+            fwrite($stdout, '------' . PHP_EOL);
+        }
+
+        return $microtime;
+    }
+
+
+    public static function debug_diff(string $a, string $b) : string
+    {
+        static::os_eol($a, $aLines);
+        static::os_eol($b, $bLines);
+
+        $cnt = max(count($aLines), count($bLines));
+
+        $lines = [];
+
+        for ( $i = 0; $i < $cnt; $i++ ) {
+            if ($aLines[ $i ] === $bLines[ $i ]) {
+                $lines[ $i ] = $aLines[ $i ];
+
+                continue;
+            }
+
+            $lines[ $i ] = '[ ERROR ] "' . $aLines[ $i ] . '" != "' . $bLines[ $i ] . '"';
+        }
+
+        $output = implode(PHP_EOL, $lines);
+
+        return $output;
+    }
+
+    /**
+     * @param mixed $a
+     * @param mixed $b
+     */
+    public static function debug_diff_var_dump($a, $b) : string
+    {
+        ob_start();
+        var_dump($a);
+        $aString = ob_get_clean();
+
+        ob_start();
+        var_dump($b);
+        $bString = ob_get_clean();
+
+        $output = static::debug_diff($aString, $bString);
+
+        return $output;
+    }
+
+
+    /**
+     * @param string[]|null $lines
+     */
+    public static function os_eol(string $str, array &$lines = null) : string
+    {
+        $lines = null;
+
+        $array = explode("\n", $str);
+
+        foreach ( $array as $i => $line ) {
+            $array[ $i ] = rtrim($line, "\r");
+        }
+
+        $lines = $array;
+
+        $output = implode("\n", $array);
+
+        return $output;
+    }
+
+
     public static function parse_string($value) : ?string
     {
         if (is_string($value)) {
@@ -555,147 +883,5 @@ class Lib
         }
 
         return $_value;
-    }
-
-
-    /**
-     * > gzhegow, строит индекс ключей (int)
-     * > [ 0 => 1, 2 => true, 3 => false ] -> [ 1 => true, 2 => true, 3 => false ]
-     *
-     * @return array<int, bool>
-     */
-    public static function array_index_int(array $array, array ...$arrays) : array
-    {
-        array_unshift($arrays, $array);
-
-        $index = array_merge(...$arrays);
-
-        $result = [];
-
-        foreach ( $index as $k => $v ) {
-            if (is_int($v)) {
-                $key = $v;
-
-                $result[ $key ] = true;
-
-            } elseif (! isset($result[ $k ])) {
-                $key = $k;
-
-                $v = (bool) $v;
-
-                if ($v) {
-                    $result[ $key ] = true;
-                }
-            }
-        }
-
-        return $result;
-    }
-
-    /**
-     * > gzhegow, строит индекс ключей (string)
-     * > [ 0 => 'key1', 'key2' => true, 'key3' => false ] -> [ 'key1' => true, 'key2' => true, 'key3' => false ]
-     *
-     * @return array<string, bool>
-     */
-    public static function array_index_string(array $array, array ...$arrays) : array
-    {
-        array_unshift($arrays, $array);
-
-        $index = array_merge(...$arrays);
-
-        $result = [];
-
-        foreach ( $index as $k => $v ) {
-            if (is_string($k) && ($k !== '')) {
-                $key = $k;
-
-                $v = (bool) $v;
-
-                if ($v) {
-                    $result[ $key ] = true;
-                }
-
-            } elseif (is_string($v) && ! isset($result[ $v ])) {
-                $key = $v;
-
-                $result[ $key ] = true;
-            }
-        }
-
-        return $result;
-    }
-
-
-    /**
-     * > gzhegow, встроенная функция всегда требует два массива на вход, вынуждая разруливать ифами то, что не нужно
-     */
-    public static function array_diff_key(array ...$arrays) : array
-    {
-        if (! $arrays) {
-            return [];
-        }
-
-        if (count($arrays) === 1) {
-            return $arrays[ 0 ];
-        }
-
-        $result = array_diff_key(...$arrays);
-
-        return $result;
-    }
-
-    /**
-     * > gzhegow, встроенная функция всегда требует два массива на вход, вынуждая разруливать ифами то, что не нужно
-     */
-    public static function array_diff(array ...$arrays) : array
-    {
-        if (! $arrays) {
-            return [];
-        }
-
-        if (count($arrays) === 1) {
-            return $arrays[ 0 ];
-        }
-
-        $result = array_diff(...$arrays);
-
-        return $result;
-    }
-
-    /**
-     * > gzhegow, встроенная функция всегда требует два массива на вход, вынуждая разруливать ифами то, что не нужно
-     */
-    public static function array_intersect_key(array ...$arrays) : array
-    {
-        if (! $arrays) {
-            return [];
-        }
-
-        if (count($arrays) === 1) {
-            return $arrays[ 0 ];
-        }
-
-        $result = array_intersect_key(...$arrays);
-
-        return $result;
-    }
-
-    /**
-     * > gzhegow, встроенная функция всегда требует два массива на вход, вынуждая разруливать ифами то, что не нужно
-     */
-    public static function array_intersect(array ...$arrays) : array
-    {
-        if (! $arrays) {
-            return [];
-        }
-
-        if (count($arrays) === 1) {
-            return $arrays[ 0 ];
-        }
-
-        $result = array_intersect(...$arrays);
-
-        return $result;
     }
 }
