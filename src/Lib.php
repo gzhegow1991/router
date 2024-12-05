@@ -40,6 +40,89 @@ class Lib
     }
 
 
+    /**
+     * @return object{ errors: array }
+     */
+    public static function php_errors() : object
+    {
+        static $stack;
+
+        $stack = $stack
+            ?? new class {
+                public $errors = [];
+            };
+
+        return $stack;
+    }
+
+    /**
+     * @return object{ list: array }
+     */
+    public static function php_errors_current() : object
+    {
+        $stack = static::php_errors();
+
+        $errors = end($stack->errors);
+
+        return $errors;
+    }
+
+    /**
+     * @return object{ list: array }
+     */
+    public static function php_errors_new() : object
+    {
+        $errors = new class {
+            public $list = [];
+        };
+
+        return $errors;
+    }
+
+    /**
+     * @return object{ list: array }
+     */
+    public static function php_errors_start(object &$errors = null) : object
+    {
+        $stack = static::php_errors();
+
+        $errors = static::php_errors_new();
+        $stack->errors[] = $errors;
+
+        return $errors;
+    }
+
+    public static function php_errors_end(?object $until) : array
+    {
+        $stack = static::php_errors();
+
+        $errors = static::php_errors_new();
+
+        while ( count($stack->errors) ) {
+            $current = array_pop($stack->errors);
+
+            foreach ( $current->list as $error ) {
+                $errors->list[] = $error;
+            }
+
+            if ($current === $until) {
+                break;
+            }
+        }
+
+        return $errors->list;
+    }
+
+    public static function php_error($error, $result = null) // : mixed
+    {
+        $current = static::php_errors_current();
+
+        $current->list[] = $error;
+
+        return $result;
+    }
+
+
     public static function php_throwable_args(...$args) : array
     {
         $len = count($args);
@@ -338,89 +421,6 @@ class Lib
     }
 
 
-    /**
-     * @return object{ errors: array }
-     */
-    public static function php_errors() : object
-    {
-        static $stack;
-
-        $stack = $stack
-            ?? new class {
-                public $errors = [];
-            };
-
-        return $stack;
-    }
-
-    /**
-     * @return object{ list: array }
-     */
-    public static function php_errors_current() : object
-    {
-        $stack = static::php_errors();
-
-        $errors = end($stack->errors);
-
-        return $errors;
-    }
-
-    /**
-     * @return object{ list: array }
-     */
-    public static function php_errors_new() : object
-    {
-        $errors = new class {
-            public $list = [];
-        };
-
-        return $errors;
-    }
-
-    /**
-     * @return object{ list: array }
-     */
-    public static function php_errors_start(object &$errors = null) : object
-    {
-        $stack = static::php_errors();
-
-        $errors = static::php_errors_new();
-        $stack->errors[] = $errors;
-
-        return $errors;
-    }
-
-    public static function php_errors_end(?object $until) : array
-    {
-        $stack = static::php_errors();
-
-        $errors = static::php_errors_new();
-
-        while ( count($stack->errors) ) {
-            $current = array_pop($stack->errors);
-
-            foreach ( $current->list as $error ) {
-                $errors->list[] = $error;
-            }
-
-            if ($current === $until) {
-                break;
-            }
-        }
-
-        return $errors->list;
-    }
-
-    public static function php_error($error, $result = null) // : mixed
-    {
-        $current = static::php_errors_current();
-
-        $current->list[] = $error;
-
-        return $result;
-    }
-
-
     public static function parse_string($value) : ?string
     {
         if (is_string($value)) {
@@ -564,7 +564,7 @@ class Lib
      *
      * @return array<int, bool>
      */
-    public static function array_int_index(array $array, array ...$arrays) : array
+    public static function array_index_int(array $array, array ...$arrays) : array
     {
         array_unshift($arrays, $array);
 
@@ -598,7 +598,7 @@ class Lib
      *
      * @return array<string, bool>
      */
-    public static function array_string_index(array $array, array ...$arrays) : array
+    public static function array_index_string(array $array, array ...$arrays) : array
     {
         array_unshift($arrays, $array);
 
@@ -626,42 +626,6 @@ class Lib
         return $result;
     }
 
-
-    /**
-     * > gzhegow, встроенная функция всегда требует два массива на вход, вынуждая разруливать ифами то, что не нужно
-     */
-    public static function array_intersect_key(array ...$arrays) : array
-    {
-        if (! $arrays) {
-            return [];
-        }
-
-        if (count($arrays) === 1) {
-            return $arrays[ 0 ];
-        }
-
-        $result = array_intersect_key(...$arrays);
-
-        return $result;
-    }
-
-    /**
-     * > gzhegow, встроенная функция всегда требует два массива на вход, вынуждая разруливать ифами то, что не нужно
-     */
-    public static function array_intersect(array ...$arrays) : array
-    {
-        if (! $arrays) {
-            return [];
-        }
-
-        if (count($arrays) === 1) {
-            return $arrays[ 0 ];
-        }
-
-        $result = array_intersect(...$arrays);
-
-        return $result;
-    }
 
     /**
      * > gzhegow, встроенная функция всегда требует два массива на вход, вынуждая разруливать ифами то, что не нужно
@@ -695,6 +659,42 @@ class Lib
         }
 
         $result = array_diff(...$arrays);
+
+        return $result;
+    }
+
+    /**
+     * > gzhegow, встроенная функция всегда требует два массива на вход, вынуждая разруливать ифами то, что не нужно
+     */
+    public static function array_intersect_key(array ...$arrays) : array
+    {
+        if (! $arrays) {
+            return [];
+        }
+
+        if (count($arrays) === 1) {
+            return $arrays[ 0 ];
+        }
+
+        $result = array_intersect_key(...$arrays);
+
+        return $result;
+    }
+
+    /**
+     * > gzhegow, встроенная функция всегда требует два массива на вход, вынуждая разруливать ифами то, что не нужно
+     */
+    public static function array_intersect(array ...$arrays) : array
+    {
+        if (! $arrays) {
+            return [];
+        }
+
+        if (count($arrays) === 1) {
+            return $arrays[ 0 ];
+        }
+
+        $result = array_intersect(...$arrays);
 
         return $result;
     }

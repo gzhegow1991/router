@@ -123,12 +123,12 @@ class RouterMatchContract
 
         $instance = new static();
 
-        $instance->idIndex = Lib::array_int_index([], ...$ids);
-        $instance->nameIndex = Lib::array_string_index([], ...$names);
-        $instance->tagIndex = Lib::array_string_index([], ...$groups);
+        $instance->idIndex = Lib::array_index_int([], ...$ids);
+        $instance->nameIndex = Lib::array_index_string([], ...$names);
+        $instance->tagIndex = Lib::array_index_string([], ...$groups);
 
-        $instance->pathIndex = Lib::array_string_index([], ...$pathes);
-        $instance->httpMethodIndex = Lib::array_string_index([], ...$methods);
+        $instance->pathIndex = Lib::array_index_string([], ...$pathes);
+        $instance->httpMethodIndex = Lib::array_index_string([], ...$methods);
 
         return $instance;
     }
