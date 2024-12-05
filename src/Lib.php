@@ -4,42 +4,6 @@ namespace Gzhegow\Router;
 
 class Lib
 {
-    public static function php_dump($value, ...$values) : string
-    {
-        array_unshift($values, $value);
-
-        $valueExports = [];
-        foreach ( $values as $i => $v ) {
-            $line = static::php_var_export($v, [ "with_objects" => false, "with_ids" => false ]);
-
-            $line = trim($line);
-            $line = preg_replace('/\s+/', ' ', $line);
-
-            $valueExports[ $i ] = $line;
-        }
-
-        $output = implode(' | ', $valueExports);
-
-        return $output;
-    }
-
-    public static function php_dump_multiline($value, ...$values) : string
-    {
-        array_unshift($values, $value);
-
-        $valueExports = [];
-        foreach ( $values as $i => $v ) {
-            $line = static::php_var_export($v, [ "with_objects" => false, "with_ids" => false ]);
-
-            $valueExports[ $i ] = $line;
-        }
-
-        $output = implode(PHP_EOL . PHP_EOL, $valueExports);
-
-        return $output;
-    }
-
-
     /**
      * @return object{ errors: array }
      */
@@ -223,203 +187,6 @@ class Lib
     }
 
 
-    public static function php_var_dump($value, array $options = []) : string
-    {
-        $maxlen = $options[ 'maxlen' ] ?? null;
-        $withArrays = $options[ 'with_arrays' ] ?? true;
-        $withIds = $options[ 'with_ids' ] ?? true;
-
-        if ($maxlen < 1) $maxlen = null;
-
-        $var = null;
-        $dump = null;
-
-        if (is_iterable($value)) {
-            if (is_object($value)) {
-                $id = $withIds
-                    ? ' # ' . spl_object_id($value)
-                    : '';
-
-                $var = 'iterable(' . get_class($value) . $id . ')';
-
-            } else {
-                $var = 'array(' . count($value) . ')';
-
-                if ($withArrays) {
-                    $dump = [];
-
-                    foreach ( $value as $i => $v ) {
-                        // ! recursion
-                        $dump[ $i ] = static::php_var_dump(
-                            $v,
-                            []
-                            + [ 'with_arrays' => false ]
-                            + $options
-                        );
-                    }
-
-                    $dump = var_export($dump, true);
-                }
-            }
-
-        } else {
-            if (is_object($value)) {
-                $id = $withIds
-                    ? ' # ' . spl_object_id($value)
-                    : '';
-
-                $var = 'object(' . get_class($value) . $id . ')';
-
-                if (method_exists($value, '__debugInfo')) {
-                    ob_start();
-                    var_dump($value);
-                    $dump = ob_get_clean();
-                }
-
-            } elseif (is_string($value)) {
-                $var = 'string(' . strlen($value) . ')';
-
-                $dump = "\"{$value}\"";
-
-            } elseif (is_resource($value)) {
-                $id = $withIds
-                    ? ' # ' . ((int) $value)
-                    : '';
-
-                $var = '{ resource(' . get_resource_type($value) . $id . ') }';
-
-            } else {
-                $var = null
-                    ?? (($value === null) ? '{ NULL }' : null)
-                    ?? (($value === false) ? '{ FALSE }' : null)
-                    ?? (($value === true) ? '{ TRUE }' : null)
-                    //
-                    ?? (is_int($value) ? (var_export($value, 1)) : null) // INF
-                    ?? (is_float($value) ? (var_export($value, 1)) : null) // NAN
-                    //
-                    ?? null;
-            }
-        }
-
-        $_value = $var;
-        if (null !== $dump) {
-            if (null !== $maxlen) {
-                $dump = explode("\n", $dump);
-
-                $dump = array_map(function ($v) use ($maxlen) {
-                    $_v = $v;
-
-                    $_v = trim($_v);
-                    $_v = substr($_v, 0, $maxlen) . '...';
-
-                    return $_v;
-                }, $dump);
-
-                $dump = implode(PHP_EOL, $dump);
-            }
-
-            $_value = "{$var} : {$dump}";
-        }
-
-        $_value = "{ {$_value} }";
-
-        return $_value;
-    }
-
-    public static function php_var_export($var, array $options = []) : string
-    {
-        $indent = $options[ 'indent' ] ?? "  ";
-        $newline = $options[ 'newline' ] ?? PHP_EOL;
-        $withObjects = $options[ 'with_objects' ] ?? true;
-        $withIds = $options[ 'with_ids' ] ?? true;
-
-        switch ( gettype($var) ) {
-            case "NULL":
-                $result = "NULL";
-                break;
-
-            case "boolean":
-                $result = ($var === true) ? "TRUE" : "FALSE";
-                break;
-
-            case "string":
-                $result = '"' . addcslashes($var, "\\\$\"\r\n\t\v\f") . '"';
-                break;
-
-            case "array":
-                $keys = array_keys($var);
-
-                foreach ( $keys as $key ) {
-                    if (is_string($key)) {
-                        $isList = false;
-
-                        break;
-                    }
-                }
-                $isList = $isList ?? true;
-
-                $isListIndexed = $isList
-                    && ($keys === range(0, count($var) - 1));
-
-                $lines = [];
-                foreach ( $var as $key => $value ) {
-                    $line = $indent;
-
-                    if (! $isListIndexed) {
-                        $line .= is_string($key) ? "\"{$key}\"" : $key;
-                        $line .= " => ";
-                    }
-
-                    // ! recursion
-                    $line .= static::php_var_export($value, $options);
-
-                    $lines[] = $line;
-                }
-
-                $result = "["
-                    . $newline
-                    . implode("," . $newline, $lines) . $newline
-                    . $indent . "]";
-
-                break;
-
-            case "object":
-                if ($withObjects) {
-                    $result = var_export($var, true);
-
-                } else {
-                    $id = $withIds
-                        ? ' # ' . spl_object_id($var)
-                        : null;
-
-                    $result = '{ object(' . get_class($var) . $id . ') }';
-                }
-
-                break;
-
-            case "resource":
-                if ($withObjects) {
-                    $result = var_export($var, true);
-
-                } else {
-                    $id = $withIds
-                        ? ' # ' . spl_object_id($var)
-                        : null;
-
-                    $result = '{ resource(' . get_resource_type($var) . $id . ') }';
-                }
-
-                break;
-
-            default:
-                $result = var_export($var, true);
-
-                break;
-        }
-
-        return $result;
-    }
-
 
     /**
      * > gzhegow, строит индекс ключей (int)
@@ -563,6 +330,7 @@ class Lib
     }
 
 
+
     /**
      * @param callable                                                          $fn
      * @param object{ microtime?: float, output?: string, result?: mixed }|null $except
@@ -573,7 +341,7 @@ class Lib
         array $trace,
         $fn, object $except = null, array &$error = null,
         $stdout = null
-    ) : ?float
+    ) : bool
     {
         $error = null;
 
@@ -583,15 +351,11 @@ class Lib
         $result = $fn();
         $output = ob_get_clean();
 
-        $output = trim($output);
-        $output = str_replace("\r\n", "\n", $output);
-        $output = preg_replace('/' . preg_quote('\\', '/') . '+/', '\\', $output);
-
         if (property_exists($except, 'result')) {
             if ($except->result !== $result) {
                 $microtime = round(microtime(true) - $microtime, 6);
 
-                $diff = static::debug_diff_var_dump($result, $except->result);
+                static::debug_diff_var_dump($result, $except->result, $diff);
 
                 $error = [
                     'Test result check failed',
@@ -618,10 +382,8 @@ class Lib
         }
 
         if (property_exists($except, 'output')) {
-            if (Lib::os_eol($except->output) !== Lib::os_eol($output)) {
+            if (static::debug_diff($output, $except->output, $diff)) {
                 $microtime = round(microtime(true) - $microtime, 6);
-
-                $diff = static::debug_diff($output, $except->output);
 
                 $error = [
                     'Test result check failed',
@@ -647,7 +409,7 @@ class Lib
             }
         }
 
-        $microtime = round(microtime(true) - $microtime, 6);;
+        $microtime = round(microtime(true) - $microtime, 6);
 
         if (property_exists($except, 'microtime')) {
             if ($except->microtime < $microtime) {
@@ -671,6 +433,8 @@ class Lib
                     fwrite($stdout, $diff . PHP_EOL);
                     fwrite($stdout, '------' . PHP_EOL);
                 }
+
+                return false;
             }
         }
 
@@ -680,42 +444,57 @@ class Lib
             fwrite($stdout, '------' . PHP_EOL);
         }
 
-        return $microtime;
+        return true;
     }
 
 
-    public static function debug_diff(string $a, string $b) : string
+
+    public static function debug_diff(string $a, string $b, string &$result = null) : bool
     {
+        $result = null;
+
         static::os_eol($a, $aLines);
         static::os_eol($b, $bLines);
 
-        $cnt = max(count($aLines), count($bLines));
+        $cnt = max(
+            count($aLines),
+            count($bLines)
+        );
 
         $lines = [];
 
+        $isDiff = false;
+
         for ( $i = 0; $i < $cnt; $i++ ) {
-            $aLine = $aLines[ $i ] ?? '{ NULL }';
-            $bLine = $bLines[ $i ] ?? '{ NULL }';
+            $aLine = ($aLines[ $i ] ?? '{ NULL }') ?: '""';
+            $bLine = ($bLines[ $i ] ?? '{ NULL }') ?: '""';
 
             if ($aLine === $bLine) {
-                $lines[ $i ] = $aLine;
+                $lines[] = $aLine;
 
                 continue;
             }
 
-            $lines[ $i ] = '[ ERROR ] ' . $aLine . ' | vs | ' . $bLine;
+            $lines[] = '';
+            $lines[] = '[ ERROR ]';
+            $lines[] = '[ A ] ' . $aLine;
+            $lines[] = '[ B ] ' . $bLine;
+            $lines[] = '[ END ]';
+            $lines[] = '';
+
+            $isDiff = true;
         }
 
-        $output = implode(PHP_EOL, $lines);
+        $result = implode(PHP_EOL, $lines);
 
-        return $output;
+        return $isDiff;
     }
 
     /**
      * @param mixed $a
      * @param mixed $b
      */
-    public static function debug_diff_var_dump($a, $b) : string
+    public static function debug_diff_var_dump($a, $b, string &$result = null) : bool
     {
         ob_start();
         var_dump($a);
@@ -725,10 +504,305 @@ class Lib
         var_dump($b);
         $bString = ob_get_clean();
 
-        $output = static::debug_diff($aString, $bString);
+        $isDiff = static::debug_diff($aString, $bString, $result);
+
+        return $isDiff;
+    }
+
+    public static function debug_line(array $options, $value, ...$values) : string
+    {
+        array_unshift($values, $value);
+
+        $valueExports = [];
+        foreach ( $values as $i => $v ) {
+            $line = static::debug_var_print($v, $options);
+
+            $line = trim($line);
+            $line = preg_replace('/\s+/', ' ', $line);
+
+            $valueExports[ $i ] = $line;
+        }
+
+        $output = implode(' | ', $valueExports);
 
         return $output;
     }
+
+    public static function debug_text(array $options, $value, ...$values) : string
+    {
+        array_unshift($values, $value);
+
+        $valueExports = [];
+        foreach ( $values as $i => $v ) {
+            $line = static::debug_var_print($v, $options);
+
+            $valueExports[ $i ] = $line;
+        }
+
+        $output = implode(PHP_EOL . PHP_EOL, $valueExports);
+
+        return $output;
+    }
+
+    public static function debug_var_dump($var, array $options = []) : string
+    {
+        $maxlen = $options[ 'maxlen' ] ?? null;
+        $withArrays = $options[ 'with_arrays' ] ?? true;
+        $withIds = $options[ 'with_ids' ] ?? true;
+
+        if ($maxlen < 1) $maxlen = null;
+
+        $type = null;
+        $dump = null;
+
+        if (is_iterable($var)) {
+            if (is_object($var)) {
+                $id = $withIds
+                    ? ' # ' . spl_object_id($var)
+                    : '';
+
+                $type = 'iterable(' . get_class($var) . $id . ')';
+
+            } else {
+                $type = 'array(' . count($var) . ')';
+
+                if ($withArrays) {
+                    $dump = [];
+
+                    foreach ( $var as $i => $v ) {
+                        // ! recursion
+                        $dump[ $i ] = static::debug_var_dump(
+                            $v,
+                            []
+                            + [ 'with_arrays' => false ]
+                            + $options
+                        );
+                    }
+
+                    $dump = var_export($dump, true);
+                }
+            }
+
+        } else {
+            if (is_object($var)) {
+                $id = $withIds
+                    ? ' # ' . spl_object_id($var)
+                    : '';
+
+                $type = 'object(' . get_class($var) . $id . ')';
+
+                if (method_exists($var, '__debugInfo')) {
+                    ob_start();
+                    var_dump($var);
+                    $dump = ob_get_clean();
+                }
+
+            } elseif (is_string($var)) {
+                $type = 'string(' . strlen($var) . ')';
+
+                $dump = "\"{$var}\"";
+
+            } elseif (is_resource($var)) {
+                $id = $withIds
+                    ? ' # ' . ((int) $var)
+                    : '';
+
+                $type = '{ resource(' . get_resource_type($var) . $id . ') }';
+
+            } else {
+                $type = null
+                    ?? (($var === null) ? '{ NULL }' : null)
+                    ?? (($var === false) ? '{ FALSE }' : null)
+                    ?? (($var === true) ? '{ TRUE }' : null)
+                    //
+                    ?? (is_int($var) ? (var_export($var, 1)) : null) // INF
+                    ?? (is_float($var) ? (var_export($var, 1)) : null) // NAN
+                    //
+                    ?? null;
+            }
+        }
+
+        $_value = $type;
+        if (null !== $dump) {
+            if (null !== $maxlen) {
+                $dump = explode("\n", $dump);
+
+                foreach ( $dump as $i => $v ) {
+                    $_v = $v;
+
+                    $_v = trim($_v);
+                    $_v = substr($_v, 0, $maxlen) . '...';
+
+                    $dump[ $i ] = $_v;
+                }
+
+                $dump = implode(PHP_EOL, $dump);
+            }
+
+            $_value = "{$type} : {$dump}";
+        }
+
+        $_value = "{ {$_value} }";
+
+        return $_value;
+    }
+
+    public static function debug_var_export($var, array $options = []) : string
+    {
+        $indent = $options[ 'indent' ] ?? "  ";
+        $newline = $options[ 'newline' ] ?? PHP_EOL;
+
+        switch ( gettype($var) ) {
+            case "NULL":
+                $result = "NULL";
+                break;
+
+            case "boolean":
+                $result = ($var === true) ? "TRUE" : "FALSE";
+                break;
+
+            case "string":
+                $result = '"' . addcslashes($var, "\\\$\"\r\n\t\v\f") . '"';
+                break;
+
+            case "array":
+                $keys = array_keys($var);
+
+                foreach ( $keys as $key ) {
+                    if (is_string($key)) {
+                        $isList = false;
+
+                        break;
+                    }
+                }
+                $isList = $isList ?? true;
+
+                $isListIndexed = $isList
+                    && ($keys === range(0, count($var) - 1));
+
+                $lines = [];
+                foreach ( $var as $key => $value ) {
+                    $line = $indent;
+
+                    if (! $isListIndexed) {
+                        $line .= is_string($key) ? "\"{$key}\"" : $key;
+                        $line .= " => ";
+                    }
+
+                    // ! recursion
+                    $line .= static::debug_var_export($value, $options);
+
+                    $lines[] = $line;
+                }
+
+                $result = "["
+                    . $newline
+                    . implode("," . $newline, $lines) . $newline
+                    . $indent . "]";
+
+                break;
+
+            default:
+                $result = var_export($var, true);
+
+                break;
+        }
+
+        return $result;
+    }
+
+    public static function debug_var_print($var, array $options = []) : string
+    {
+        $indent = $options[ 'indent' ] ?? "  ";
+        $newline = $options[ 'newline' ] ?? PHP_EOL;
+        $withArrays = $options[ 'with_arrays' ] ?? true;
+        $withIds = $options[ 'with_ids' ] ?? true;
+        $withObjects = $options[ 'with_objects' ] ?? true;
+
+        switch ( gettype($var) ) {
+            case "string":
+                $result = '"' . $var . '"';
+                break;
+
+            case "array":
+                if (! $withArrays) {
+                    $result = 'array(' . count($var) . ')';
+
+                } else {
+                    $keys = array_keys($var);
+
+                    foreach ( $keys as $k ) {
+                        if (is_string($k)) {
+                            $isList = false;
+
+                            break;
+                        }
+                    }
+                    $isList = $isList ?? true;
+
+                    $isListIndexed = $isList
+                        && ($keys === range(0, count($var) - 1));
+
+                    $lines = [];
+                    foreach ( $var as $k => $v ) {
+                        $line = $indent;
+
+                        if (! $isListIndexed) {
+                            $line .= is_string($k) ? "\"{$k}\"" : $k;
+                            $line .= " => ";
+                        }
+
+                        // ! recursion
+                        $line .= static::debug_var_print($v, [ 'with_arrays' => false ] + $options);
+
+                        $lines[] = $line;
+                    }
+
+                    $result = "["
+                        . $newline
+                        . implode("," . $newline, $lines) . $newline
+                        . $indent . "]";
+                }
+
+                break;
+
+            case "object":
+                if ($withObjects) {
+                    $result = var_export($var, true);
+
+                } else {
+                    $id = $withIds
+                        ? ' # ' . spl_object_id($var)
+                        : null;
+
+                    $result = '{ object(' . get_class($var) . $id . ') }';
+                }
+
+                break;
+
+            case "resource":
+                if ($withObjects) {
+                    $result = var_export($var, true);
+
+                } else {
+                    $id = $withIds
+                        ? ' # ' . spl_object_id($var)
+                        : null;
+
+                    $result = '{ resource(' . get_resource_type($var) . $id . ') }';
+                }
+
+                break;
+
+            default:
+                $result = static::debug_var_export($var, $options);
+
+                break;
+        }
+
+        return $result;
+    }
+
 
 
     /**
@@ -750,6 +824,7 @@ class Lib
 
         return $output;
     }
+
 
 
     public static function parse_string($value) : ?string
