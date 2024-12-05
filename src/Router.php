@@ -980,7 +980,7 @@ class Router implements RouterInterface
             } else {
                 throw new LogicException(
                     'Each of `routes` should be string as route `name` or object of class: ' . Route::class
-                    . ' / ' . Lib::php_dump($routes)
+                    . ' / ' . Lib::debug_dump($routes)
                 );
             }
         }
@@ -1034,7 +1034,7 @@ class Router implements RouterInterface
                     'Missing attributes: '
                     . "attributes[{$key}][{$idx}]"
                     . ', ' . "attributes[{$key}]"
-                    . ' / ' . Lib::php_dump($attributes)
+                    . ' / ' . Lib::debug_dump($attributes)
                 );
             }
 
@@ -1076,7 +1076,7 @@ class Router implements RouterInterface
             if ($route->action->closure || $route->action->methodObject || $route->action->invokableObject) {
                 throw new RuntimeException(
                     'The `action` should not be runtime object or \Closure: '
-                    . Lib::php_dump($runtimeAction)
+                    . Lib::debug_dump($runtimeAction)
                     . ' / ' . $route->path
                 );
             }
@@ -1165,7 +1165,8 @@ class Router implements RouterInterface
         if (! $this->config->registerAllowObjectsAndClosures) {
             if ($middleware->closure || $middleware->methodObject || $middleware->invokableObject) {
                 throw new RuntimeException(
-                    'This `middleware` should not be runtime object or \Closure: ' . Lib::php_dump($middleware)
+                    'This `middleware` should not be runtime object or \Closure: '
+                    . Lib::debug_dump($middleware)
                 );
             }
         }
@@ -1182,7 +1183,8 @@ class Router implements RouterInterface
         if (! $this->config->registerAllowObjectsAndClosures) {
             if ($fallback->closure || $fallback->methodObject || $fallback->invokableObject) {
                 throw new RuntimeException(
-                    'This `fallback` should not be runtime object or \Closure: ' . Lib::php_dump($fallback)
+                    'This `fallback` should not be runtime object or \Closure: '
+                    . Lib::debug_dump($fallback)
                 );
             }
         }
@@ -1197,19 +1199,19 @@ class Router implements RouterInterface
     {
         if (null === ($path = $routeBlueprint->path)) {
             throw new RuntimeException(
-                'Missing `path` in route: ' . Lib::php_dump($routeBlueprint)
+                'Missing `path` in route: ' . Lib::debug_dump($routeBlueprint)
             );
         }
 
         if (null === $routeBlueprint->action) {
             throw new RuntimeException(
-                'Missing `action` in route: ' . Lib::php_dump($routeBlueprint)
+                'Missing `action` in route: ' . Lib::debug_dump($routeBlueprint)
             );
         }
 
         if (null === $routeBlueprint->httpMethodIndex) {
             throw new RuntimeException(
-                'Missing `method` in route: ' . Lib::php_dump($routeBlueprint)
+                'Missing `method` in route: ' . Lib::debug_dump($routeBlueprint)
             );
         }
 

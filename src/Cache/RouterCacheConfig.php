@@ -71,7 +71,7 @@ class RouterCacheConfig extends AbstractConfig
         ) {
             throw new LogicException(
                 'The `cacheAdapter` should be instance of: ' . $class
-                . ' / ' . Lib::php_dump($this->cacheAdapter)
+                . ' / ' . Lib::debug_dump($this->cacheAdapter)
             );
         }
 
