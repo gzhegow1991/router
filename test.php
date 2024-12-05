@@ -34,10 +34,9 @@ set_exception_handler(function (\Throwable $e) {
 
 
 // > добавляем несколько функция для тестирования
-// > добавляем несколько функция для тестирования
 function _dump($value, ...$values) : void
 {
-    echo \Gzhegow\Router\Lib::php_dump($value, ...$values) . "\n";
+    echo \Gzhegow\Router\Lib::php_dump($value, ...$values) . PHP_EOL;
 }
 
 function _assert_call(\Closure $fn, array $expectResult = [], string $expectOutput = null) : ?float
