@@ -18,19 +18,12 @@ use Gzhegow\Router\Handler\Middleware\GenericHandlerMiddleware;
 
 interface RouterInterface
 {
-    public function getConfig() : RouterConfig;
-
     /**
-     * @param callable $fn
+     * @param \Closure $fn
      *
      * @return static
      */
-    public function setConfig($fn); // : static
-
-    /**
-     * @return static
-     */
-    public function resetConfig(); // : static
+    public function configure(\Closure $fn); // : static
 
 
     /**

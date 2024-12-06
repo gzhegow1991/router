@@ -2,15 +2,36 @@
 
 namespace Gzhegow\Router\Config;
 
-use Gzhegow\Router\Exception\LogicException;
+use Gzhegow\Router\Lib;
 
 
 abstract class AbstractConfig
 {
+    /**
+     * @var AbstractConfig[]
+     */
+    protected $__sections = [];
+
+
+    public function __isset($name)
+    {
+        if (substr($name, 0, 2) === '__') {
+            return false;
+        }
+
+        if (! property_exists($this, $name)) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function __get($name)
     {
-        if (! property_exists($this, $name)) {
-            throw new LogicException('Missing property: ' . $name);
+        if (! $this->__isset($name)) {
+            throw new \LogicException(
+                'Missing property: ' . $name
+            );
         }
 
         return $this->{$name};
@@ -18,29 +39,86 @@ abstract class AbstractConfig
 
     public function __set($name, $value)
     {
-        if (! property_exists($this, $name)) {
-            throw new LogicException('Missing property: ' . $name);
+        if (! $this->__isset($name)) {
+            throw new \LogicException(
+                'Missing property: ' . $name
+            );
         }
 
         $this->{$name} = $value;
     }
 
+    public function __unset($name)
+    {
+        if (! $this->__isset($name)) {
+            throw new \LogicException(
+                'Missing property: ' . $name
+            );
+        }
+
+        $this->{$name} = null;
+    }
+
+
+    /**
+     * @param \Closure $fn
+     *
+     * @return void
+     */
+    public function configure(\Closure $fn) : void
+    {
+        $fn->call($this, $this);
+
+        foreach ( $this->__sections as $key => $section ) {
+            $current = $this->{$key};
+
+            if ($current === $this->__sections[ $key ]) {
+                continue;
+            }
+
+            if (false
+                || (! is_object($current))
+                || (get_class($current) !== get_class($section))
+            ) {
+                throw new \LogicException(
+                    'Invalid section: ' . $key
+                    . ' / ' . Lib::debug_dump($current)
+                );
+            }
+
+            $this->__sections[ $key ]->fill($this->{$key});
+
+            $this->{$key} = $this->__sections[ $key ];
+        }
+    }
+
+
+    public function reset() : void
+    {
+        $this->fill(new static());
+    }
 
     /**
      * @param self $config
      *
      * @return static
      */
-    public function fill($config) // : static
+    public function fill(self $config) // : static
     {
-        if (! is_a($config, static::class)) {
-            throw new LogicException('The `config` should be instance of: ' . static::class);
-        }
-
         $vars = get_object_vars($config);
 
         foreach ( $vars as $key => $value ) {
-            $this->{$key} = $value;
+            if (! $this->__isset($key)) {
+                continue;
+            }
+
+            if (array_key_exists($key, $this->__sections)) {
+                // ! recursion
+                $this->{$key}->fill($value);
+
+            } else {
+                $this->{$key} = $value;
+            }
         }
 
         return $this;

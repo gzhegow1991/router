@@ -16,11 +16,10 @@ use Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineFactoryInterface;
 
 interface RouterFactoryInterface
 {
-    public function newRouter(
-        PipelineFactoryInterface $pipelineFactory = null,
-        //
-        RouterCacheInterface $routerCache = null
-    ) : RouterInterface;
+    public function newRouter() : RouterInterface;
+
+
+    public function newPipelineFactory() : PipelineFactoryInterface;
 
 
     public function newRouterCache() : RouterCacheInterface;
@@ -35,7 +34,7 @@ interface RouterFactoryInterface
     public function newFallbackCollection() : FallbackCollection;
 
 
-    public function newRouteNode() : RouterNode;
+    public function newRouterNode() : RouterNode;
 
 
     public function newRouteBlueprint(RouteBlueprint $from = null) : RouteBlueprint;

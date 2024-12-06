@@ -12,8 +12,8 @@ use Gzhegow\Router\Node\RouterNode;
 use Gzhegow\Router\Route\Struct\Tag;
 use Gzhegow\Router\Route\RouteGroup;
 use Gzhegow\Router\Route\Struct\Path;
+use Gzhegow\Router\RouterConfig;
 use Gzhegow\Router\Route\RouteBlueprint;
-use Gzhegow\Router\Cache\RouterCacheConfig;
 use Gzhegow\Router\Exception\LogicException;
 use Gzhegow\Router\Exception\RuntimeException;
 use Gzhegow\Router\Collection\RouteCollection;
@@ -57,19 +57,14 @@ class Router implements RouterInterface
     protected $pipelineFactory;
 
     /**
-     * @var RouterCacheInterface
-     */
-    protected $cache;
-
-    /**
      * @var RouterConfig
      */
     protected $config;
 
     /**
-     * @var bool
+     * @var RouterCacheInterface
      */
-    protected $isRouterChanged = false;
+    protected $cache;
 
     /**
      * @var RouteCollection
@@ -97,17 +92,24 @@ class Router implements RouterInterface
      */
     protected $routeGroupRoot;
 
+    /**
+     * @var bool
+     */
+    protected $isRouterChanged = false;
+
 
     public function __construct(
         RouterFactoryInterface $routerFactory,
-        PipelineFactoryInterface $pipelineFactory,
-        //
-        RouterCacheInterface $cache
+        PipelineFactoryInterface $pipelineFactory
     )
     {
         $this->routerFactory = $routerFactory;
         $this->pipelineFactory = $pipelineFactory;
 
+        $this->config = new RouterConfig();
+
+        $cache = $this->routerFactory->newRouterCache();
+        $cache->setConfig($this->config->cache);
         $this->cache = $cache;
 
         $this->routeCollection = $this->routerFactory->newRouteCollection();
@@ -115,45 +117,34 @@ class Router implements RouterInterface
         $this->fallbackCollection = $this->routerFactory->newFallbackCollection();
         $this->patternCollection = $this->routerFactory->newPatternCollection();
 
-        $routerNodeRoot = $this->routerFactory->newRouteNode();
+        $routerNodeRoot = $this->routerFactory->newRouterNode();
         $routerNodeRoot->part = '/';
         $this->routerNodeRoot = $routerNodeRoot;
 
         $this->routeGroupRoot = $this->routerFactory->newRouteGroup();
-
-        $this->resetConfig();
-    }
-
-
-    public function getConfig() : RouterConfig
-    {
-        return $this->config;
     }
 
     /**
-     * @param callable $fn
-     *
      * @return static
      */
-    public function setConfig($fn) // : static
+    public function setConfig(RouterConfig $config) // : static
     {
-        $fn($this->config);
-
-        $this->cache->setConfig(function (RouterCacheConfig $config) {
-            $config->fill($this->config->cache);
-        });
-
-        $this->config->validate();
+        $this->config = $config;
 
         return $this;
     }
 
+
     /**
+     * @param \Closure $fn
+     *
      * @return static
      */
-    public function resetConfig() // : static
+    public function configure(\Closure $fn) // : static
     {
-        $this->config = new RouterConfig();
+        $this->config->configure($fn);
+
+        $this->config->validate();
 
         return $this;
     }
@@ -1119,7 +1110,7 @@ class Router implements RouterInterface
                     $routeNode = $routeNodePrevious->childrenByRegex[ $partRegex ] ?? null;
 
                     if (null === $routeNode) {
-                        $routeNode = $this->routerFactory->newRouteNode();
+                        $routeNode = $this->routerFactory->newRouterNode();
                         $routeNode->part = $part;
 
                         $routeNodePrevious->childrenByRegex[ $partRegex ] = $routeNode;
@@ -1129,7 +1120,7 @@ class Router implements RouterInterface
                     $routeNode = $routeNodePrevious->childrenByPart[ $part ] ?? null;
 
                     if (null === $routeNode) {
-                        $routeNode = $this->routerFactory->newRouteNode();
+                        $routeNode = $this->routerFactory->newRouterNode();
                         $routeNode->part = $part;
 
                         $routeNodePrevious->childrenByPart[ $part ] = $routeNode;

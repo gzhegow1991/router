@@ -18,28 +18,28 @@ use Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineFactoryInterface;
 
 class RouterFactory implements RouterFactoryInterface
 {
-    public function newRouter(
-        PipelineFactoryInterface $pipelineFactory = null,
-        //
-        RouterCacheInterface $routerCache = null
-    ) : RouterInterface
+    public function newRouter() : RouterInterface
     {
-        $pipelineFactory = $pipelineFactory ?? new PipelineFactory();
+        $pipelineFactory = $this->newPipelineFactory();
 
-        $routerCache = $routerCache ?? $this->newRouterCache();
-
-        return new Router(
+        $router = new Router(
             $this,
-            $pipelineFactory,
-            //
-            $routerCache
+            $pipelineFactory
         );
+
+        return $router;
+    }
+
+
+    public function newPipelineFactory() : PipelineFactoryInterface
+    {
+        return new PipelineFactory();
     }
 
 
     public function newRouterCache() : RouterCacheInterface
     {
-        return new RouterCache();
+        return new RouterCache($this);
     }
 
 
@@ -64,7 +64,7 @@ class RouterFactory implements RouterFactoryInterface
     }
 
 
-    public function newRouteNode() : RouterNode
+    public function newRouterNode() : RouterNode
     {
         return new RouterNode();
     }

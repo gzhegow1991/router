@@ -34,7 +34,6 @@ class RouterConfig extends AbstractConfig
      * @var bool
      */
     protected $registerAllowObjectsAndClosures = false;
-
     /**
      * > бросать исключение при попытке зарегистрировать роут без/с trailing-slash
      *
@@ -43,21 +42,18 @@ class RouterConfig extends AbstractConfig
      * @var int
      */
     protected $compileTrailingSlashMode = Router::TRAILING_SLASH_AS_IS;
-
     /**
      * > true -> не учитывать метод запроса при выполнении маршрута, удобно тестировать POST/OPTIONS/HEAD запросы в браузере (сработает первый зарегистрированный!
      *
      * @var bool
      */
     protected $dispatchIgnoreMethod = false;
-
     /**
      * > 'GET|POST|PUT|OPTIONS', чтобы принудительно установить метод запроса при выполнении действия
      *
      * @var HttpMethod|string
      */
     protected $dispatchForceMethod = null;
-
     /**
      * > автоматически доставлять или убирать trailing-slash на этапе маршрутизации
      *
@@ -68,27 +64,26 @@ class RouterConfig extends AbstractConfig
 
     public function __construct()
     {
-        $this->cache = new RouterCacheConfig();
+        $this->__sections[ 'cache' ] = $this->cache = new RouterCacheConfig();
     }
 
 
-    public function validate() : void
+    public function validate()
     {
         $this->cache->validate();
 
         $this->registerAllowObjectsAndClosures = (bool) $this->registerAllowObjectsAndClosures;
+        $this->dispatchIgnoreMethod = (bool) $this->dispatchIgnoreMethod;
+
+        if (null !== $this->dispatchForceMethod) {
+            $this->dispatchForceMethod = HttpMethod::from($this->dispatchForceMethod)->getValue();
+        }
 
         if (! isset(Router::LIST_TRAILING_SLASH[ $this->compileTrailingSlashMode ])) {
             throw new LogicException(
                 'The `compileTrailingSlashMode` should be one of: '
                 . implode(',', array_keys(Router::LIST_TRAILING_SLASH))
             );
-        }
-
-        $this->dispatchIgnoreMethod = (bool) $this->dispatchIgnoreMethod;
-
-        if (null !== $this->dispatchForceMethod) {
-            $this->dispatchForceMethod = HttpMethod::from($this->dispatchForceMethod)->getValue();
         }
 
         if (! isset(Router::LIST_TRAILING_SLASH[ $this->dispatchTrailingSlashMode ])) {

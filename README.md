@@ -93,7 +93,7 @@ $router = $factory->newRouter();
 
 // >>> настраиваем роутер
 $config = $router->getConfig();
-$router->setConfig(function (\Gzhegow\Router\RouterConfig $config) {
+$router->configure(function (\Gzhegow\Router\RouterConfig $config) {
     // >>> роутер
     $config->registerAllowObjectsAndClosures = false;
     $config->compileTrailingSlashMode = \Gzhegow\Router\Router::TRAILING_SLASH_AS_IS;

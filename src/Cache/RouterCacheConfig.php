@@ -27,7 +27,6 @@ class RouterCacheConfig extends AbstractConfig
      * @var string|null
      */
     protected $cacheMode = RouterCache::CACHE_MODE_NO_CACHE;
-
     /**
      * > адаптер кэширования, psr\cache
      *
@@ -38,14 +37,12 @@ class RouterCacheConfig extends AbstractConfig
      * @var object|\Psr\Cache\CacheItemPoolInterface|null
      */
     protected $cacheAdapter = null;
-
     /**
      * > путь для файлового кэша в случае отстутствия адаптера
      *
      * @var string|null
      */
     protected $cacheDirpath = __DIR__ . '/../var/cache/gzhegow.router';
-
     /**
      * > имя файла для файлового кэша в случае отстутствия адаптера
      *
