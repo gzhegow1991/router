@@ -12,7 +12,6 @@ use Gzhegow\Router\Node\RouterNode;
 use Gzhegow\Router\Route\Struct\Tag;
 use Gzhegow\Router\Route\RouteGroup;
 use Gzhegow\Router\Route\Struct\Path;
-use Gzhegow\Router\RouterConfig;
 use Gzhegow\Router\Route\RouteBlueprint;
 use Gzhegow\Router\Exception\LogicException;
 use Gzhegow\Router\Exception\RuntimeException;
@@ -100,17 +99,18 @@ class Router implements RouterInterface
 
     public function __construct(
         RouterFactoryInterface $routerFactory,
-        PipelineFactoryInterface $pipelineFactory
+        PipelineFactoryInterface $pipelineFactory,
+        //
+        RouterConfig $config
     )
     {
         $this->routerFactory = $routerFactory;
         $this->pipelineFactory = $pipelineFactory;
 
-        $this->config = new RouterConfig();
+        $this->config = $config;
+        $this->config->validate();
 
-        $cache = $this->routerFactory->newRouterCache();
-        $cache->setConfig($this->config->cache);
-        $this->cache = $cache;
+        $this->cache = $this->routerFactory->newRouterCache($this->config->cache);
 
         $this->routeCollection = $this->routerFactory->newRouteCollection();
         $this->middlewareCollection = $this->routerFactory->newMiddlewareCollection();
@@ -122,31 +122,6 @@ class Router implements RouterInterface
         $this->routerNodeRoot = $routerNodeRoot;
 
         $this->routeGroupRoot = $this->routerFactory->newRouteGroup();
-    }
-
-    /**
-     * @return static
-     */
-    public function setConfig(RouterConfig $config) // : static
-    {
-        $this->config = $config;
-
-        return $this;
-    }
-
-
-    /**
-     * @param \Closure $fn
-     *
-     * @return static
-     */
-    public function configure(\Closure $fn) // : static
-    {
-        $this->config->configure($fn);
-
-        $this->config->validate();
-
-        return $this;
     }
 
 

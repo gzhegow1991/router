@@ -7,6 +7,7 @@ use Gzhegow\Router\Node\RouterNode;
 use Gzhegow\Router\Route\RouteGroup;
 use Gzhegow\Router\Cache\RouterCache;
 use Gzhegow\Router\Route\RouteBlueprint;
+use Gzhegow\Router\Cache\RouterCacheConfig;
 use Gzhegow\Router\Collection\RouteCollection;
 use Gzhegow\Router\Cache\RouterCacheInterface;
 use Gzhegow\Router\Collection\PatternCollection;
@@ -18,13 +19,15 @@ use Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineFactoryInterface;
 
 class RouterFactory implements RouterFactoryInterface
 {
-    public function newRouter() : RouterInterface
+    public function newRouter(RouterConfig $config) : RouterInterface
     {
         $pipelineFactory = $this->newPipelineFactory();
 
         $router = new Router(
             $this,
-            $pipelineFactory
+            $pipelineFactory,
+            //
+            $config
         );
 
         return $router;
@@ -37,9 +40,9 @@ class RouterFactory implements RouterFactoryInterface
     }
 
 
-    public function newRouterCache() : RouterCacheInterface
+    public function newRouterCache(RouterCacheConfig $config) : RouterCacheInterface
     {
-        return new RouterCache($this);
+        return new RouterCache($config);
     }
 
 

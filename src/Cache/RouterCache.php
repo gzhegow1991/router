@@ -6,8 +6,6 @@
 
 namespace Gzhegow\Router\Cache;
 
-use Gzhegow\Router\RouterFactoryInterface;
-use Gzhegow\Router\Cache\RouterCacheConfig;
 use Gzhegow\Router\Exception\RuntimeException;
 
 
@@ -23,11 +21,6 @@ class RouterCache implements RouterCacheInterface
 
 
     /**
-     * @var RouterFactoryInterface
-     */
-    protected $factory;
-
-    /**
      * @var RouterCacheConfig
      */
     protected $config;
@@ -38,21 +31,10 @@ class RouterCache implements RouterCacheInterface
     protected $cacheAdapterItem;
 
 
-    public function __construct(RouterFactoryInterface $factory)
-    {
-        $this->factory = $factory;
-
-        $this->config = new RouterCacheConfig();
-    }
-
-    /**
-     * @param RouterCacheConfig $config
-     */
-    public function setConfig(RouterCacheConfig $config) // : static
+    public function __construct(RouterCacheConfig $config)
     {
         $this->config = $config;
-
-        return $this;
+        $this->config->validate();
     }
 
 

@@ -19,14 +19,6 @@ use Gzhegow\Router\Handler\Middleware\GenericHandlerMiddleware;
 interface RouterInterface
 {
     /**
-     * @param \Closure $fn
-     *
-     * @return static
-     */
-    public function configure(\Closure $fn); // : static
-
-
-    /**
      * @return static
      */
     public function cacheClear(); // : static

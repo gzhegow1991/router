@@ -85,15 +85,12 @@ function _assert_call(\Closure $fn, array $expectResult = [], string $expectOutp
 
 // >>> ЗАПУСКАЕМ!
 
-// >>> сначала всегда фабрика
+// > сначала всегда фабрика
 $factory = new \Gzhegow\Router\RouterFactory();
 
-// >>> создаем роутер
-$router = $factory->newRouter();
-
-// >>> настраиваем роутер
-$config = $router->getConfig();
-$router->configure(function (\Gzhegow\Router\RouterConfig $config) {
+// > создаем конфигурацию
+$config = new \Gzhegow\Router\RouterConfig();
+$config->configure(function (\Gzhegow\Router\RouterConfig $config) {
     // >>> роутер
     $config->registerAllowObjectsAndClosures = false;
     $config->compileTrailingSlashMode = \Gzhegow\Router\Router::TRAILING_SLASH_AS_IS;
@@ -101,7 +98,7 @@ $router->configure(function (\Gzhegow\Router\RouterConfig $config) {
     $config->dispatchForceMethod = null;
     $config->dispatchTrailingSlashMode = \Gzhegow\Router\Router::TRAILING_SLASH_AS_IS;
 
-    // >>> кеш роутера
+    // >>> кэш роутера
     $config->cache->cacheMode = \Gzhegow\Router\Cache\RouterCache::CACHE_MODE_STORAGE;
     //
     // >>> для кэша можно использовать путь к файлу, в этом случае кеш будет сделан через file_{get|put}_contents() + (un)serialize()
@@ -125,6 +122,9 @@ $router->configure(function (\Gzhegow\Router\RouterConfig $config) {
     // $config->cache->cacheMode = \Gzhegow\Router\Cache\RouterCache::CACHE_MODE_STORAGE;
     // $config->cache->cacheAdapter = $symfonyCacheAdapter;
 });
+
+// >>> создаем роутер
+$router = $factory->newRouter($config);
 
 // >>> вызываем функцию, которая загрузит кеш, и если его нет - выполнит регистрацию маршрутов и сохранение их в кэш (не обязательно)
 $router->cacheRemember(static function (\Gzhegow\Router\RouterInterface $router) {
@@ -152,7 +152,7 @@ $router->cacheRemember(static function (\Gzhegow\Router\RouterInterface $router)
     // $group->tag('');
 
     // > добавим группу маршрутов
-    $group = $router->group()
+    $router->group()
         // > ставим теги для каждого роута в группе
         // > с помощью тегов можно будет найти нужную группу роутов или настроить её поведение, как показано выше
         ->tags([ 'user' ])
