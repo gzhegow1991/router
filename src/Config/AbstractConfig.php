@@ -78,7 +78,7 @@ abstract class AbstractConfig
 
             if (false
                 || (! is_object($current))
-                || (get_class($current) !== get_class($section))
+                || (! is_a($current, get_class($section)))
             ) {
                 throw new \LogicException(
                     'Invalid section: ' . $key
