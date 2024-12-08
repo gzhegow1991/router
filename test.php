@@ -1,6 +1,5 @@
 <?php
 
-// require_once getenv('COMPOSER_HOME') . '/vendor/autoload.php';
 require_once __DIR__ . '/vendor/autoload.php';
 
 
@@ -16,6 +15,9 @@ set_error_handler(function ($errno, $errstr, $errfile, $errline) {
     }
 });
 set_exception_handler(function (\Throwable $e) {
+    // require_once getenv('COMPOSER_HOME') . '/vendor/autoload.php';
+    // dd();
+
     $current = $e;
     do {
         echo "\n";
@@ -73,7 +75,7 @@ function _assert_call(\Closure $fn, array $expectResult = [], string $expectOutp
 // >>> ЗАПУСКАЕМ!
 
 // > сначала всегда фабрика
-$factory = new \Gzhegow\Router\RouterFactory();
+$routerFactory = new \Gzhegow\Router\RouterFactory();
 
 // > создаем конфигурацию
 $config = new \Gzhegow\Router\RouterConfig();
@@ -110,8 +112,31 @@ $config->configure(function (\Gzhegow\Router\RouterConfig $config) {
     // $config->cache->cacheAdapter = $symfonyCacheAdapter;
 });
 
+// > создаем кеш роутера
+// > его задача сохранять маршруты в файл после того, как они будут скомпилированы и сохранены в виде дерева
+$routerCache = new \Gzhegow\Router\Cache\RouterCache($config->cache);
+
+// > создаем фабрику для конвеера
+$pipelineFactory = new \Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineFactory();
+
+// > создаем процессор для конвеера
+$pipelineProcessor = new \Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineProcessor($pipelineFactory);
+
+// > создаем процесс-менеджер для конвеера
+$pipelineProcessManager = new \Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineProcessManager(
+    $pipelineFactory,
+    $pipelineProcessor
+);
+
 // >>> создаем роутер
-$router = $factory->newRouter($config);
+$router = $routerFactory->newRouter(
+    $routerCache,
+    //
+    $pipelineFactory,
+    $pipelineProcessManager,
+    //
+    $config
+);
 
 // >>> вызываем функцию, которая загрузит кеш, и если его нет - выполнит регистрацию маршрутов и сохранение их в кэш (не обязательно)
 $router->cacheRemember(static function (\Gzhegow\Router\RouterInterface $router) {

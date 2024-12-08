@@ -26,10 +26,10 @@ use Gzhegow\Router\Collection\MiddlewareCollection;
 use Gzhegow\Router\Exception\Runtime\NotFoundException;
 use Gzhegow\Router\Handler\Action\Internal\ThrowAction;
 use Gzhegow\Router\Exception\Exception\DispatchException;
-use Gzhegow\Pipeline\Exception\Runtime\PipelineException;
 use Gzhegow\Router\Handler\Fallback\GenericHandlerFallback;
 use Gzhegow\Router\Handler\Middleware\GenericHandlerMiddleware;
 use Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineFactoryInterface;
+use Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineProcessManagerInterface;
 
 
 class Router implements RouterInterface
@@ -51,10 +51,15 @@ class Router implements RouterInterface
      * @var RouterFactoryInterface
      */
     protected $routerFactory;
+
     /**
      * @var PipelineFactoryInterface
      */
     protected $pipelineFactory;
+    /**
+     * @var PipelineProcessManagerInterface
+     */
+    protected $pipelineProcessManager;
 
     /**
      * @var RouterConfig
@@ -64,24 +69,24 @@ class Router implements RouterInterface
     /**
      * @var RouterCacheInterface
      */
-    protected $cache;
+    protected $routerCache;
 
-    /**
-     * @var RouteCollection
-     */
-    protected $routeCollection;
-    /**
-     * @var MiddlewareCollection
-     */
-    protected $middlewareCollection;
     /**
      * @var FallbackCollection
      */
     protected $fallbackCollection;
     /**
+     * @var MiddlewareCollection
+     */
+    protected $middlewareCollection;
+    /**
      * @var PatternCollection
      */
     protected $patternCollection;
+    /**
+     * @var RouteCollection
+     */
+    protected $routeCollection;
 
     /**
      * @var RouterNode
@@ -100,23 +105,27 @@ class Router implements RouterInterface
 
     public function __construct(
         RouterFactoryInterface $routerFactory,
+        RouterCacheInterface $routerCache,
+        //
         PipelineFactoryInterface $pipelineFactory,
+        PipelineProcessManagerInterface $pipelineProcessManager,
         //
         RouterConfig $config
     )
     {
         $this->routerFactory = $routerFactory;
+        $this->routerCache = $routerCache;
+
         $this->pipelineFactory = $pipelineFactory;
+        $this->pipelineProcessManager = $pipelineProcessManager;
+
+        $this->fallbackCollection = $this->routerFactory->newFallbackCollection();
+        $this->middlewareCollection = $this->routerFactory->newMiddlewareCollection();
+        $this->patternCollection = $this->routerFactory->newPatternCollection();
+        $this->routeCollection = $this->routerFactory->newRouteCollection();
 
         $this->config = $config;
         $this->config->validate();
-
-        $this->cache = $this->routerFactory->newRouterCache($this->config->cache);
-
-        $this->routeCollection = $this->routerFactory->newRouteCollection();
-        $this->middlewareCollection = $this->routerFactory->newMiddlewareCollection();
-        $this->fallbackCollection = $this->routerFactory->newFallbackCollection();
-        $this->patternCollection = $this->routerFactory->newPatternCollection();
 
         $routerNodeRoot = $this->routerFactory->newRouterNode();
         $routerNodeRoot->part = '/';
@@ -131,7 +140,7 @@ class Router implements RouterInterface
      */
     public function cacheClear() // : static
     {
-        $this->cache->clearCache();
+        $this->routerCache->clearCache();
 
         return $this;
     }
@@ -164,7 +173,7 @@ class Router implements RouterInterface
             );
         }
 
-        $cacheData = $this->cache->loadCache();
+        $cacheData = $this->routerCache->loadCache();
 
         $status = (null !== $cacheData);
 
@@ -201,12 +210,41 @@ class Router implements RouterInterface
             'routerNodeRoot'       => $this->routerNodeRoot,
         ];
 
-        $this->cache->saveCache($cacheData);
+        $this->routerCache->saveCache($cacheData);
 
         $this->isRouterChanged = false;
 
         return $this;
     }
+
+
+    public function newBlueprint(RouteBlueprint $from = null) : RouteBlueprint
+    {
+        $routeBlueprint = $this->routeGroupRoot->newBlueprint($from);
+
+        return $routeBlueprint;
+    }
+
+    /**
+     * @param string|null                                    $path
+     * @param string|string[]|null                           $httpMethods
+     * @param callable|object|array|class-string|string|null $action
+     * @param string|null                                    $name
+     * @param string|string[]|null                           $tags
+     */
+    public function blueprint(
+        RouteBlueprint $from = null,
+        $path = null, $httpMethods = null, $action = null, $name = null, $tags = null
+    ) : RouteBlueprint
+    {
+        $routeBlueprint = $this->routeGroupRoot->blueprint(
+            $from,
+            $path, $httpMethods, $action, $name, $tags
+        );
+
+        return $routeBlueprint;
+    }
+
 
 
     public function group(RouteBlueprint $from = null) : RouteGroup
@@ -246,34 +284,6 @@ class Router implements RouterInterface
         $this->routeGroupRoot->addRoute($routeBlueprint);
 
         return $this;
-    }
-
-
-    public function newBlueprint(RouteBlueprint $from = null) : RouteBlueprint
-    {
-        $routeBlueprint = $this->routeGroupRoot->newBlueprint($from);
-
-        return $routeBlueprint;
-    }
-
-    /**
-     * @param string|null                                    $path
-     * @param string|string[]|null                           $httpMethods
-     * @param callable|object|array|class-string|string|null $action
-     * @param string|null                                    $name
-     * @param string|string[]|null                           $tags
-     */
-    public function blueprint(
-        RouteBlueprint $from = null,
-        $path = null, $httpMethods = null, $action = null, $name = null, $tags = null
-    ) : RouteBlueprint
-    {
-        $routeBlueprint = $this->routeGroupRoot->blueprint(
-            $from,
-            $path, $httpMethods, $action, $name, $tags
-        );
-
-        return $routeBlueprint;
     }
 
 
@@ -900,12 +910,10 @@ class Router implements RouterInterface
             $chain = $chain->endMiddleware();
         }
 
-        $processManager = $this->pipelineFactory->newProcessManager();
-
         try {
-            $result = $processManager->run($pipeline, $input, $context);
+            $result = $this->pipelineProcessManager->run($pipeline, $input, $context);
         }
-        catch ( PipelineException $throwable ) {
+        catch ( \Gzhegow\Pipeline\Exception\Runtime\PipelineException $throwable ) {
             $e = new DispatchException(
                 "Unhandled exception occured during dispatch", -1
             );

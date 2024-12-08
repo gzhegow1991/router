@@ -14,18 +14,30 @@ use Gzhegow\Router\Collection\PatternCollection;
 use Gzhegow\Router\Collection\FallbackCollection;
 use Gzhegow\Router\Collection\MiddlewareCollection;
 use Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineFactory;
+use Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineProcessor;
+use Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineProcessManager;
 use Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineFactoryInterface;
+use Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineProcessorInterface;
+use Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineProcessManagerInterface;
 
 
 class RouterFactory implements RouterFactoryInterface
 {
-    public function newRouter(RouterConfig $config) : RouterInterface
+    public function newRouter(
+        RouterCacheInterface $routerCache,
+        //
+        PipelineFactoryInterface $pipelineFactory,
+        PipelineProcessManagerInterface $pipelineProcessManager,
+        //
+        RouterConfig $config
+    ) : RouterInterface
     {
-        $pipelineFactory = $this->newPipelineFactory();
-
         $router = new Router(
             $this,
+            $routerCache,
+            //
             $pipelineFactory,
+            $pipelineProcessManager,
             //
             $config
         );
@@ -34,15 +46,35 @@ class RouterFactory implements RouterFactoryInterface
     }
 
 
+    public function newRouterCache(RouterCacheConfig $config) : RouterCacheInterface
+    {
+        return new RouterCache($config);
+    }
+
+
     public function newPipelineFactory() : PipelineFactoryInterface
     {
         return new PipelineFactory();
     }
 
-
-    public function newRouterCache(RouterCacheConfig $config) : RouterCacheInterface
+    public function newPipelineProcessor(
+        PipelineFactoryInterface $factory
+    ) : PipelineProcessorInterface
     {
-        return new RouterCache($config);
+        return new PipelineProcessor(
+            $factory
+        );
+    }
+
+    public function newPipelineProcessManager(
+        PipelineFactoryInterface $factory,
+        PipelineProcessorInterface $processor
+    ) : PipelineProcessManagerInterface
+    {
+        return new PipelineProcessManager(
+            $factory,
+            $processor
+        );
     }
 
 

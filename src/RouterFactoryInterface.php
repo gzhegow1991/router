@@ -13,17 +13,35 @@ use Gzhegow\Router\Collection\PatternCollection;
 use Gzhegow\Router\Collection\FallbackCollection;
 use Gzhegow\Router\Collection\MiddlewareCollection;
 use Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineFactoryInterface;
+use Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineProcessorInterface;
+use Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineProcessManagerInterface;
 
 
 interface RouterFactoryInterface
 {
-    public function newRouter(RouterConfig $config) : RouterInterface;
+    public function newRouter(
+        RouterCacheInterface $routerCache,
+        //
+        PipelineFactoryInterface $pipelineFactory,
+        PipelineProcessManagerInterface $pipelineProcessManager,
+        //
+        RouterConfig $config
+    ) : RouterInterface;
+
+
+    public function newRouterCache(RouterCacheConfig $config) : RouterCacheInterface;
 
 
     public function newPipelineFactory() : PipelineFactoryInterface;
 
+    public function newPipelineProcessor(
+        PipelineFactoryInterface $factory
+    ) : PipelineProcessorInterface;
 
-    public function newRouterCache(RouterCacheConfig $config) : RouterCacheInterface;
+    public function newPipelineProcessManager(
+        PipelineFactoryInterface $factory,
+        PipelineProcessorInterface $processor
+    ) : PipelineProcessManagerInterface;
 
 
     public function newRouteCollection() : RouteCollection;

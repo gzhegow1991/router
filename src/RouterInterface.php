@@ -31,6 +31,21 @@ interface RouterInterface
     public function cacheRemember($fn); // : static
 
 
+    public function newBlueprint(RouteBlueprint $from = null) : RouteBlueprint;
+
+    /**
+     * @param string|null                                    $path
+     * @param string|string[]|null                           $httpMethods
+     * @param callable|object|array|class-string|string|null $action
+     * @param string|null                                    $name
+     * @param string|string[]|null                           $tags
+     */
+    public function blueprint(
+        RouteBlueprint $from = null,
+        $path = null, $httpMethods = null, $action = null, $name = null, $tags = null
+    ) : RouteBlueprint;
+
+
     public function group(RouteBlueprint $from = null) : RouteGroup;
 
 
@@ -51,21 +66,6 @@ interface RouterInterface
      * @return static
      */
     public function addRoute(RouteBlueprint $routeBlueprint); // : static
-
-
-    public function newBlueprint(RouteBlueprint $from = null) : RouteBlueprint;
-
-    /**
-     * @param string|null                                    $path
-     * @param string|string[]|null                           $httpMethods
-     * @param callable|object|array|class-string|string|null $action
-     * @param string|null                                    $name
-     * @param string|string[]|null                           $tags
-     */
-    public function blueprint(
-        RouteBlueprint $from = null,
-        $path = null, $httpMethods = null, $action = null, $name = null, $tags = null
-    ) : RouteBlueprint;
 
 
     /**
