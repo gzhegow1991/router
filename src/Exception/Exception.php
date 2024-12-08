@@ -2,6 +2,8 @@
 
 namespace Gzhegow\Router\Exception;
 
+use Gzhegow\Router\Lib\Lib;
+
 
 class Exception extends \Exception
     implements ExceptionInterface
@@ -30,9 +32,9 @@ class Exception extends \Exception
     protected $code;
 
 
-    public function __construct(...$errors)
+    public function __construct(...$args)
     {
-        foreach ( \Gzhegow\Router\Lib::php_throwable_args(...$errors) as $k => $v ) {
+        foreach ( Lib::php_throwable_args(...$args) as $k => $v ) {
             if (property_exists($this, $k)) {
                 $this->{$k} = $v;
             }

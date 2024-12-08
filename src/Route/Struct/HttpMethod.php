@@ -2,7 +2,7 @@
 
 namespace Gzhegow\Router\Route\Struct;
 
-use Gzhegow\Router\Lib;
+use Gzhegow\Router\Lib\Lib;
 use Gzhegow\Router\Exception\LogicException;
 
 

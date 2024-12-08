@@ -17,6 +17,7 @@ composer require gzhegow/router;
 ```php
 <?php
 
+// require_once getenv('COMPOSER_HOME') . '/vendor/autoload.php';
 require_once __DIR__ . '/vendor/autoload.php';
 
 
@@ -36,11 +37,14 @@ set_exception_handler(function (\Throwable $e) {
     do {
         echo "\n";
 
-        echo \Gzhegow\Router\Lib::debug_var_dump($current) . PHP_EOL;
+        echo \Gzhegow\Router\Lib\Lib::debug_var_dump($current) . PHP_EOL;
         echo $current->getMessage() . PHP_EOL;
 
         foreach ( $e->getTrace() as $traceItem ) {
-            echo "{$traceItem['file']} : {$traceItem['line']}" . PHP_EOL;
+            $file = $traceItem[ 'file' ] ?? '{file}';
+            $line = $traceItem[ 'line' ] ?? '{line}';
+
+            echo "{$file} : {$line}" . PHP_EOL;
         }
 
         echo PHP_EOL;
@@ -51,14 +55,14 @@ set_exception_handler(function (\Throwable $e) {
 
 
 // > добавляем несколько функция для тестирования
-function _dump($value, ...$values) : void
+function _dump(...$values) : void
 {
-    echo \Gzhegow\Router\Lib::debug_line([ 'with_ids' => false, 'with_objects' => false ], $value, ...$values);
+    echo implode(' | ', array_map([ \Gzhegow\Router\Lib\Lib::class, 'debug_value' ], $values));
 }
 
-function _dump_ln($value, ...$values) : void
+function _dump_ln(...$values) : void
 {
-    echo \Gzhegow\Router\Lib::debug_line([ 'with_ids' => false, 'with_objects' => false ], $value, ...$values) . PHP_EOL;
+    echo implode(' | ', array_map([ \Gzhegow\Router\Lib\Lib::class, 'debug_value' ], $values)) . PHP_EOL;
 }
 
 function _assert_call(\Closure $fn, array $expectResult = [], string $expectOutput = null) : void
@@ -75,7 +79,7 @@ function _assert_call(\Closure $fn, array $expectResult = [], string $expectOutp
         $expect->output = $expectOutput;
     }
 
-    $status = \Gzhegow\Router\Lib::assert_call($trace, $fn, $expect, $error, STDOUT);
+    $status = \Gzhegow\Router\Lib\Lib::assert_call($trace, $fn, $expect, $error, STDOUT);
 
     if (! $status) {
         throw new \Gzhegow\Router\Exception\LogicException();
@@ -292,12 +296,12 @@ $fn = function () use ($router) {
 };
 _assert_call($fn, [], <<<HEREDOC
 "TEST 1"
-"[ RESULT ]" | [ 1 => { object(Gzhegow\Router\Route\Route) }, 2 => { object(Gzhegow\Router\Route\Route) } ]
-"[ RESULT ]" | 0 | [ 1 => { object(Gzhegow\Router\Route\Route) }, 2 => { object(Gzhegow\Router\Route\Route) }, 3 => { object(Gzhegow\Router\Route\Route) } ]
-"[ RESULT ]" | 0 | [ 1 => { object(Gzhegow\Router\Route\Route) }, 2 => { object(Gzhegow\Router\Route\Route) }, 3 => { object(Gzhegow\Router\Route\Route) }, 4 => { object(Gzhegow\Router\Route\Route) }, 5 => { object(Gzhegow\Router\Route\Route) } ]
-"[ RESULT ]" | { object(Gzhegow\Router\Route\Route) }
-"[ RESULT ]" | { object(Gzhegow\Router\Route\Route) }
-"[ RESULT ]" | { object(Gzhegow\Router\Route\Route) }
+"[ RESULT ]" | [ 1 => "{ object # Gzhegow\Router\Route\Route }", 2 => "{ object # Gzhegow\Router\Route\Route }" ]
+"[ RESULT ]" | 0 | [ 1 => "{ object # Gzhegow\Router\Route\Route }", 2 => "{ object # Gzhegow\Router\Route\Route }", 3 => "{ object # Gzhegow\Router\Route\Route }" ]
+"[ RESULT ]" | 0 | [ 1 => "{ object # Gzhegow\Router\Route\Route }", 2 => "{ object # Gzhegow\Router\Route\Route }", 3 => "{ object # Gzhegow\Router\Route\Route }", 4 => "{ object # Gzhegow\Router\Route\Route }", 5 => "{ object # Gzhegow\Router\Route\Route }" ]
+"[ RESULT ]" | { object # Gzhegow\Router\Route\Route }
+"[ RESULT ]" | { object # Gzhegow\Router\Route\Route }
+"[ RESULT ]" | { object # Gzhegow\Router\Route\Route }
 ""
 HEREDOC
 );
@@ -334,8 +338,8 @@ $fn = function () use ($router) {
 };
 _assert_call($fn, [], <<<HEREDOC
 "TEST 2"
-"[ RESULT ]" | 1 | { object(Gzhegow\Router\Route\Route) }
-"[ RESULT ]" | 2 | { object(Gzhegow\Router\Route\Route) }
+"[ RESULT ]" | 1 | { object # Gzhegow\Router\Route\Route }
+"[ RESULT ]" | 2 | { object # Gzhegow\Router\Route\Route }
 ""
 HEREDOC
 );
@@ -456,7 +460,7 @@ _assert_call($fn, [], <<<HEREDOC
 "TEST 6"
 "[ CATCH ]" | "Gzhegow\Router\Exception\Exception\DispatchException" | "Unhandled exception occured during dispatch"
 "[ CATCH ]" | "Gzhegow\Router\Exception\Runtime\NotFoundException" | "Route not found: `/api/v1/not-found/not-found` / `GET`"
-"[ RESULT ]" | NULL
+"[ RESULT ]" | { NULL }
 ""
 HEREDOC
 );

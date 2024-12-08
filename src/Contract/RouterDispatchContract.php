@@ -2,7 +2,7 @@
 
 namespace Gzhegow\Router\Contract;
 
-use Gzhegow\Router\Lib;
+use Gzhegow\Router\Lib\Lib;
 use Gzhegow\Router\Route\Struct\HttpMethod;
 use Gzhegow\Router\Exception\LogicException;
 
@@ -93,7 +93,8 @@ class RouterDispatchContract
         if (null === ($_httpMethod = HttpMethod::tryFrom($httpMethod))) {
             return Lib::php_error(
                 [
-                    'The `from[0]` should be valid `httpMethod`: ' . Lib::debug_dump($httpMethod),
+                    'The `from[0]` should be valid `httpMethod`',
+                    $httpMethod,
                     $array,
                 ]
             );
@@ -102,7 +103,8 @@ class RouterDispatchContract
         if (null === ($_requestUri = Lib::parse_path($requestUri))) {
             return Lib::php_error(
                 [
-                    'The `from[0]` should be valid `path`: ' . Lib::debug_dump($requestUri),
+                    'The `from[0]` should be valid `path`',
+                    $requestUri,
                     $array,
                 ]
             );

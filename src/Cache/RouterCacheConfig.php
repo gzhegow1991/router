@@ -6,7 +6,7 @@
 
 namespace Gzhegow\Router\Cache;
 
-use Gzhegow\Router\Lib;
+use Gzhegow\Router\Lib\Lib;
 use Gzhegow\Router\Config\AbstractConfig;
 use Gzhegow\Router\Exception\LogicException;
 
@@ -67,8 +67,10 @@ class RouterCacheConfig extends AbstractConfig
             && ! is_a($this->cacheAdapter, $class = '\Psr\Cache\CacheItemPoolInterface')
         ) {
             throw new LogicException(
-                'The `cacheAdapter` should be instance of: ' . $class
-                . ' / ' . Lib::debug_dump($this->cacheAdapter)
+                [
+                    'The `cacheAdapter` should be instance of: ' . $class,
+                    $this->cacheAdapter,
+                ]
             );
         }
 
@@ -76,7 +78,10 @@ class RouterCacheConfig extends AbstractConfig
             && (null === Lib::parse_dirpath($this->cacheDirpath))
         ) {
             throw new LogicException(
-                'The `cacheDirpath` should be valid directory path: ' . $this->cacheDirpath
+                [
+                    'The `cacheDirpath` should be valid directory path',
+                    $this->cacheDirpath,
+                ]
             );
         }
 

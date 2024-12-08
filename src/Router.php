@@ -6,6 +6,7 @@
 
 namespace Gzhegow\Router;
 
+use Gzhegow\Router\Lib\Lib;
 use Gzhegow\Router\Route\Route;
 use Gzhegow\Router\Pattern\Pattern;
 use Gzhegow\Router\Node\RouterNode;
@@ -945,8 +946,10 @@ class Router implements RouterInterface
 
             } else {
                 throw new LogicException(
-                    'Each of `routes` should be string as route `name` or object of class: ' . Route::class
-                    . ' / ' . Lib::debug_dump($routes)
+                    [
+                        'Each of `routes` should be string as route `name` or object of class: ' . Route::class,
+                        $routes,
+                    ]
                 );
             }
         }
@@ -997,10 +1000,11 @@ class Router implements RouterInterface
 
             if (null === $attr) {
                 throw new RuntimeException(
-                    'Missing attributes: '
-                    . "attributes[{$key}][{$idx}]"
-                    . ', ' . "attributes[{$key}]"
-                    . ' / ' . Lib::debug_dump($attributes)
+                    [
+                        'Missing attributes: '
+                        . "attributes[{$key}][{$idx}], attributes[{$key}]",
+                        $attributes,
+                    ]
                 );
             }
 
@@ -1041,9 +1045,11 @@ class Router implements RouterInterface
 
             if ($route->action->closure || $route->action->methodObject || $route->action->invokableObject) {
                 throw new RuntimeException(
-                    'The `action` should not be runtime object or \Closure: '
-                    . Lib::debug_dump($runtimeAction)
-                    . ' / ' . $route->path
+                    [
+                        'The `action` should not be runtime object or \Closure',
+                        $runtimeAction,
+                        $route,
+                    ]
                 );
             }
         }
@@ -1131,8 +1137,10 @@ class Router implements RouterInterface
         if (! $this->config->registerAllowObjectsAndClosures) {
             if ($middleware->closure || $middleware->methodObject || $middleware->invokableObject) {
                 throw new RuntimeException(
-                    'This `middleware` should not be runtime object or \Closure: '
-                    . Lib::debug_dump($middleware)
+                    [
+                        'This `middleware` should not be runtime object or \Closure',
+                        $middleware,
+                    ]
                 );
             }
         }
@@ -1149,8 +1157,10 @@ class Router implements RouterInterface
         if (! $this->config->registerAllowObjectsAndClosures) {
             if ($fallback->closure || $fallback->methodObject || $fallback->invokableObject) {
                 throw new RuntimeException(
-                    'This `fallback` should not be runtime object or \Closure: '
-                    . Lib::debug_dump($fallback)
+                    [
+                        'This `fallback` should not be runtime object or \Closure',
+                        $fallback,
+                    ]
                 );
             }
         }
@@ -1165,19 +1175,28 @@ class Router implements RouterInterface
     {
         if (null === ($path = $routeBlueprint->path)) {
             throw new RuntimeException(
-                'Missing `path` in route: ' . Lib::debug_dump($routeBlueprint)
+                [
+                    'Missing `path` in route',
+                    $routeBlueprint,
+                ]
             );
         }
 
         if (null === $routeBlueprint->action) {
             throw new RuntimeException(
-                'Missing `action` in route: ' . Lib::debug_dump($routeBlueprint)
+                [
+                    'Missing `action` in route',
+                    $routeBlueprint,
+                ]
             );
         }
 
         if (null === $routeBlueprint->httpMethodIndex) {
             throw new RuntimeException(
-                'Missing `method` in route: ' . Lib::debug_dump($routeBlueprint)
+                [
+                    'Missing `method` in route',
+                    $routeBlueprint,
+                ]
             );
         }
 

@@ -2,7 +2,7 @@
 
 namespace Gzhegow\Router\Pattern;
 
-use Gzhegow\Router\Lib;
+use Gzhegow\Router\Lib\Lib;
 use Gzhegow\Router\Router;
 use Gzhegow\Router\Exception\LogicException;
 

@@ -2,8 +2,6 @@
 
 namespace Gzhegow\Router\Config;
 
-use Gzhegow\Router\Lib;
-
 
 abstract class AbstractConfig
 {
@@ -81,8 +79,10 @@ abstract class AbstractConfig
                 || (! is_a($current, get_class($section)))
             ) {
                 throw new \LogicException(
-                    'Invalid section: ' . $key
-                    . ' / ' . Lib::debug_dump($current)
+                    [
+                        'Invalid section: ' . $key,
+                        $current,
+                    ]
                 );
             }
 
