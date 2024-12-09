@@ -6,7 +6,7 @@
 
 namespace Gzhegow\Router;
 
-use Gzhegow\Router\Lib\Lib;
+use Gzhegow\Lib\Lib;
 use Gzhegow\Router\Route\Route;
 use Gzhegow\Router\Pattern\Pattern;
 use Gzhegow\Router\Node\RouterNode;
@@ -949,7 +949,7 @@ class Router implements RouterInterface
             if (is_object($route)) {
                 $_routes[ $idx ] = $route;
 
-            } elseif (null !== ($_name = Lib::parse_astring($route))) {
+            } elseif (null !== ($_name = Lib::parse_string_not_empty($route))) {
                 $_routeNames[ $idx ] = $_name;
 
             } else {

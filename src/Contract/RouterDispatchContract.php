@@ -2,7 +2,7 @@
 
 namespace Gzhegow\Router\Contract;
 
-use Gzhegow\Router\Lib\Lib;
+use Gzhegow\Lib\Lib;
 use Gzhegow\Router\Route\Struct\HttpMethod;
 use Gzhegow\Router\Exception\LogicException;
 

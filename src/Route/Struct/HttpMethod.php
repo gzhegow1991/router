@@ -2,7 +2,7 @@
 
 namespace Gzhegow\Router\Route\Struct;
 
-use Gzhegow\Router\Lib\Lib;
+use Gzhegow\Lib\Lib;
 use Gzhegow\Router\Exception\LogicException;
 
 
@@ -100,7 +100,7 @@ class HttpMethod
      */
     public static function tryFromString($string) : ?self
     {
-        if (null === ($_string = Lib::parse_astring($string))) {
+        if (null === ($_string = Lib::parse_string_not_empty($string))) {
             return Lib::php_error(
                 [ 'The `from` should be non-empty string', $string ]
             );

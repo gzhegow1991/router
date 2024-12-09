@@ -17,7 +17,6 @@ composer require gzhegow/router;
 ```php
 <?php
 
-// require_once getenv('COMPOSER_HOME') . '/vendor/autoload.php';
 require_once __DIR__ . '/vendor/autoload.php';
 
 
@@ -33,11 +32,14 @@ set_error_handler(function ($errno, $errstr, $errfile, $errline) {
     }
 });
 set_exception_handler(function (\Throwable $e) {
+    // require_once getenv('COMPOSER_HOME') . '/vendor/autoload.php';
+    // dd();
+
     $current = $e;
     do {
         echo "\n";
 
-        echo \Gzhegow\Router\Lib\Lib::debug_var_dump($current) . PHP_EOL;
+        echo \Gzhegow\Lib\Lib::debug_var_dump($current) . PHP_EOL;
         echo $current->getMessage() . PHP_EOL;
 
         foreach ( $e->getTrace() as $traceItem ) {
@@ -57,12 +59,12 @@ set_exception_handler(function (\Throwable $e) {
 // > добавляем несколько функция для тестирования
 function _dump(...$values) : void
 {
-    echo implode(' | ', array_map([ \Gzhegow\Router\Lib\Lib::class, 'debug_value' ], $values));
+    echo implode(' | ', array_map([ \Gzhegow\Lib\Lib::class, 'debug_value' ], $values));
 }
 
 function _dump_ln(...$values) : void
 {
-    echo implode(' | ', array_map([ \Gzhegow\Router\Lib\Lib::class, 'debug_value' ], $values)) . PHP_EOL;
+    echo implode(' | ', array_map([ \Gzhegow\Lib\Lib::class, 'debug_value' ], $values)) . PHP_EOL;
 }
 
 function _assert_call(\Closure $fn, array $expectResult = [], string $expectOutput = null) : void
@@ -79,7 +81,7 @@ function _assert_call(\Closure $fn, array $expectResult = [], string $expectOutp
         $expect->output = $expectOutput;
     }
 
-    $status = \Gzhegow\Router\Lib\Lib::assert_call($trace, $fn, $expect, $error, STDOUT);
+    $status = \Gzhegow\Lib\Lib::assert_call($trace, $fn, $expect, $error, STDOUT);
 
     if (! $status) {
         throw new \Gzhegow\Router\Exception\LogicException();
@@ -90,7 +92,7 @@ function _assert_call(\Closure $fn, array $expectResult = [], string $expectOutp
 // >>> ЗАПУСКАЕМ!
 
 // > сначала всегда фабрика
-$factory = new \Gzhegow\Router\RouterFactory();
+$routerFactory = new \Gzhegow\Router\RouterFactory();
 
 // > создаем конфигурацию
 $config = new \Gzhegow\Router\RouterConfig();
@@ -127,8 +129,31 @@ $config->configure(function (\Gzhegow\Router\RouterConfig $config) {
     // $config->cache->cacheAdapter = $symfonyCacheAdapter;
 });
 
+// > создаем кеш роутера
+// > его задача сохранять маршруты в файл после того, как они будут скомпилированы и сохранены в виде дерева
+$routerCache = new \Gzhegow\Router\Cache\RouterCache($config->cache);
+
+// > создаем фабрику для конвеера
+$pipelineFactory = new \Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineFactory();
+
+// > создаем процессор для конвеера
+$pipelineProcessor = new \Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineProcessor($pipelineFactory);
+
+// > создаем процесс-менеджер для конвеера
+$pipelineProcessManager = new \Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineProcessManager(
+    $pipelineFactory,
+    $pipelineProcessor
+);
+
 // >>> создаем роутер
-$router = $factory->newRouter($config);
+$router = $routerFactory->newRouter(
+    $routerCache,
+    //
+    $pipelineFactory,
+    $pipelineProcessManager,
+    //
+    $config
+);
 
 // >>> вызываем функцию, которая загрузит кеш, и если его нет - выполнит регистрацию маршрутов и сохранение их в кэш (не обязательно)
 $router->cacheRemember(static function (\Gzhegow\Router\RouterInterface $router) {

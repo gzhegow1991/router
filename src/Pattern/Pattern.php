@@ -2,7 +2,7 @@
 
 namespace Gzhegow\Router\Pattern;
 
-use Gzhegow\Router\Lib\Lib;
+use Gzhegow\Lib\Lib;
 use Gzhegow\Router\Router;
 use Gzhegow\Router\Exception\LogicException;
 
@@ -97,7 +97,7 @@ class Pattern implements \Serializable
 
         [ $pattern, $regex ] = $array + [ null, null ];
 
-        if (null === ($_pattern = Lib::parse_astring($pattern))) {
+        if (null === ($_pattern = Lib::parse_string_not_empty($pattern))) {
             return Lib::php_error(
                 [
                     'The `from[0]` should be non-empty string',
@@ -106,7 +106,7 @@ class Pattern implements \Serializable
             );
         }
 
-        if (null === ($_regex = Lib::parse_astring($regex))) {
+        if (null === ($_regex = Lib::parse_string_not_empty($regex))) {
             return Lib::php_error(
                 [
                     'The `from[1]` should be non-empty string',

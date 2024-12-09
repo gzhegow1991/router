@@ -6,7 +6,7 @@
 
 namespace Gzhegow\Router\Cache;
 
-use Gzhegow\Router\Lib\Lib;
+use Gzhegow\Lib\Lib;
 use Gzhegow\Router\Config\AbstractConfig;
 use Gzhegow\Router\Exception\LogicException;
 
