@@ -14,7 +14,9 @@ use Gzhegow\Router\Exception\LogicException;
 
 /**
  * @property string|null                                   $cacheMode
+ *
  * @property object|\Psr\Cache\CacheItemPoolInterface|null $cacheAdapter
+ *
  * @property string|null                                   $cacheDirpath
  * @property string|null                                   $cacheFilename
  */
@@ -28,8 +30,9 @@ class RouterCacheConfig extends Config
      * @var string|null
      */
     protected $cacheMode = RouterCache::CACHE_MODE_NO_CACHE;
+
     /**
-     * > адаптер кэширования, psr\cache
+     * > можно установить пакет `composer require symfony/cache` и использовать адаптер, чтобы хранить кэш в redis или любым другим способом
      *
      * @noinspection PhpFullyQualifiedNameUsageInspection
      * @noinspection PhpUndefinedClassInspection
@@ -38,14 +41,15 @@ class RouterCacheConfig extends Config
      * @var object|\Psr\Cache\CacheItemPoolInterface|null
      */
     protected $cacheAdapter;
+
     /**
-     * > путь для файлового кэша в случае отстутствия адаптера
+     * > для кэша можно использовать путь к файлу, в этом случае кеш будет сделан через file_{get|put}_contents() + (un)serialize()
      *
      * @var string|null
      */
     protected $cacheDirpath = __DIR__ . '/../var/cache/gzhegow.router';
     /**
-     * > имя файла для файлового кэша в случае отстутствия адаптера
+     * > для кэша можно использовать путь к файлу, в этом случае кеш будет сделан через file_{get|put}_contents() + (un)serialize()
      *
      * @var string|null
      */

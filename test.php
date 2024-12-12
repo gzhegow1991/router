@@ -90,7 +90,6 @@ $routerConfig->configure(function (\Gzhegow\Router\RouterConfig $config) {
     // >>> кэш роутера
     $config->cache->cacheMode = \Gzhegow\Router\Cache\RouterCache::CACHE_MODE_STORAGE;
     //
-    // >>> для кэша можно использовать путь к файлу, в этом случае кеш будет сделан через file_{get|put}_contents() + (un)serialize()
     $cacheDir = __DIR__ . '/var/cache';
     $cacheNamespace = 'gzhegow.router';
     $cacheDirpath = "{$cacheDir}/{$cacheNamespace}";
@@ -98,7 +97,6 @@ $routerConfig->configure(function (\Gzhegow\Router\RouterConfig $config) {
     $config->cache->cacheDirpath = $cacheDirpath;
     $config->cache->cacheFilename = $cacheFilename;
     //
-    // >>> либо можно установить пакет `composer require symfony/cache` и использовать адаптер, чтобы хранить кэш в redis или любым другим способом
     // $symfonyCacheAdapter = new \Symfony\Component\Cache\Adapter\FilesystemAdapter(
     //     $cacheNamespace, $defaultLifetime = 0, $cacheDir
     // );
@@ -130,7 +128,7 @@ $pipelineProcessManager = new \Gzhegow\Router\Package\Gzhegow\Pipeline\ProcessMa
     $pipelineProcessor
 );
 
-// >>> создаем роутер
+// > создаем роутер
 $router = new \Gzhegow\Router\Router(
     $routerFactory,
     $routerCache,
@@ -141,7 +139,10 @@ $router = new \Gzhegow\Router\Router(
     $routerConfig
 );
 
-// >>> вызываем функцию, которая загрузит кеш, и если его нет - выполнит регистрацию маршрутов и сохранение их в кэш (не обязательно)
+// > так можно очистить кэш
+// $router->cacheClear();
+
+// > вызываем функцию, которая загрузит кеш, и если его нет - выполнит регистрацию маршрутов и сохранение их в кэш (не обязательно)
 $router->cacheRemember(static function (\Gzhegow\Router\RouterInterface $router) {
     // > добавляем паттерн, который можно использовать в маршрутах
     $router->pattern('{id}', '[0-9]+');
