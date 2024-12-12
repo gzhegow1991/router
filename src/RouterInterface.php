@@ -8,6 +8,7 @@ use Gzhegow\Router\Route\RouteGroup;
 use Gzhegow\Router\Route\RouteBlueprint;
 use Gzhegow\Router\Contract\RouterMatchContract;
 use Gzhegow\Router\Contract\RouterDispatchContract;
+use Gzhegow\Router\Exception\Exception\DispatchException;
 use Gzhegow\Router\Handler\Fallback\GenericHandlerFallback;
 use Gzhegow\Router\Handler\Middleware\GenericHandlerMiddleware;
 
@@ -140,7 +141,7 @@ interface RouterInterface
 
 
     /**
-     * @throws \Throwable
+     * @throws DispatchException
      */
     public function dispatch(RouterDispatchContract $contract, $input = null, $context = null);
 

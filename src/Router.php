@@ -29,7 +29,7 @@ use Gzhegow\Router\Exception\Exception\DispatchException;
 use Gzhegow\Router\Handler\Fallback\GenericHandlerFallback;
 use Gzhegow\Router\Handler\Middleware\GenericHandlerMiddleware;
 use Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineFactoryInterface;
-use Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineProcessManagerInterface;
+use Gzhegow\Router\Package\Gzhegow\Pipeline\ProcessManager\ProcessManagerInterface;
 
 
 class Router implements RouterInterface
@@ -57,7 +57,7 @@ class Router implements RouterInterface
      */
     protected $pipelineFactory;
     /**
-     * @var PipelineProcessManagerInterface
+     * @var ProcessManagerInterface
      */
     protected $pipelineProcessManager;
 
@@ -108,7 +108,7 @@ class Router implements RouterInterface
         RouterCacheInterface $routerCache,
         //
         PipelineFactoryInterface $pipelineFactory,
-        PipelineProcessManagerInterface $pipelineProcessManager,
+        ProcessManagerInterface $pipelineProcessManager,
         //
         RouterConfig $config
     )
@@ -678,7 +678,7 @@ class Router implements RouterInterface
 
 
     /**
-     * @throws \Throwable
+     * @throws DispatchException
      */
     public function dispatch(
         RouterDispatchContract $contract,

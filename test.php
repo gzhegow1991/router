@@ -78,8 +78,8 @@ function _assert_call(\Closure $fn, array $expectResult = [], string $expectOutp
 $routerFactory = new \Gzhegow\Router\RouterFactory();
 
 // > создаем конфигурацию
-$config = new \Gzhegow\Router\RouterConfig();
-$config->configure(function (\Gzhegow\Router\RouterConfig $config) {
+$routerConfig = new \Gzhegow\Router\RouterConfig();
+$routerConfig->configure(function (\Gzhegow\Router\RouterConfig $config) {
     // >>> роутер
     $config->registerAllowObjectsAndClosures = false;
     $config->compileTrailingSlashMode = \Gzhegow\Router\Router::TRAILING_SLASH_AS_IS;
@@ -114,28 +114,31 @@ $config->configure(function (\Gzhegow\Router\RouterConfig $config) {
 
 // > создаем кеш роутера
 // > его задача сохранять маршруты в файл после того, как они будут скомпилированы и сохранены в виде дерева
-$routerCache = new \Gzhegow\Router\Cache\RouterCache($config->cache);
+$routerCache = new \Gzhegow\Router\Cache\RouterCache($routerConfig->cache);
 
 // > создаем фабрику для конвеера
 $pipelineFactory = new \Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineFactory();
 
 // > создаем процессор для конвеера
-$pipelineProcessor = new \Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineProcessor($pipelineFactory);
+$pipelineProcessor = new \Gzhegow\Router\Package\Gzhegow\Pipeline\Processor\Processor(
+    $pipelineFactory
+);
 
 // > создаем процесс-менеджер для конвеера
-$pipelineProcessManager = new \Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineProcessManager(
+$pipelineProcessManager = new \Gzhegow\Router\Package\Gzhegow\Pipeline\ProcessManager\ProcessManager(
     $pipelineFactory,
     $pipelineProcessor
 );
 
 // >>> создаем роутер
-$router = $routerFactory->newRouter(
+$router = new \Gzhegow\Router\Router(
+    $routerFactory,
     $routerCache,
     //
     $pipelineFactory,
     $pipelineProcessManager,
     //
-    $config
+    $routerConfig
 );
 
 // >>> вызываем функцию, которая загрузит кеш, и если его нет - выполнит регистрацию маршрутов и сохранение их в кэш (не обязательно)
@@ -468,7 +471,7 @@ _assert_call($fn, [], <<<HEREDOC
 "TEST 6"
 "[ CATCH ]" | "Gzhegow\Router\Exception\Exception\DispatchException" | "Unhandled exception occured during dispatch"
 "[ CATCH ]" | "Gzhegow\Router\Exception\Runtime\NotFoundException" | "Route not found: `/api/v1/not-found/not-found` / `GET`"
-"[ RESULT ]" | { NULL }
+"[ RESULT ]" | NULL
 ""
 HEREDOC
 );
