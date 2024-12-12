@@ -53,27 +53,11 @@ class RouterCache implements RouterCacheInterface
         } elseif ($this->config->cacheDirpath) {
             $cacheFilepath = "{$this->config->cacheDirpath}/{$this->config->cacheFilename}";
 
-            $before = error_reporting(0);
-            if (@is_file($cacheFilepath)) {
-                $content = @file_get_contents($cacheFilepath);
+            $cacheData = $this->fileGetCache($cacheFilepath);
 
-                if (false === $content) {
-                    throw new RuntimeException(
-                        'Unable to read file: ' . $cacheFilepath
-                    );
-                }
-
-                $cacheData = $content;
+            if (null !== $cacheData) {
                 $cacheData = $this->unserializeCacheData($cacheData);
-
-                if (false
-                    || (false === $cacheData)
-                    || (is_object($cacheData) && (get_class($cacheData) === '__PHP_Incomplete_Class'))
-                ) {
-                    $cacheData = null;
-                }
             }
-            error_reporting($before);
         }
 
         return $cacheData;
@@ -94,23 +78,7 @@ class RouterCache implements RouterCacheInterface
 
             $content = $this->serializeCacheData($cacheData);
 
-            $status = false;
-            $before = error_reporting(0);
-            try {
-                if (! @is_dir($this->config->cacheDirpath)) {
-                    @mkdir($this->config->cacheDirpath, 0775, true);
-                }
-                $status = @file_put_contents($cacheFilepath, $content);
-            }
-            catch ( \Throwable $e ) {
-            }
-            error_reporting($before);
-
-            if (! $status) {
-                throw new RuntimeException(
-                    'Unable to write file: ' . $cacheFilepath
-                );
-            }
+            $this->filePutCache($cacheFilepath, $content);
         }
 
         return $this;
@@ -128,22 +96,7 @@ class RouterCache implements RouterCacheInterface
         } elseif ($this->config->cacheDirpath) {
             $cacheFilepath = "{$this->config->cacheDirpath}/{$this->config->cacheFilename}";
 
-            $status = true;
-            $before = error_reporting(0);
-            try {
-                if (@is_file($cacheFilepath)) {
-                    $status = @unlink($cacheFilepath);
-                }
-            }
-            catch ( \Throwable $e ) {
-            }
-            error_reporting($before);
-
-            if (! $status) {
-                throw new RuntimeException(
-                    'Unable to delete file: ' . $cacheFilepath
-                );
-            }
+            $this->fileUnlinkCache($cacheFilepath);
         }
 
         return $this;
@@ -169,13 +122,127 @@ class RouterCache implements RouterCacheInterface
     }
 
 
-    protected function serializeCacheData(array $cacheData) // : false|string
+    protected function fileGetCache(string $file) : ?string
     {
-        return @serialize($cacheData);
+        $cacheData = null;
+
+        $before = error_reporting(0);
+
+        if (@is_file($file)) {
+            try {
+                $cacheData = @file_get_contents($file);
+            }
+            catch ( \Throwable $e ) {
+                $cacheData = false;
+            }
+
+            if (false === $cacheData) {
+                throw new RuntimeException(
+                    'Unable to read file: ' . $file
+                );
+            }
+        }
+
+        error_reporting($before);
+
+        return $cacheData;
     }
 
-    protected function unserializeCacheData(string $cacheData) // : false|array|__PHP_Incomplete_Class
+    protected function filePutCache(string $file, string $content) : bool
     {
-        return @unserialize($cacheData);
+        $before = error_reporting(0);
+
+        try {
+            if (! @is_dir($this->config->cacheDirpath)) {
+                @mkdir($this->config->cacheDirpath, 0775, true);
+            }
+
+            $status = @file_put_contents($file, $content);
+        }
+        catch ( \Throwable $e ) {
+            $status = false;
+        }
+
+        error_reporting($before);
+
+        if (! $status) {
+            throw new RuntimeException(
+                'Unable to write file: ' . $file
+            );
+        }
+
+        return $status;
+    }
+
+    protected function fileUnlinkCache(string $file) : bool
+    {
+        $status = true;
+
+        $before = error_reporting(0);
+
+        try {
+            if (@is_file($file)) {
+                $status = @unlink($file);
+            }
+        }
+        catch ( \Throwable $e ) {
+            $status = false;
+        }
+
+        if (! $status) {
+            throw new RuntimeException(
+                'Unable to delete file: ' . $file
+            );
+        }
+
+        error_reporting($before);
+
+        return $status;
+    }
+
+
+    protected function serializeCacheData(array $data) : ?string
+    {
+        $before = error_reporting(0);
+
+        try {
+            $result = @serialize($data);
+        }
+        catch ( \Throwable $e ) {
+            $result = false;
+        }
+
+        if (false === $result) {
+            throw new RuntimeException(
+                'Unable to serialize data: ' . Lib::php_dump($data)
+            );
+        }
+
+        error_reporting($before);
+
+        return $result;
+    }
+
+    protected function unserializeCacheData(string $data) : ?array
+    {
+        $before = error_reporting(0);
+
+        try {
+            $result = @unserialize($data);
+        }
+        catch ( \Throwable $e ) {
+            $result = false;
+        }
+
+        if (false
+            || (false === $result)
+            || (is_object($result) && (get_class($result) === '__PHP_Incomplete_Class'))
+        ) {
+            $result = null;
+        }
+
+        error_reporting($before);
+
+        return $result;
     }
 }
