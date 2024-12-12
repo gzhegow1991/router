@@ -25,11 +25,6 @@ class RouterCache implements RouterCacheInterface
      */
     protected $config;
 
-    /**
-     * @var object|\Psr\Cache\CacheItemInterface
-     */
-    protected $cacheAdapterItem;
-
 
     public function __construct(RouterCacheConfig $config)
     {
@@ -39,13 +34,12 @@ class RouterCache implements RouterCacheInterface
 
 
     /**
-     * @noinspection PhpFullyQualifiedNameUsageInspection
+     * @return \Psr\Cache\CacheItemInterface|null
      */
-    public function initCache() // : static
+    protected function getCacheAdapterItem() // : \Psr\Cache\CacheItemInterface
     {
-        if ($this->config->cacheMode !== static::CACHE_MODE_STORAGE) return $this;
-        if (! $this->config->cacheAdapter) return $this;
-        if ($this->cacheAdapterItem) return $this;
+        if (static::CACHE_MODE_STORAGE !== $this->config->cacheMode) return null;
+        if (null === $this->config->cacheAdapter) return null;
 
         try {
             $cacheItem = $this->config->cacheAdapter->getItem(__CLASS__);
@@ -54,113 +48,120 @@ class RouterCache implements RouterCacheInterface
             throw new RuntimeException($e->getMessage(), $e->getCode(), $e);
         }
 
-        $this->cacheAdapterItem = $cacheItem;
-
-        return $this;
+        return $cacheItem;
     }
+
 
     public function loadCache() : ?array
     {
-        $this->initCache();
+        if (static::CACHE_MODE_STORAGE !== $this->config->cacheMode) return null;
 
         $cacheData = null;
 
-        if ($this->config->cacheMode === static::CACHE_MODE_STORAGE) {
-            if ($this->config->cacheAdapter) {
-                try {
-                    if ($this->cacheAdapterItem->isHit()) {
-                        $cacheData = $this->cacheAdapterItem->get();
-                    }
+        if ($this->config->cacheAdapter) {
+            try {
+                $cacheItem = $this->getCacheAdapterItem();
+
+                if ($cacheItem->isHit()) {
+                    $cacheData = $cacheItem->get();
                 }
-                catch ( \Throwable $e ) {
-                }
-
-            } elseif ($this->config->cacheDirpath) {
-                $cacheFilepath = "{$this->config->cacheDirpath}/{$this->config->cacheFilename}";
-
-                $before = error_reporting(0);
-                if (@is_file($cacheFilepath)) {
-                    if (false !== ($content = @file_get_contents($cacheFilepath))) {
-                        $cacheData = $content;
-
-                    } else {
-                        throw new RuntimeException(
-                            'Unable to read file: ' . $cacheFilepath
-                        );
-                    }
-
-                    $cacheData = $this->unserializeCacheData($cacheData);
-
-                    if (false === $cacheData) {
-                        $cacheData = null;
-
-                    } elseif (get_class($cacheData) === '__PHP_Incomplete_Class') {
-                        $cacheData = null;
-                    }
-                }
-                error_reporting($before);
             }
+            catch ( \Throwable $e ) {
+            }
+
+        } elseif ($this->config->cacheDirpath) {
+            $cacheFilepath = "{$this->config->cacheDirpath}/{$this->config->cacheFilename}";
+
+            $before = error_reporting(0);
+            if (@is_file($cacheFilepath)) {
+                $content = @file_get_contents($cacheFilepath);
+
+                if (false === $content) {
+                    throw new RuntimeException(
+                        'Unable to read file: ' . $cacheFilepath
+                    );
+                }
+
+                $cacheData = $content;
+                $cacheData = $this->unserializeCacheData($cacheData);
+
+                if (false
+                    || (false === $cacheData)
+                    || (is_object($cacheData) && (get_class($cacheData) === '__PHP_Incomplete_Class'))
+                ) {
+                    $cacheData = null;
+                }
+            }
+            error_reporting($before);
         }
 
         return $cacheData;
     }
 
-    public function clearCache() // : static
-    {
-        if ($this->config->cacheMode === static::CACHE_MODE_STORAGE) {
-            if ($this->config->cacheAdapter) {
-                $cacheAdapter = $this->config->cacheAdapter;
-
-                $cacheAdapter->clear();
-
-            } elseif ($this->config->cacheDirpath) {
-                $cacheFilepath = "{$this->config->cacheDirpath}/{$this->config->cacheFilename}";
-
-                $before = error_reporting(0);
-                $status = true;
-                if (@is_file($cacheFilepath)) {
-                    $status = @unlink($cacheFilepath);
-                }
-                error_reporting($before);
-
-                if (! $status) {
-                    throw new RuntimeException(
-                        'Unable to delete file: ' . $cacheFilepath
-                    );
-                }
-            }
-        }
-
-        return $this;
-    }
-
     public function saveCache(array $cacheData) // : static
     {
-        $this->initCache();
+        if (static::CACHE_MODE_STORAGE !== $this->config->cacheMode) return $this;
 
-        if ($this->config->cacheMode === static::CACHE_MODE_STORAGE) {
-            if ($this->config->cacheAdapter) {
-                $this->cacheAdapterItem->set($cacheData);
+        if ($this->config->cacheAdapter) {
+            $cacheItem = $this->getCacheAdapterItem();
+            $cacheItem->set($cacheData);
 
-                $this->config->cacheAdapter->save($this->cacheAdapterItem);
+            $this->config->cacheAdapter->save($cacheItem);
 
-            } elseif ($this->config->cacheDirpath) {
-                $cacheFilepath = "{$this->config->cacheDirpath}/{$this->config->cacheFilename}";
+        } elseif ($this->config->cacheDirpath) {
+            $cacheFilepath = "{$this->config->cacheDirpath}/{$this->config->cacheFilename}";
 
-                $content = $this->serializeCacheData($cacheData);
+            $content = $this->serializeCacheData($cacheData);
 
-                $before = error_reporting(0);
+            $status = false;
+            $before = error_reporting(0);
+            try {
                 if (! @is_dir($this->config->cacheDirpath)) {
                     @mkdir($this->config->cacheDirpath, 0775, true);
                 }
                 $status = @file_put_contents($cacheFilepath, $content);
-                error_reporting($before);
+            }
+            catch ( \Throwable $e ) {
+            }
+            error_reporting($before);
 
-                if (! $status) {
-                    throw new RuntimeException(
-                        'Unable to write file: ' . $cacheFilepath
-                    );
+            if (! $status) {
+                throw new RuntimeException(
+                    'Unable to write file: ' . $cacheFilepath
+                );
+            }
+        }
+
+        return $this;
+    }
+
+    public function clearCache() // : static
+    {
+        if (static::CACHE_MODE_STORAGE !== $this->config->cacheMode) return $this;
+
+        if ($this->config->cacheAdapter) {
+            $cacheAdapter = $this->config->cacheAdapter;
+
+            $cacheAdapter->clear();
+
+        } elseif ($this->config->cacheDirpath) {
+            $cacheFilepath = "{$this->config->cacheDirpath}/{$this->config->cacheFilename}";
+
+            $status = true;
+            $before = error_reporting(0);
+            try {
+                if (@is_file($cacheFilepath)) {
+                    $status = @unlink($cacheFilepath);
                 }
+            }
+            catch ( \Throwable $e ) {
+            }
+            error_reporting($before);
+
+            if (! $status) {
+                throw new RuntimeException(
+                    'Unable to delete file: ' . $cacheFilepath
+                );
             }
         }
 
@@ -168,12 +169,12 @@ class RouterCache implements RouterCacheInterface
     }
 
 
-    protected function serializeCacheData($cacheData) // : false|string
+    protected function serializeCacheData(array $cacheData) // : false|string
     {
         return @serialize($cacheData);
     }
 
-    protected function unserializeCacheData($cacheData) // : false|array|__PHP_Incomplete_Class
+    protected function unserializeCacheData(string $cacheData) // : false|array|__PHP_Incomplete_Class
     {
         return @unserialize($cacheData);
     }
