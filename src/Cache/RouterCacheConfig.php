@@ -37,7 +37,7 @@ class RouterCacheConfig extends Config
      *
      * @var object|\Psr\Cache\CacheItemPoolInterface|null
      */
-    protected $cacheAdapter = null;
+    protected $cacheAdapter;
     /**
      * > путь для файлового кэша в случае отстутствия адаптера
      *

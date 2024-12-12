@@ -49,7 +49,7 @@ class RouterConfig extends Config
      *
      * @var HttpMethod|string
      */
-    protected $dispatchForceMethod = null;
+    protected $dispatchForceMethod;
     /**
      * > автоматически доставлять или убирать trailing-slash на этапе маршрутизации
      *
