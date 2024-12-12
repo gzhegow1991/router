@@ -7,6 +7,7 @@
 namespace Gzhegow\Router\Cache;
 
 use Gzhegow\Lib\Lib;
+use Gzhegow\Lib\Config\Config;
 use Gzhegow\Router\Config\AbstractConfig;
 use Gzhegow\Router\Exception\LogicException;
 
@@ -17,7 +18,7 @@ use Gzhegow\Router\Exception\LogicException;
  * @property string|null                                   $cacheDirpath
  * @property string|null                                   $cacheFilename
  */
-class RouterCacheConfig extends AbstractConfig
+class RouterCacheConfig extends Config
 {
     /**
      * > тип кеширования - кешировать или не использовать кэш
