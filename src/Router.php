@@ -152,7 +152,7 @@ class Router implements RouterInterface
      */
     public function cacheRemember($fn) // : static
     {
-        if ($this->cacheLoad()) {
+        if (null !== $this->cacheLoad()) {
             return $this;
         }
 
@@ -165,6 +165,7 @@ class Router implements RouterInterface
         return $this;
     }
 
+
     protected function cacheLoad() : bool
     {
         if ($this->isRouterChanged) {
@@ -175,25 +176,25 @@ class Router implements RouterInterface
 
         $cacheData = $this->routerCache->loadCache();
 
-        $status = (null !== $cacheData);
+        if (null === $cacheData) {
+            return false;
+        }
 
-        if ($status) {
-            $keys = [
-                'routeCollection'      => true,
-                'middlewareCollection' => true,
-                'fallbackCollection'   => true,
-                'patternCollection'    => true,
-                'routerNodeRoot'       => true,
-            ];
+        $keys = [
+            'routeCollection'      => true,
+            'middlewareCollection' => true,
+            'fallbackCollection'   => true,
+            'patternCollection'    => true,
+            'routerNodeRoot'       => true,
+        ];
 
-            foreach ( $keys as $key => $bool ) {
-                if (isset($cacheData[ $key ])) {
-                    $this->{$key} = $cacheData[ $key ];
-                }
+        foreach ( $keys as $key => $bool ) {
+            if (isset($cacheData[ $key ])) {
+                $this->{$key} = $cacheData[ $key ];
             }
         }
 
-        return $status;
+        return true;
     }
 
     protected function cacheSave() // : static
