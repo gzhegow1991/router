@@ -33,25 +33,6 @@ class RouterCache implements RouterCacheInterface
     }
 
 
-    /**
-     * @return \Psr\Cache\CacheItemInterface|null
-     */
-    protected function getCacheAdapterItem() // : \Psr\Cache\CacheItemInterface
-    {
-        if (static::CACHE_MODE_STORAGE !== $this->config->cacheMode) return null;
-        if (null === $this->config->cacheAdapter) return null;
-
-        try {
-            $cacheItem = $this->config->cacheAdapter->getItem(__CLASS__);
-        }
-        catch ( \Psr\Cache\InvalidArgumentException $e ) {
-            throw new RuntimeException($e->getMessage(), $e->getCode(), $e);
-        }
-
-        return $cacheItem;
-    }
-
-
     public function loadCache() : ?array
     {
         if (static::CACHE_MODE_STORAGE !== $this->config->cacheMode) return null;
@@ -60,7 +41,7 @@ class RouterCache implements RouterCacheInterface
 
         if ($this->config->cacheAdapter) {
             try {
-                $cacheItem = $this->getCacheAdapterItem();
+                $cacheItem = $this->cacheAdapterGetItem();
 
                 if ($cacheItem->isHit()) {
                     $cacheData = $cacheItem->get();
@@ -103,7 +84,7 @@ class RouterCache implements RouterCacheInterface
         if (static::CACHE_MODE_STORAGE !== $this->config->cacheMode) return $this;
 
         if ($this->config->cacheAdapter) {
-            $cacheItem = $this->getCacheAdapterItem();
+            $cacheItem = $this->cacheAdapterGetItem();
             $cacheItem->set($cacheData);
 
             $this->config->cacheAdapter->save($cacheItem);
@@ -166,6 +147,25 @@ class RouterCache implements RouterCacheInterface
         }
 
         return $this;
+    }
+
+
+    /**
+     * @return \Psr\Cache\CacheItemInterface|null
+     */
+    protected function cacheAdapterGetItem() // : \Psr\Cache\CacheItemInterface
+    {
+        if (static::CACHE_MODE_STORAGE !== $this->config->cacheMode) return null;
+        if (null === $this->config->cacheAdapter) return null;
+
+        try {
+            $cacheItem = $this->config->cacheAdapter->getItem(__CLASS__);
+        }
+        catch ( \Psr\Cache\InvalidArgumentException $e ) {
+            throw new RuntimeException($e->getMessage(), $e->getCode(), $e);
+        }
+
+        return $cacheItem;
     }
 
 
