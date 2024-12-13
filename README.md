@@ -92,11 +92,11 @@ function _assert_call(\Closure $fn, array $expectResult = [], string $expectOutp
 // >>> ЗАПУСКАЕМ!
 
 // > сначала всегда фабрика
-$routerFactory = new \Gzhegow\Router\RouterFactory();
+$factory = new \Gzhegow\Router\RouterFactory();
 
 // > создаем конфигурацию
-$routerConfig = new \Gzhegow\Router\RouterConfig();
-$routerConfig->configure(function (\Gzhegow\Router\RouterConfig $config) {
+$config = new \Gzhegow\Router\RouterConfig();
+$config->configure(function (\Gzhegow\Router\RouterConfig $config) {
     // >>> роутер
     $config->registerAllowObjectsAndClosures = false;
     $config->compileTrailingSlashMode = \Gzhegow\Router\Router::TRAILING_SLASH_AS_IS;
@@ -129,7 +129,7 @@ $routerConfig->configure(function (\Gzhegow\Router\RouterConfig $config) {
 
 // > создаем кеш роутера
 // > его задача сохранять маршруты в файл после того, как они будут скомпилированы и сохранены в виде дерева
-$routerCache = new \Gzhegow\Router\Cache\RouterCache($routerConfig->cache);
+$cache = new \Gzhegow\Router\Cache\RouterCache($config->cache);
 
 // > создаем фабрику для конвеера
 $pipelineFactory = new \Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineFactory();
@@ -147,13 +147,13 @@ $pipelineProcessManager = new \Gzhegow\Router\Package\Gzhegow\Pipeline\ProcessMa
 
 // > создаем роутер
 $router = new \Gzhegow\Router\Router(
-    $routerFactory,
-    $routerCache,
+    $factory,
+    $cache,
     //
     $pipelineFactory,
     $pipelineProcessManager,
     //
-    $routerConfig
+    $config
 );
 
 // > так можно очистить кэш
