@@ -58,9 +58,7 @@ class RouterCacheConfig extends Config
 
     public function validate() : void
     {
-        if ((null !== $this->cacheMode)
-            && ! isset(RouterCache::LIST_CACHE_MODE[ $this->cacheMode ])
-        ) {
+        if (! isset(RouterCache::LIST_CACHE_MODE[ $this->cacheMode ])) {
             throw new LogicException(
                 [
                     'The `cacheMode` should be one of: '

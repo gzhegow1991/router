@@ -64,7 +64,7 @@ class RouterConfig extends Config
     }
 
 
-    public function validate()
+    public function validate() : void
     {
         $this->cache->validate();
 
