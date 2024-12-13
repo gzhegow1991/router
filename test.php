@@ -42,15 +42,28 @@ set_exception_handler(function (\Throwable $e) {
 // > добавляем несколько функция для тестирования
 function _dump(...$values) : void
 {
-    echo implode(' | ', array_map([ \Gzhegow\Lib\Lib::class, 'debug_value' ], $values));
+    $lines = [];
+    foreach ( $values as $value ) {
+        $lines[] = \Gzhegow\Lib\Lib::debug_value($value);
+    }
+
+    echo implode(' | ', $lines) . PHP_EOL;
 }
 
-function _dump_ln(...$values) : void
+function _debug($value, ...$values) : void
 {
-    echo implode(' | ', array_map([ \Gzhegow\Lib\Lib::class, 'debug_value' ], $values)) . PHP_EOL;
+    $lines = [];
+    foreach ( $values as $value ) {
+        $lines[] = \Gzhegow\Lib\Lib::debug_type_id($value);
+    }
+
+    echo implode(' | ', $lines) . PHP_EOL;
 }
 
-function _assert_call(\Closure $fn, array $expectResult = [], string $expectOutput = null) : void
+function _assert_call(
+    \Closure $fn,
+    array $expectResult = [], string $expectOutput = null, float $expectMicrotime = null
+) : void
 {
     $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
 
@@ -62,6 +75,10 @@ function _assert_call(\Closure $fn, array $expectResult = [], string $expectOutp
 
     if (null !== $expectOutput) {
         $expect->output = $expectOutput;
+    }
+
+    if (null !== $expectMicrotime) {
+        $expect->microtime = $expectMicrotime;
     }
 
     $status = \Gzhegow\Lib\Lib::assert_call($trace, $fn, $expect, $error, STDOUT);
@@ -273,7 +290,7 @@ $router->cacheRemember(static function (\Gzhegow\Router\RouterInterface $router)
 // $route = $router->matchFirstByName('user.main');
 // $route = $router->matchFirstByTag('user');
 $fn = function () use ($router) {
-    _dump_ln('TEST 1');
+    _dump('TEST 1');
 
     $ids = [ 1, 2 ];
     $names = [ 'user.main' ];
@@ -281,30 +298,30 @@ $fn = function () use ($router) {
 
 
     $routes = $router->matchAllByIds($ids);
-    _dump_ln('[ RESULT ]', $routes);
+    _dump('[ RESULT ]', $routes);
 
 
     $batch = $router->matchAllByNames($names);
     foreach ( $batch as $i => $routes ) {
-        _dump_ln('[ RESULT ]', $i, $routes);
+        _dump('[ RESULT ]', $i, $routes);
     }
 
     $batch = $router->matchAllByTags($tags);
     foreach ( $batch as $i => $routes ) {
-        _dump_ln('[ RESULT ]', $i, $routes);
+        _dump('[ RESULT ]', $i, $routes);
     }
 
 
     $route = $router->matchFirstByIds($ids);
-    _dump_ln('[ RESULT ]', $route);
+    _dump('[ RESULT ]', $route);
 
     $route = $router->matchFirstByNames($names);
-    _dump_ln('[ RESULT ]', $route);
+    _dump('[ RESULT ]', $route);
 
     $route = $router->matchFirstByTags($tags);
-    _dump_ln('[ RESULT ]', $route);
+    _dump('[ RESULT ]', $route);
 
-    _dump('');
+    echo '';
 };
 _assert_call($fn, [], <<<HEREDOC
 "TEST 1"
@@ -321,7 +338,7 @@ HEREDOC
 // // > TEST
 // // > так можно искать маршруты с помощью нескольких фильтров (если указать массивы - они работают как логическое ИЛИ, тогда как сами фильтры работают через логическое И
 $fn = function () use ($router) {
-    _dump_ln('TEST 2');
+    _dump('TEST 2');
 
     $contract = \Gzhegow\Router\Contract\RouterMatchContract::from([
         // 'id'          => 1,
@@ -343,10 +360,10 @@ $fn = function () use ($router) {
     $routes = $router->matchByContract($contract);
 
     foreach ( $routes as $id => $route ) {
-        _dump_ln('[ RESULT ]', $id, $route);
+        _dump('[ RESULT ]', $id, $route);
     }
 
-    _dump('');
+    echo '';
 };
 _assert_call($fn, [], <<<HEREDOC
 "TEST 2"
@@ -359,7 +376,7 @@ HEREDOC
 // > TEST
 // > так можно сгенерировать ссылки для зарегистрированных маршрутов
 $fn = function () use ($router) {
-    _dump_ln('TEST 3');
+    _dump('TEST 3');
 
     $instances = [];
     $instances[ 'a' ] = $router->matchFirstByNames('user.main');
@@ -381,9 +398,9 @@ $fn = function () use ($router) {
     // > можно передать либо список объектов (instance of Route::class) и/или список строк (route `name`)
     $result = $router->urls($routes, $attributes);
 
-    _dump_ln('[ RESULT ]', $result);
+    _dump('[ RESULT ]', $result);
 
-    _dump('');
+    echo '';
 };
 _assert_call($fn, [], <<<HEREDOC
 "TEST 3"
@@ -395,15 +412,15 @@ HEREDOC
 // > TEST
 // > так можно запустить выполнение маршрута в вашем файле index.php, на который указывает apache2/nginx
 $fn = function () use ($router) {
-    _dump_ln('TEST 4');
+    _dump('TEST 4');
 
     $contract = \Gzhegow\Router\Contract\RouterDispatchContract::from([ 'GET', '/api/v1/user/1/main' ]);
 
     $result = $router->dispatch($contract);
 
-    _dump_ln('[ RESULT ]', $result);
+    _dump('[ RESULT ]', $result);
 
-    _dump('');
+    echo '';
 };
 _assert_call($fn, [], <<<HEREDOC
 "TEST 4"
@@ -422,15 +439,15 @@ HEREDOC
 // > TEST
 // > такого маршрута нет, запустится ранее указанный fallback-обработчик
 $fn = function () use ($router) {
-    _dump_ln('TEST 5');
+    _dump('TEST 5');
 
     $contract = \Gzhegow\Router\Contract\RouterDispatchContract::from([ 'GET', '/api/v1/user/not-found' ]);
 
     $result = $router->dispatch($contract);
 
-    _dump_ln('[ RESULT ]', $result);
+    _dump('[ RESULT ]', $result);
 
-    _dump('');
+    echo '';
 };
 _assert_call($fn, [], <<<HEREDOC
 "TEST 5"
@@ -449,7 +466,7 @@ HEREDOC
 // > TEST
 // > такого маршрута нет, и одновременно с этим обработчик ошибок не был задан (либо был задан, но вернул NULL, что трактуется как "обработка не удалась")
 $fn = function () use ($router) {
-    _dump_ln('TEST 6');
+    _dump('TEST 6');
 
     $contract = \Gzhegow\Router\Contract\RouterDispatchContract::from([ 'GET', '/api/v1/not-found/not-found' ]);
 
@@ -458,15 +475,15 @@ $fn = function () use ($router) {
         $result = $router->dispatch($contract);
     }
     catch ( \Gzhegow\Router\Exception\Exception\DispatchException $e ) {
-        _dump_ln('[ CATCH ]', get_class($e), $e->getMessage());
+        _dump('[ CATCH ]', get_class($e), $e->getMessage());
 
         foreach ( $e->getPreviousList() as $ee ) {
-            _dump_ln('[ CATCH ]', get_class($ee), $ee->getMessage());
+            _dump('[ CATCH ]', get_class($ee), $ee->getMessage());
         }
     }
-    _dump_ln('[ RESULT ]', $result);
+    _dump('[ RESULT ]', $result);
 
-    _dump('');
+    echo '';
 };
 _assert_call($fn, [], <<<HEREDOC
 "TEST 6"
@@ -480,15 +497,15 @@ HEREDOC
 // > TEST
 // > этот маршрут бросает \LogicException, запустятся DemoLogicExceptionFallback и DemoThrowableFallback
 $fn = function () use ($router) {
-    _dump_ln('TEST 7');
+    _dump('TEST 7');
 
     $contract = \Gzhegow\Router\Contract\RouterDispatchContract::from([ 'GET', '/api/v1/user/1/logic' ]);
 
     $result = $router->dispatch($contract);
 
-    _dump_ln('[ RESULT ]', $result);
+    _dump('[ RESULT ]', $result);
 
-    _dump('');
+    echo '';
 };
 _assert_call($fn, [], <<<HEREDOC
 "TEST 7"
@@ -508,15 +525,15 @@ HEREDOC
 // > TEST
 // > этот маршрут бросает \RuntimeException, запустятся DemoThrowableFallback и DemoRuntimeExceptionFallback
 $fn = function () use ($router) {
-    _dump_ln('TEST 8');
+    _dump('TEST 8');
 
     $contract = \Gzhegow\Router\Contract\RouterDispatchContract::from([ 'GET', '/api/v1/user/1/runtime' ]);
 
     $result = $router->dispatch($contract);
 
-    _dump_ln('[ RESULT ]', $result);
+    _dump('[ RESULT ]', $result);
 
-    _dump('');
+    echo '';
 };
 _assert_call($fn, [], <<<HEREDOC
 "TEST 8"
