@@ -77,15 +77,21 @@ class RouterConfig extends Config
 
         if (! isset(Router::LIST_TRAILING_SLASH[ $this->compileTrailingSlashMode ])) {
             throw new LogicException(
-                'The `compileTrailingSlashMode` should be one of: '
-                . implode(',', array_keys(Router::LIST_TRAILING_SLASH))
+                [
+                    'The `compileTrailingSlashMode` should be one of: '
+                    . implode(',', array_keys(Router::LIST_TRAILING_SLASH)),
+                    $this,
+                ]
             );
         }
 
         if (! isset(Router::LIST_TRAILING_SLASH[ $this->dispatchTrailingSlashMode ])) {
             throw new LogicException(
-                'The `dispatchTrailingSlashMode` should be one of: '
-                . implode(',', array_keys(Router::LIST_TRAILING_SLASH))
+                [
+                    'The `dispatchTrailingSlashMode` should be one of: '
+                    . implode(',', array_keys(Router::LIST_TRAILING_SLASH)),
+                    $this,
+                ]
             );
         }
     }

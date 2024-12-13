@@ -62,9 +62,11 @@ class RouterCacheConfig extends Config
             && ! isset(RouterCache::LIST_CACHE_MODE[ $this->cacheMode ])
         ) {
             throw new LogicException(
-                'The `cacheMode` should be one of: '
-                . implode('|', array_keys(RouterCache::LIST_CACHE_MODE))
-                . ' / ' . $this->cacheMode
+                [
+                    'The `cacheMode` should be one of: '
+                    . implode('|', array_keys(RouterCache::LIST_CACHE_MODE)),
+                    $this,
+                ]
             );
         }
 
@@ -74,7 +76,7 @@ class RouterCacheConfig extends Config
             throw new LogicException(
                 [
                     'The `cacheAdapter` should be instance of: ' . $class,
-                    $this->cacheAdapter,
+                    $this,
                 ]
             );
         }
@@ -85,7 +87,7 @@ class RouterCacheConfig extends Config
             throw new LogicException(
                 [
                     'The `cacheDirpath` should be valid directory path',
-                    $this->cacheDirpath,
+                    $this,
                 ]
             );
         }
@@ -94,7 +96,10 @@ class RouterCacheConfig extends Config
             && (null === Lib::parse_filename($this->cacheFilename))
         ) {
             throw new LogicException(
-                'The `cacheFilename` should be valid filename: ' . $this->cacheFilename
+                [
+                    'The `cacheFilename` should be valid filename',
+                    $this,
+                ]
             );
         }
     }
