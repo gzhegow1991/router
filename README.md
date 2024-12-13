@@ -67,7 +67,7 @@ function _dump(...$values) : void
     echo implode(' | ', $lines) . PHP_EOL;
 }
 
-function _debug($value, ...$values) : void
+function _debug(...$values) : void
 {
     $lines = [];
     foreach ( $values as $value ) {
