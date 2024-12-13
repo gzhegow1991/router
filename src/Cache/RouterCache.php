@@ -54,10 +54,13 @@ class RouterCache implements RouterCacheInterface
         } elseif ($this->config->cacheDirpath) {
             $cacheFilepath = "{$this->config->cacheDirpath}/{$this->config->cacheFilename}";
 
-            $cacheData = Lib::fs_file_get_contents($cacheFilepath);
+            $content = null;
+            if (is_file($cacheFilepath)) {
+                $content = Lib::fs_file_get_contents($cacheFilepath);
+            }
 
-            if (null !== $cacheData) {
-                $cacheData = Lib::php_unserialize($cacheData);
+            if (null !== $content) {
+                $cacheData = Lib::php_unserialize($content);
             }
         }
 
