@@ -60,32 +60,14 @@ function _debug(...$values) : void
     echo implode(' | ', $lines) . PHP_EOL;
 }
 
-function _assert_call(
-    \Closure $fn,
-    array $expectResult = [], string $expectOutput = null, float $expectMicrotime = null
+function _assert_output(
+    \Closure $fn, string $expect = null
 ) : void
 {
     $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
 
-    $expect = (object) [];
-
-    if (count($expectResult)) {
-        $expect->result = $expectResult[ 0 ];
-    }
-
-    if (null !== $expectOutput) {
-        $expect->output = $expectOutput;
-    }
-
-    if (null !== $expectMicrotime) {
-        $expect->microtime = $expectMicrotime;
-    }
-
-    $status = \Gzhegow\Lib\Lib::assert_call($trace, $fn, $expect, $error, STDOUT);
-
-    if (! $status) {
-        throw new \Gzhegow\Router\Exception\LogicException();
-    }
+    \Gzhegow\Lib\Lib::assert_stdout([ STDOUT ]);
+    \Gzhegow\Lib\Lib::assert_output($trace, $fn, $expect);
 }
 
 
@@ -323,7 +305,7 @@ $fn = function () use ($router) {
 
     echo '';
 };
-_assert_call($fn, [], <<<HEREDOC
+_assert_output($fn, <<<HEREDOC
 "TEST 1"
 "[ RESULT ]" | [ 1 => "{ object # Gzhegow\Router\Route\Route }", 2 => "{ object # Gzhegow\Router\Route\Route }" ]
 "[ RESULT ]" | 0 | [ 1 => "{ object # Gzhegow\Router\Route\Route }", 2 => "{ object # Gzhegow\Router\Route\Route }", 3 => "{ object # Gzhegow\Router\Route\Route }" ]
@@ -365,7 +347,7 @@ $fn = function () use ($router) {
 
     echo '';
 };
-_assert_call($fn, [], <<<HEREDOC
+_assert_output($fn, <<<HEREDOC
 "TEST 2"
 "[ RESULT ]" | 1 | { object # Gzhegow\Router\Route\Route }
 "[ RESULT ]" | 2 | { object # Gzhegow\Router\Route\Route }
@@ -402,7 +384,7 @@ $fn = function () use ($router) {
 
     echo '';
 };
-_assert_call($fn, [], <<<HEREDOC
+_assert_output($fn, <<<HEREDOC
 "TEST 3"
 "[ RESULT ]" | [ "a" => "/api/v1/user/1/main", "b" => "/api/v1/user/2/main", "c" => "/api/v1/user/3/main" ]
 ""
@@ -422,7 +404,7 @@ $fn = function () use ($router) {
 
     echo '';
 };
-_assert_call($fn, [], <<<HEREDOC
+_assert_output($fn, <<<HEREDOC
 "TEST 4"
 @before :: Gzhegow\Router\Handler\Demo\Middleware\DemoCorsMiddleware::__invoke
 @before :: Gzhegow\Pipeline\Handler\Demo\Middleware\Demo1stMiddleware::__invoke
@@ -449,7 +431,7 @@ $fn = function () use ($router) {
 
     echo '';
 };
-_assert_call($fn, [], <<<HEREDOC
+_assert_output($fn, <<<HEREDOC
 "TEST 5"
 @before :: Gzhegow\Router\Handler\Demo\Middleware\DemoCorsMiddleware::__invoke
 @before :: Gzhegow\Pipeline\Handler\Demo\Middleware\Demo1stMiddleware::__invoke
@@ -485,7 +467,7 @@ $fn = function () use ($router) {
 
     echo '';
 };
-_assert_call($fn, [], <<<HEREDOC
+_assert_output($fn, <<<HEREDOC
 "TEST 6"
 "[ CATCH ]" | "Gzhegow\Router\Exception\Exception\DispatchException" | "Unhandled exception occured during dispatch"
 "[ CATCH ]" | "Gzhegow\Router\Exception\Runtime\NotFoundException" | "Route not found: `/api/v1/not-found/not-found` / `GET`"
@@ -507,7 +489,7 @@ $fn = function () use ($router) {
 
     echo '';
 };
-_assert_call($fn, [], <<<HEREDOC
+_assert_output($fn, <<<HEREDOC
 "TEST 7"
 @before :: Gzhegow\Router\Handler\Demo\Middleware\DemoCorsMiddleware::__invoke
 @before :: Gzhegow\Pipeline\Handler\Demo\Middleware\Demo1stMiddleware::__invoke
@@ -535,7 +517,7 @@ $fn = function () use ($router) {
 
     echo '';
 };
-_assert_call($fn, [], <<<HEREDOC
+_assert_output($fn, <<<HEREDOC
 "TEST 8"
 @before :: Gzhegow\Router\Handler\Demo\Middleware\DemoCorsMiddleware::__invoke
 @before :: Gzhegow\Pipeline\Handler\Demo\Middleware\Demo1stMiddleware::__invoke
