@@ -4,12 +4,12 @@ namespace Gzhegow\Router;
 
 use Gzhegow\Lib\Config\Config;
 use Gzhegow\Router\Route\Struct\HttpMethod;
-use Gzhegow\Router\Cache\RouterCacheConfig;
+use Gzhegow\Router\Cache\CacheConfig;
 use Gzhegow\Router\Exception\LogicException;
 
 
 /**
- * @property RouterCacheConfig $cache
+ * @property CacheConfig       $cache
  *
  * @property bool              $registerAllowObjectsAndClosures
  * @property int               $compileTrailingSlashMode
@@ -20,7 +20,7 @@ use Gzhegow\Router\Exception\LogicException;
 class RouterConfig extends Config
 {
     /**
-     * @var RouterCacheConfig
+     * @var CacheConfig
      */
     protected $cache;
 
@@ -60,7 +60,7 @@ class RouterConfig extends Config
 
     public function __construct()
     {
-        $this->__sections[ 'cache' ] = $this->cache = new RouterCacheConfig();
+        $this->__sections[ 'cache' ] = $this->cache = new CacheConfig();
     }
 
 

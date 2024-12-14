@@ -3,7 +3,7 @@
 namespace Gzhegow\Router\Cache;
 
 
-interface RouterCacheInterface
+interface CacheInterface
 {
     public function loadCache() : ?array;
 

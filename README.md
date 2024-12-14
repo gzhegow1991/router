@@ -104,7 +104,7 @@ $config->configure(function (\Gzhegow\Router\RouterConfig $config) {
     $config->dispatchTrailingSlashMode = \Gzhegow\Router\Router::TRAILING_SLASH_AS_IS;
 
     // >>> кэш роутера
-    $config->cache->cacheMode = \Gzhegow\Router\Cache\RouterCache::CACHE_MODE_STORAGE;
+    $config->cache->cacheMode = \Gzhegow\Router\Cache\Cache::CACHE_MODE_STORAGE;
     //
     $cacheDir = __DIR__ . '/var/cache';
     $cacheNamespace = 'gzhegow.router';
@@ -128,7 +128,7 @@ $config->configure(function (\Gzhegow\Router\RouterConfig $config) {
 
 // > создаем кеш роутера
 // > его задача сохранять маршруты в файл после того, как они будут скомпилированы и сохранены в виде дерева
-$cache = new \Gzhegow\Router\Cache\RouterCache($config->cache);
+$cache = new \Gzhegow\Router\Cache\Cache($config->cache);
 
 // > создаем фабрику для конвеера
 $pipelineFactory = new \Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineFactory();

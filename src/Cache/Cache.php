@@ -10,7 +10,7 @@ use Gzhegow\Lib\Lib;
 use Gzhegow\Router\Exception\RuntimeException;
 
 
-class RouterCache implements RouterCacheInterface
+class Cache implements CacheInterface
 {
     const CACHE_MODE_NO_CACHE = 'NO_CACHE';
     const CACHE_MODE_STORAGE  = 'STORAGE';
@@ -22,12 +22,12 @@ class RouterCache implements RouterCacheInterface
 
 
     /**
-     * @var RouterCacheConfig
+     * @var CacheConfig
      */
     protected $config;
 
 
-    public function __construct(RouterCacheConfig $config)
+    public function __construct(CacheConfig $config)
     {
         $this->config = $config;
         $this->config->validate();

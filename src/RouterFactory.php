@@ -3,7 +3,7 @@
 namespace Gzhegow\Router;
 
 use Gzhegow\Router\Route\Route;
-use Gzhegow\Router\Node\RouterNode;
+use Gzhegow\Router\Node\Node;
 use Gzhegow\Router\Route\RouteGroup;
 use Gzhegow\Router\Route\RouteBlueprint;
 use Gzhegow\Router\Collection\RouteCollection;
@@ -35,9 +35,9 @@ class RouterFactory implements RouterFactoryInterface
     }
 
 
-    public function newRouterNode() : RouterNode
+    public function newRouterNode() : Node
     {
-        return new RouterNode();
+        return new Node();
     }
 
 

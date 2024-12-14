@@ -3,7 +3,7 @@
 namespace Gzhegow\Router\Node;
 
 
-class RouterNode implements \Serializable
+class Node implements \Serializable
 {
     /**
      * @var string
@@ -11,11 +11,11 @@ class RouterNode implements \Serializable
     public $part;
 
     /**
-     * @var array<string, RouterNode>
+     * @var array<string, Node>
      */
     public $childrenByPart = [];
     /**
-     * @var array<string, RouterNode>
+     * @var array<string, Node>
      */
     public $childrenByRegex = [];
 

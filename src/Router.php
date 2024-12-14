@@ -9,7 +9,7 @@ namespace Gzhegow\Router;
 use Gzhegow\Lib\Lib;
 use Gzhegow\Router\Route\Route;
 use Gzhegow\Router\Pattern\Pattern;
-use Gzhegow\Router\Node\RouterNode;
+use Gzhegow\Router\Node\Node;
 use Gzhegow\Router\Route\Struct\Tag;
 use Gzhegow\Router\Route\RouteGroup;
 use Gzhegow\Router\Route\Struct\Path;
@@ -17,7 +17,7 @@ use Gzhegow\Router\Route\RouteBlueprint;
 use Gzhegow\Router\Exception\LogicException;
 use Gzhegow\Router\Exception\RuntimeException;
 use Gzhegow\Router\Collection\RouteCollection;
-use Gzhegow\Router\Cache\RouterCacheInterface;
+use Gzhegow\Router\Cache\CacheInterface;
 use Gzhegow\Router\Collection\PatternCollection;
 use Gzhegow\Router\Contract\RouterMatchContract;
 use Gzhegow\Router\Collection\FallbackCollection;
@@ -67,7 +67,7 @@ class Router implements RouterInterface
     protected $config;
 
     /**
-     * @var RouterCacheInterface
+     * @var CacheInterface
      */
     protected $routerCache;
 
@@ -89,7 +89,7 @@ class Router implements RouterInterface
     protected $routeCollection;
 
     /**
-     * @var RouterNode
+     * @var Node
      */
     protected $routerNodeRoot;
     /**
@@ -105,7 +105,7 @@ class Router implements RouterInterface
 
     public function __construct(
         RouterFactoryInterface $routerFactory,
-        RouterCacheInterface $routerCache,
+        CacheInterface $routerCache,
         //
         PipelineFactoryInterface $pipelineFactory,
         ProcessManagerInterface $pipelineProcessManager,
@@ -152,7 +152,7 @@ class Router implements RouterInterface
      */
     public function cacheRemember($fn) // : static
     {
-        if (null !== $this->cacheLoad()) {
+        if ($this->cacheLoad()) {
             return $this;
         }
 
@@ -175,7 +175,6 @@ class Router implements RouterInterface
         }
 
         $cacheData = $this->routerCache->loadCache();
-
         if (null === $cacheData) {
             return false;
         }
