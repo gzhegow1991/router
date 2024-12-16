@@ -7,7 +7,7 @@
 namespace Gzhegow\Router\Core\Cache;
 
 use Gzhegow\Lib\Lib;
-use Gzhegow\Router\Core\Exception\RuntimeException;
+use Gzhegow\Router\Exception\RuntimeException;
 
 
 class Cache implements CacheInterface

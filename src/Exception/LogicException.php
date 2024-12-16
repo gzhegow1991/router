@@ -1,6 +1,6 @@
 <?php
 
-namespace Gzhegow\Router\Core\Exception;
+namespace Gzhegow\Router\Exception;
 
 use Gzhegow\Lib\Exception\LogicException as LogicExceptionBase;
 

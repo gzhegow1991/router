@@ -3,7 +3,7 @@
 namespace Gzhegow\Router\Core\Contract;
 
 use Gzhegow\Lib\Lib;
-use Gzhegow\Router\Core\Exception\LogicException;
+use Gzhegow\Router\Exception\LogicException;
 
 
 class RouterMatchContract

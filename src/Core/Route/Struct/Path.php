@@ -4,7 +4,7 @@ namespace Gzhegow\Router\Core\Route\Struct;
 
 use Gzhegow\Lib\Lib;
 use Gzhegow\Router\Core\Router;
-use Gzhegow\Router\Core\Exception\LogicException;
+use Gzhegow\Router\Exception\LogicException;
 
 
 class Path

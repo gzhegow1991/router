@@ -4,7 +4,7 @@ namespace Gzhegow\Router\Core\Pattern;
 
 use Gzhegow\Lib\Lib;
 use Gzhegow\Router\Core\Router;
-use Gzhegow\Router\Core\Exception\LogicException;
+use Gzhegow\Router\Exception\LogicException;
 
 
 class Pattern implements \Serializable

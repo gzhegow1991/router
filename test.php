@@ -456,7 +456,7 @@ $fn = function () use ($router) {
     try {
         $result = $router->dispatch($contract);
     }
-    catch ( \Gzhegow\Router\Core\Exception\Exception\DispatchException $e ) {
+    catch ( \Gzhegow\Router\Exception\Exception\DispatchException $e ) {
         _dump('[ CATCH ]', get_class($e), $e->getMessage());
 
         foreach ( $e->getPreviousList() as $ee ) {
@@ -469,8 +469,8 @@ $fn = function () use ($router) {
 };
 _assert_output($fn, <<<HEREDOC
 "TEST 6"
-"[ CATCH ]" | "Gzhegow\Router\Core\Exception\Exception\DispatchException" | "Unhandled exception occured during dispatch"
-"[ CATCH ]" | "Gzhegow\Router\Core\Exception\Runtime\NotFoundException" | "Route not found: `/api/v1/not-found/not-found` / `GET`"
+"[ CATCH ]" | "Gzhegow\Router\Exception\Exception\DispatchException" | "Unhandled exception occured during dispatch"
+"[ CATCH ]" | "Gzhegow\Router\Exception\Runtime\NotFoundException" | "Route not found: `/api/v1/not-found/not-found` / `GET`"
 "[ RESULT ]" | NULL
 ""
 HEREDOC

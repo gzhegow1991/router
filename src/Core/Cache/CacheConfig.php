@@ -9,7 +9,7 @@ namespace Gzhegow\Router\Core\Cache;
 use Gzhegow\Lib\Lib;
 use Gzhegow\Lib\Config\Config;
 use Gzhegow\Router\Core\Config\AbstractConfig;
-use Gzhegow\Router\Core\Exception\LogicException;
+use Gzhegow\Router\Exception\LogicException;
 
 
 /**

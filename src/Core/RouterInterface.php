@@ -8,7 +8,7 @@ use Gzhegow\Router\Core\Route\RouteGroup;
 use Gzhegow\Router\Core\Route\RouteBlueprint;
 use Gzhegow\Router\Core\Contract\RouterMatchContract;
 use Gzhegow\Router\Core\Contract\RouterDispatchContract;
-use Gzhegow\Router\Core\Exception\Exception\DispatchException;
+use Gzhegow\Router\Exception\Exception\DispatchException;
 use Gzhegow\Router\Core\Handler\Fallback\GenericHandlerFallback;
 use Gzhegow\Router\Core\Handler\Middleware\GenericHandlerMiddleware;
 

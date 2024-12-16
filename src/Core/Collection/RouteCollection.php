@@ -3,7 +3,7 @@
 namespace Gzhegow\Router\Core\Collection;
 
 use Gzhegow\Router\Core\Route\Route;
-use Gzhegow\Router\Core\Exception\RuntimeException;
+use Gzhegow\Router\Exception\RuntimeException;
 
 
 class RouteCollection

@@ -5,7 +5,7 @@ namespace Gzhegow\Router\Core;
 use Gzhegow\Lib\Config\Config;
 use Gzhegow\Router\Core\Route\Struct\HttpMethod;
 use Gzhegow\Router\Core\Cache\CacheConfig;
-use Gzhegow\Router\Core\Exception\LogicException;
+use Gzhegow\Router\Exception\LogicException;
 
 
 /**
