@@ -1,6 +1,6 @@
 <?php
 
-namespace Gzhegow\Router\Core\Handler\Demo\Controller;
+namespace Gzhegow\Router\Demo\Handler\Controller;
 
 class DemoController
 {

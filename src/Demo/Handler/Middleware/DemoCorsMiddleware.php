@@ -1,6 +1,6 @@
 <?php
 
-namespace Gzhegow\Router\Core\Handler\Demo\Middleware;
+namespace Gzhegow\Router\Demo\Handler\Middleware;
 
 use Gzhegow\Router\Core\Handler\Middleware\CorsMiddleware;
 

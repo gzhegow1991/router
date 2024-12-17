@@ -7,5 +7,4 @@ use Gzhegow\Pipeline\Handler\Action\GenericHandlerAction as GenericHandlerAction
 
 class GenericHandlerAction extends GenericHandlerActionBase
 {
-
 }

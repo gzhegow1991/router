@@ -179,16 +179,16 @@ $router->cacheRemember(static function (\Gzhegow\Router\Core\RouterInterface $ro
         // > подключаем поставляемый middleware-посредник для CORS-заголовков
         // > в поставляемом посреднике режим "разрешить всё", если нужны тонкие настройки - стоит наследовать класс или написать свой
         ->middlewares([
-            '\Gzhegow\Router\Core\Handler\Demo\Middleware\DemoCorsMiddleware',
-            '\Gzhegow\Router\Core\Handler\Demo\Middleware\Demo1stMiddleware',
-            '\Gzhegow\Router\Core\Handler\Demo\Middleware\Demo2ndMiddleware',
+            '\Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware',
+            '\Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware',
+            '\Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware',
         ])
         //
         // > этот fallback-обработчик написан обрабатывать любые \Throwable, превращая их строку текста
         ->fallbacks([
-            '\Gzhegow\Router\Core\Handler\Demo\Fallback\DemoRuntimeExceptionFallback',
-            '\Gzhegow\Router\Core\Handler\Demo\Fallback\DemoLogicExceptionFallback',
-            '\Gzhegow\Router\Core\Handler\Demo\Fallback\DemoThrowableFallback',
+            '\Gzhegow\Router\Demo\Handler\Fallback\DemoRuntimeExceptionFallback',
+            '\Gzhegow\Router\Demo\Handler\Fallback\DemoLogicExceptionFallback',
+            '\Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback',
         ])
         //
         // регистрируем группу
@@ -198,7 +198,7 @@ $router->cacheRemember(static function (\Gzhegow\Router\Core\RouterInterface $ro
             //     ->route(
             //         $path = '/api/v1/user/{id}/main',
             //         $httpMethods = [ 'GET' ],
-            //         $action = '\Gzhegow\Router\Core\Handler\Demo\Action\DemoCorsAction',
+            //         $action = '\Gzhegow\Router\Demo\Handler\Action\DemoCorsAction',
             //         $name = 'user.main',
             //         $tags = [ 'user' ]
             //     )
@@ -207,63 +207,63 @@ $router->cacheRemember(static function (\Gzhegow\Router\Core\RouterInterface $ro
             // ;
 
             // > можно указывать теги и поведение и для конкретного роута, при этом если такие же поведения уже были зарегистрированы раньше, то повторно они не добавятся
-            // $group->route('/api/v1/user/{id}/main', 'GET', '\Gzhegow\Router\Core\Handler\Demo\Action\DemoCorsAction')
+            // $group->route('/api/v1/user/{id}/main', 'GET', '\Gzhegow\Router\Demo\Handler\Action\DemoCorsAction')
             //     ->name('user.main')
             //     ->tags([ 'user' ])
             //     ->middlewares([
-            //         '\Gzhegow\Router\Core\Handler\Demo\Middleware\DemoCorsMiddleware',
-            //         '\Gzhegow\Router\Core\Handler\Demo\Middleware\Demo1stMiddleware',
-            //         '\Gzhegow\Router\Core\Handler\Demo\Middleware\Demo2ndMiddleware',
+            //         '\Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware',
+            //         '\Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware',
+            //         '\Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware',
             //     ])
             //     ->fallbacks([
-            //         '\Gzhegow\Router\Core\Handler\Demo\Fallback\DemoRuntimeExceptionFallback',
-            //         '\Gzhegow\Router\Core\Handler\Demo\Fallback\DemoLogicExceptionFallback',
-            //         '\Gzhegow\Router\Core\Handler\Demo\Fallback\DemoThrowableFallback',
+            //         '\Gzhegow\Router\Demo\Handler\Fallback\DemoRuntimeExceptionFallback',
+            //         '\Gzhegow\Router\Demo\Handler\Fallback\DemoLogicExceptionFallback',
+            //         '\Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback',
             //     ])
             // ;
 
-            $group->route('/api/v1/user/{id}/main', 'GET', [ '\Gzhegow\Router\Core\Handler\Demo\Controller\DemoController', 'mainGet' ], 'user.main');
+            $group->route('/api/v1/user/{id}/main', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'mainGet' ], 'user.main');
             // > это же имя мы уже использовали выше, однако `path` совпадает и так можно
-            $group->route('/api/v1/user/{id}/main', 'POST', [ '\Gzhegow\Router\Core\Handler\Demo\Controller\DemoController', 'mainPost' ], 'user.main');
-            $group->route('/api/v1/user/{id}/main', 'OPTIONS', '\Gzhegow\Router\Core\Handler\Demo\Action\DemoCorsAction', 'user.main');
+            $group->route('/api/v1/user/{id}/main', 'POST', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'mainPost' ], 'user.main');
+            $group->route('/api/v1/user/{id}/main', 'OPTIONS', '\Gzhegow\Router\Demo\Handler\Action\DemoCorsAction', 'user.main');
 
             // > можно задавать группу в группе, метод ->register() передаст все роуты в родительскую группу и соединит групповые настройки с основными
             $group->group()
                 ->name('user.main')
                 ->path('/api/v1/user/{id}')
                 ->register(static function (\Gzhegow\Router\Core\Route\RouteGroup $group) {
-                    $group->route('/logic', 'GET', [ '\Gzhegow\Router\Core\Handler\Demo\Controller\DemoController', 'logic' ], 'user.logic');
-                    $group->route('/runtime', 'GET', [ '\Gzhegow\Router\Core\Handler\Demo\Controller\DemoController', 'runtime' ], 'user.runtime');
+                    $group->route('/logic', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'logic' ], 'user.logic');
+                    $group->route('/runtime', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'runtime' ], 'user.runtime');
                 })
             ;
         })
     ;
 
     // > можно добавлять маршруты и без групп (в главную группу)
-    // $router->route('/api/v1/user/{id}/main', 'GET', [ '\Gzhegow\Router\Core\Handler\Demo\Controller\DemoController', 'mainGet' ], 'user.main');
+    // $router->route('/api/v1/user/{id}/main', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'mainGet' ], 'user.main');
 
     // > можно добавлять роуты на основе "чертежа" (это неявно используется во всех остальных способах)
     // $blueprint = $router->blueprint()
     //     ->path('/api/v1/user/{id}/main')
     //     ->httpMethod('GET')
-    //     ->action([ '\Gzhegow\Router\Core\Handler\Demo\Controller\DemoController', 'main' ])
+    //     ->action([ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'main' ])
     // ;
     // $router->addRoute($blueprint);
 
     // > добавляет middleware-посредник по пути (они отработают даже если маршрут не найден, но путь начинался с указанного)
     // > будьте внимательны, посредники отрабатывают в той последовательности, в которой заданы, если задать их до группы, то и отработают они раньше
-    $router->middlewareOnPath('/api/v1/user', '\Gzhegow\Router\Core\Handler\Demo\Middleware\DemoCorsMiddleware');
-    $router->middlewareOnPath('/api/v1/user', '\Gzhegow\Router\Core\Handler\Demo\Middleware\Demo1stMiddleware');
-    $router->middlewareOnPath('/api/v1/user', '\Gzhegow\Router\Core\Handler\Demo\Middleware\Demo2ndMiddleware');
+    $router->middlewareOnPath('/api/v1/user', '\Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware');
+    $router->middlewareOnPath('/api/v1/user', '\Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware');
+    $router->middlewareOnPath('/api/v1/user', '\Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware');
     // // > можно привязывать посредники так же по тегу, теги в свою очередь привязывать к маршрутам
-    // $router->middlewareOnTag('user', '\Gzhegow\Router\Core\Handler\Demo\Middleware\DemoCorsMiddleware');
+    // $router->middlewareOnTag('user', '\Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware');
 
     // > добавляет fallback-обработчик по пути (если во время действия будет брошено исключение или роута не будет - запустится это действие)
     // > несколько fallback-обработчиков запустятся один за другим, пока какой-либо из них не вернет not-NULL результат, и если ни один - будет брошено \Gzhegow\Pipeline\PipelineException
     // > будьте внимательны, fallback-обработчики отрабатывают в той последовательности, в которой заданы, если задать их до группы, то и отработают они раньше
-    $router->fallbackOnPath('/api/v1/user', '\Gzhegow\Router\Core\Handler\Demo\Fallback\DemoThrowableFallback');
+    $router->fallbackOnPath('/api/v1/user', '\Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback');
     // // > можно привязывать fallback-обработчики так же по тегу, теги в свою очередь привязывать к маршрутам
-    // $router->fallbackOnTag('user', '\Gzhegow\Router\Core\Handler\Demo\Fallback\DemoThrowableFallback');
+    // $router->fallbackOnTag('user', '\Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback');
 
     // > коммитим указанные выше роуты - это скомпилирует роуты (при компиляции роуты индексируются для быстрого поиска)
     $router->commit();
@@ -410,13 +410,13 @@ $fn = function () use ($router) {
 };
 _assert_output($fn, <<<HEREDOC
 "TEST 4"
-@before :: Gzhegow\Router\Core\Handler\Demo\Middleware\DemoCorsMiddleware::__invoke
-@before :: Gzhegow\Pipeline\Handler\Demo\Middleware\Demo1stMiddleware::__invoke
-@before :: Gzhegow\Pipeline\Handler\Demo\Middleware\Demo2ndMiddleware::__invoke
-Gzhegow\Router\Core\Handler\Demo\Controller\DemoController::mainGet
-@after :: Gzhegow\Pipeline\Handler\Demo\Middleware\Demo2ndMiddleware::__invoke
-@after :: Gzhegow\Pipeline\Handler\Demo\Middleware\Demo1stMiddleware::__invoke
-@after :: Gzhegow\Router\Core\Handler\Demo\Middleware\DemoCorsMiddleware::__invoke
+@before :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
+@before :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
+@before :: Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware::__invoke
+Gzhegow\Router\Demo\Handler\Controller\DemoController::mainGet
+@after :: Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware::__invoke
+@after :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
+@after :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
 "[ RESULT ]" | 1
 ""
 HEREDOC
@@ -437,14 +437,14 @@ $fn = function () use ($router) {
 };
 _assert_output($fn, <<<HEREDOC
 "TEST 5"
-@before :: Gzhegow\Router\Core\Handler\Demo\Middleware\DemoCorsMiddleware::__invoke
-@before :: Gzhegow\Pipeline\Handler\Demo\Middleware\Demo1stMiddleware::__invoke
-@before :: Gzhegow\Pipeline\Handler\Demo\Middleware\Demo2ndMiddleware::__invoke
-Gzhegow\Pipeline\Handler\Demo\Fallback\DemoThrowableFallback::__invoke
-@after :: Gzhegow\Pipeline\Handler\Demo\Middleware\Demo2ndMiddleware::__invoke
-@after :: Gzhegow\Pipeline\Handler\Demo\Middleware\Demo1stMiddleware::__invoke
-@after :: Gzhegow\Router\Core\Handler\Demo\Middleware\DemoCorsMiddleware::__invoke
-"[ RESULT ]" | "Gzhegow\Pipeline\Handler\Demo\Fallback\DemoThrowableFallback::__invoke result."
+@before :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
+@before :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
+@before :: Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware::__invoke
+Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback::__invoke
+@after :: Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware::__invoke
+@after :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
+@after :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
+"[ RESULT ]" | "Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback::__invoke result."
 ""
 HEREDOC
 );
@@ -495,15 +495,15 @@ $fn = function () use ($router) {
 };
 _assert_output($fn, <<<HEREDOC
 "TEST 7"
-@before :: Gzhegow\Router\Core\Handler\Demo\Middleware\DemoCorsMiddleware::__invoke
-@before :: Gzhegow\Pipeline\Handler\Demo\Middleware\Demo1stMiddleware::__invoke
-@before :: Gzhegow\Pipeline\Handler\Demo\Middleware\Demo2ndMiddleware::__invoke
-Gzhegow\Router\Core\Handler\Demo\Controller\DemoController::logic
-Gzhegow\Pipeline\Handler\Demo\Fallback\DemoLogicExceptionFallback::__invoke
-@after :: Gzhegow\Pipeline\Handler\Demo\Middleware\Demo2ndMiddleware::__invoke
-@after :: Gzhegow\Pipeline\Handler\Demo\Middleware\Demo1stMiddleware::__invoke
-@after :: Gzhegow\Router\Core\Handler\Demo\Middleware\DemoCorsMiddleware::__invoke
-"[ RESULT ]" | "Gzhegow\Pipeline\Handler\Demo\Fallback\DemoLogicExceptionFallback::__invoke result."
+@before :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
+@before :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
+@before :: Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware::__invoke
+Gzhegow\Router\Demo\Handler\Controller\DemoController::logic
+Gzhegow\Router\Demo\Handler\Fallback\DemoLogicExceptionFallback::__invoke
+@after :: Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware::__invoke
+@after :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
+@after :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
+"[ RESULT ]" | "Gzhegow\Router\Demo\Handler\Fallback\DemoLogicExceptionFallback::__invoke result."
 ""
 HEREDOC
 );
@@ -523,15 +523,15 @@ $fn = function () use ($router) {
 };
 _assert_output($fn, <<<HEREDOC
 "TEST 8"
-@before :: Gzhegow\Router\Core\Handler\Demo\Middleware\DemoCorsMiddleware::__invoke
-@before :: Gzhegow\Pipeline\Handler\Demo\Middleware\Demo1stMiddleware::__invoke
-@before :: Gzhegow\Pipeline\Handler\Demo\Middleware\Demo2ndMiddleware::__invoke
-Gzhegow\Router\Core\Handler\Demo\Controller\DemoController::runtime
-Gzhegow\Pipeline\Handler\Demo\Fallback\DemoRuntimeExceptionFallback::__invoke
-@after :: Gzhegow\Pipeline\Handler\Demo\Middleware\Demo2ndMiddleware::__invoke
-@after :: Gzhegow\Pipeline\Handler\Demo\Middleware\Demo1stMiddleware::__invoke
-@after :: Gzhegow\Router\Core\Handler\Demo\Middleware\DemoCorsMiddleware::__invoke
-"[ RESULT ]" | "Gzhegow\Pipeline\Handler\Demo\Fallback\DemoRuntimeExceptionFallback::__invoke result."
+@before :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
+@before :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
+@before :: Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware::__invoke
+Gzhegow\Router\Demo\Handler\Controller\DemoController::runtime
+Gzhegow\Router\Demo\Handler\Fallback\DemoRuntimeExceptionFallback::__invoke
+@after :: Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware::__invoke
+@after :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
+@after :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
+"[ RESULT ]" | "Gzhegow\Router\Demo\Handler\Fallback\DemoRuntimeExceptionFallback::__invoke result."
 ""
 HEREDOC
 );
