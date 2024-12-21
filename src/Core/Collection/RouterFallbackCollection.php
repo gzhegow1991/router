@@ -7,7 +7,7 @@ use Gzhegow\Router\Core\Route\Struct\Path;
 use Gzhegow\Router\Core\Handler\Fallback\GenericHandlerFallback;
 
 
-class FallbackCollection
+class RouterFallbackCollection
 {
     /**
      * @var int

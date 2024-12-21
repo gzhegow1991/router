@@ -5,7 +5,7 @@ namespace Gzhegow\Router\Package\Gzhegow\Pipeline;
 use Gzhegow\Pipeline\PipelineFactory as PipelineFactoryBase;
 
 
-class PipelineFactory extends PipelineFactoryBase
-    implements PipelineFactoryInterface
+class RouterPipelineFactory extends PipelineFactoryBase
+    implements RouterPipelineFactoryInterface
 {
 }

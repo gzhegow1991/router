@@ -6,7 +6,7 @@ use Gzhegow\Router\Core\Route\Route;
 use Gzhegow\Router\Exception\RuntimeException;
 
 
-class RouteCollection
+class RouterRouteCollection
 {
     /**
      * @var int

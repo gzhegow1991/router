@@ -3,41 +3,41 @@
 namespace Gzhegow\Router\Core;
 
 use Gzhegow\Router\Core\Route\Route;
-use Gzhegow\Router\Core\Node\Node;
+use Gzhegow\Router\Core\Node\RouterNode;
 use Gzhegow\Router\Core\Route\RouteGroup;
 use Gzhegow\Router\Core\Route\RouteBlueprint;
-use Gzhegow\Router\Core\Collection\RouteCollection;
-use Gzhegow\Router\Core\Collection\PatternCollection;
-use Gzhegow\Router\Core\Collection\FallbackCollection;
-use Gzhegow\Router\Core\Collection\MiddlewareCollection;
+use Gzhegow\Router\Core\Collection\RouterRouteCollection;
+use Gzhegow\Router\Core\Collection\RouterPatternCollection;
+use Gzhegow\Router\Core\Collection\RouterFallbackCollection;
+use Gzhegow\Router\Core\Collection\RouterMiddlewareCollection;
 
 
 class RouterFactory implements RouterFactoryInterface
 {
-    public function newRouteCollection() : RouteCollection
+    public function newRouteCollection() : RouterRouteCollection
     {
-        return new RouteCollection();
+        return new RouterRouteCollection();
     }
 
-    public function newPatternCollection() : PatternCollection
+    public function newPatternCollection() : RouterPatternCollection
     {
-        return new PatternCollection();
+        return new RouterPatternCollection();
     }
 
-    public function newMiddlewareCollection() : MiddlewareCollection
+    public function newMiddlewareCollection() : RouterMiddlewareCollection
     {
-        return new MiddlewareCollection();
+        return new RouterMiddlewareCollection();
     }
 
-    public function newFallbackCollection() : FallbackCollection
+    public function newFallbackCollection() : RouterFallbackCollection
     {
-        return new FallbackCollection();
+        return new RouterFallbackCollection();
     }
 
 
-    public function newRouterNode() : Node
+    public function newRouterNode() : RouterNode
     {
-        return new Node();
+        return new RouterNode();
     }
 
 

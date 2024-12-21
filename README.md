@@ -61,16 +61,6 @@ set_exception_handler(function (\Throwable $e) {
 
 
 // > добавляем несколько функция для тестирования
-function _dump(...$values) : void
-{
-    $lines = [];
-    foreach ( $values as $value ) {
-        $lines[] = \Gzhegow\Lib\Lib::debug_value($value);
-    }
-
-    echo implode(' | ', $lines) . PHP_EOL;
-}
-
 function _debug(...$values) : void
 {
     $lines = [];
@@ -81,13 +71,32 @@ function _debug(...$values) : void
     echo implode(' | ', $lines) . PHP_EOL;
 }
 
+function _dump(...$values) : void
+{
+    $lines = [];
+    foreach ( $values as $value ) {
+        $lines[] = \Gzhegow\Lib\Lib::debug_value($value);
+    }
+
+    echo implode(' | ', $lines) . PHP_EOL;
+}
+
+function _dump_array($value, int $maxLevel = null, bool $multiline = false) : void
+{
+    $content = $multiline
+        ? \Gzhegow\Lib\Lib::debug_array_multiline($value, $maxLevel)
+        : \Gzhegow\Lib\Lib::debug_array($value, $maxLevel);
+
+    echo $content . PHP_EOL;
+}
+
 function _assert_output(
     \Closure $fn, string $expect = null
 ) : void
 {
     $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
 
-    \Gzhegow\Lib\Lib::assert_stdout([ STDOUT ]);
+    \Gzhegow\Lib\Lib::assert_resource_static(STDOUT);
     \Gzhegow\Lib\Lib::assert_output($trace, $fn, $expect);
 }
 
@@ -108,7 +117,7 @@ $config->configure(function (\Gzhegow\Router\Core\RouterConfig $config) {
     $config->dispatchTrailingSlashMode = \Gzhegow\Router\Core\Router::TRAILING_SLASH_AS_IS;
 
     // >>> кэш роутера
-    $config->cache->cacheMode = \Gzhegow\Router\Core\Cache\Cache::CACHE_MODE_STORAGE;
+    $config->cache->cacheMode = \Gzhegow\Router\Core\Cache\RouterCache::CACHE_MODE_STORAGE;
     //
     $cacheDir = __DIR__ . '/var/cache';
     $cacheNamespace = 'gzhegow.router';
@@ -132,18 +141,18 @@ $config->configure(function (\Gzhegow\Router\Core\RouterConfig $config) {
 
 // > создаем кеш роутера
 // > его задача сохранять маршруты в файл после того, как они будут скомпилированы и сохранены в виде дерева
-$cache = new \Gzhegow\Router\Core\Cache\Cache($config->cache);
+$cache = new \Gzhegow\Router\Core\Cache\RouterCache($config->cache);
 
 // > создаем фабрику для конвеера
-$pipelineFactory = new \Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineFactory();
+$pipelineFactory = new \Gzhegow\Router\Package\Gzhegow\Pipeline\RouterPipelineFactory();
 
 // > создаем процессор для конвеера
-$pipelineProcessor = new \Gzhegow\Router\Package\Gzhegow\Pipeline\Processor\Processor(
+$pipelineProcessor = new \Gzhegow\Router\Package\Gzhegow\Pipeline\Processor\RouterProcessor(
     $pipelineFactory
 );
 
 // > создаем процесс-менеджер для конвеера
-$pipelineProcessManager = new \Gzhegow\Router\Package\Gzhegow\Pipeline\ProcessManager\ProcessManager(
+$pipelineProcessManager = new \Gzhegow\Router\Package\Gzhegow\Pipeline\ProcessManager\RouterProcessManager(
     $pipelineFactory,
     $pipelineProcessor
 );

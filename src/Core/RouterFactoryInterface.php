@@ -3,27 +3,27 @@
 namespace Gzhegow\Router\Core;
 
 use Gzhegow\Router\Core\Route\Route;
-use Gzhegow\Router\Core\Node\Node;
+use Gzhegow\Router\Core\Node\RouterNode;
 use Gzhegow\Router\Core\Route\RouteGroup;
 use Gzhegow\Router\Core\Route\RouteBlueprint;
-use Gzhegow\Router\Core\Collection\RouteCollection;
-use Gzhegow\Router\Core\Collection\PatternCollection;
-use Gzhegow\Router\Core\Collection\FallbackCollection;
-use Gzhegow\Router\Core\Collection\MiddlewareCollection;
+use Gzhegow\Router\Core\Collection\RouterRouteCollection;
+use Gzhegow\Router\Core\Collection\RouterPatternCollection;
+use Gzhegow\Router\Core\Collection\RouterFallbackCollection;
+use Gzhegow\Router\Core\Collection\RouterMiddlewareCollection;
 
 
 interface RouterFactoryInterface
 {
-    public function newRouteCollection() : RouteCollection;
+    public function newRouteCollection() : RouterRouteCollection;
 
-    public function newPatternCollection() : PatternCollection;
+    public function newPatternCollection() : RouterPatternCollection;
 
-    public function newMiddlewareCollection() : MiddlewareCollection;
+    public function newMiddlewareCollection() : RouterMiddlewareCollection;
 
-    public function newFallbackCollection() : FallbackCollection;
+    public function newFallbackCollection() : RouterFallbackCollection;
 
 
-    public function newRouterNode() : Node;
+    public function newRouterNode() : RouterNode;
 
 
     public function newRouteBlueprint(RouteBlueprint $from = null) : RouteBlueprint;

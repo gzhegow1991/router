@@ -3,7 +3,7 @@
 namespace Gzhegow\Router\Core;
 
 use Gzhegow\Router\Core\Route\Route;
-use Gzhegow\Router\Core\Pattern\Pattern;
+use Gzhegow\Router\Core\Pattern\RouterPattern;
 use Gzhegow\Router\Core\Route\RouteGroup;
 use Gzhegow\Router\Core\Route\RouteBlueprint;
 use Gzhegow\Router\Core\Contract\RouterMatchContract;
@@ -161,7 +161,7 @@ interface RouterInterface
 
     public function registerRoute(Route $route) : int;
 
-    public function registerPattern(Pattern $pattern) : string;
+    public function registerPattern(RouterPattern $pattern) : string;
 
     public function registerMiddleware(GenericHandlerMiddleware $middleware) : int;
 

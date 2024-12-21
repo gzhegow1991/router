@@ -7,7 +7,7 @@ use Gzhegow\Router\Core\Route\Struct\Path;
 use Gzhegow\Router\Core\Handler\Middleware\GenericHandlerMiddleware;
 
 
-class MiddlewareCollection
+class RouterMiddlewareCollection
 {
     /**
      * @var int

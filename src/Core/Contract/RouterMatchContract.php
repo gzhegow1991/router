@@ -39,7 +39,7 @@ class RouterMatchContract
     /**
      * @return static
      */
-    public static function from($from) : self
+    public static function from($from) // : static
     {
         $instance = static::tryFrom($from, $error);
 
@@ -53,7 +53,7 @@ class RouterMatchContract
     /**
      * @return static|null
      */
-    public static function tryFrom($from, \Throwable &$last = null) : ?self
+    public static function tryFrom($from, \Throwable &$last = null) // : ?static
     {
         $last = null;
 
@@ -78,7 +78,7 @@ class RouterMatchContract
     /**
      * @return static|null
      */
-    public static function tryFromInstance($instance) : ?self
+    public static function tryFromInstance($instance) // : ?static
     {
         if (! is_a($instance, static::class)) {
             return Lib::php_error(
@@ -92,7 +92,7 @@ class RouterMatchContract
     /**
      * @return static
      */
-    public static function tryFromArray($array) : ?self
+    public static function tryFromArray($array) // : ?static
     {
         if (! is_array($array)) {
             return Lib::php_error(

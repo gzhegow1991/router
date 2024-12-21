@@ -8,28 +8,28 @@ namespace Gzhegow\Router\Core;
 
 use Gzhegow\Lib\Lib;
 use Gzhegow\Router\Core\Route\Route;
-use Gzhegow\Router\Core\Pattern\Pattern;
-use Gzhegow\Router\Core\Node\Node;
+use Gzhegow\Router\Core\Pattern\RouterPattern;
+use Gzhegow\Router\Core\Node\RouterNode;
 use Gzhegow\Router\Core\Route\Struct\Tag;
 use Gzhegow\Router\Core\Route\RouteGroup;
 use Gzhegow\Router\Core\Route\Struct\Path;
 use Gzhegow\Router\Core\Route\RouteBlueprint;
 use Gzhegow\Router\Exception\LogicException;
 use Gzhegow\Router\Exception\RuntimeException;
-use Gzhegow\Router\Core\Collection\RouteCollection;
-use Gzhegow\Router\Core\Cache\CacheInterface;
-use Gzhegow\Router\Core\Collection\PatternCollection;
+use Gzhegow\Router\Core\Collection\RouterRouteCollection;
+use Gzhegow\Router\Core\Cache\RouterCacheInterface;
+use Gzhegow\Router\Core\Collection\RouterPatternCollection;
 use Gzhegow\Router\Core\Contract\RouterMatchContract;
-use Gzhegow\Router\Core\Collection\FallbackCollection;
+use Gzhegow\Router\Core\Collection\RouterFallbackCollection;
 use Gzhegow\Router\Core\Contract\RouterDispatchContract;
-use Gzhegow\Router\Core\Collection\MiddlewareCollection;
+use Gzhegow\Router\Core\Collection\RouterMiddlewareCollection;
 use Gzhegow\Router\Exception\Runtime\NotFoundException;
 use Gzhegow\Router\Core\Handler\Action\Internal\ThrowAction;
 use Gzhegow\Router\Exception\Exception\DispatchException;
 use Gzhegow\Router\Core\Handler\Fallback\GenericHandlerFallback;
 use Gzhegow\Router\Core\Handler\Middleware\GenericHandlerMiddleware;
-use Gzhegow\Router\Package\Gzhegow\Pipeline\PipelineFactoryInterface;
-use Gzhegow\Router\Package\Gzhegow\Pipeline\ProcessManager\ProcessManagerInterface;
+use Gzhegow\Router\Package\Gzhegow\Pipeline\RouterPipelineFactoryInterface;
+use Gzhegow\Router\Package\Gzhegow\Pipeline\ProcessManager\RouterProcessManagerInterface;
 
 
 class Router implements RouterInterface
@@ -53,11 +53,11 @@ class Router implements RouterInterface
     protected $routerFactory;
 
     /**
-     * @var PipelineFactoryInterface
+     * @var RouterPipelineFactoryInterface
      */
     protected $pipelineFactory;
     /**
-     * @var ProcessManagerInterface
+     * @var RouterProcessManagerInterface
      */
     protected $pipelineProcessManager;
 
@@ -67,29 +67,29 @@ class Router implements RouterInterface
     protected $config;
 
     /**
-     * @var CacheInterface
+     * @var RouterCacheInterface
      */
     protected $routerCache;
 
     /**
-     * @var FallbackCollection
+     * @var RouterFallbackCollection
      */
     protected $fallbackCollection;
     /**
-     * @var MiddlewareCollection
+     * @var RouterMiddlewareCollection
      */
     protected $middlewareCollection;
     /**
-     * @var PatternCollection
+     * @var RouterPatternCollection
      */
     protected $patternCollection;
     /**
-     * @var RouteCollection
+     * @var RouterRouteCollection
      */
     protected $routeCollection;
 
     /**
-     * @var Node
+     * @var RouterNode
      */
     protected $routerNodeRoot;
     /**
@@ -105,10 +105,10 @@ class Router implements RouterInterface
 
     public function __construct(
         RouterFactoryInterface $routerFactory,
-        CacheInterface $routerCache,
+        RouterCacheInterface $routerCache,
         //
-        PipelineFactoryInterface $pipelineFactory,
-        ProcessManagerInterface $pipelineProcessManager,
+        RouterPipelineFactoryInterface $pipelineFactory,
+        RouterProcessManagerInterface $pipelineProcessManager,
         //
         RouterConfig $config
     )
@@ -293,7 +293,7 @@ class Router implements RouterInterface
      */
     public function pattern($pattern, $regex) // : static
     {
-        $pattern = Pattern::from([ $pattern, $regex ]);
+        $pattern = RouterPattern::from([ $pattern, $regex ]);
 
         $this->registerPattern($pattern);
 
@@ -1123,7 +1123,7 @@ class Router implements RouterInterface
         return $id;
     }
 
-    public function registerPattern(Pattern $pattern) : string
+    public function registerPattern(RouterPattern $pattern) : string
     {
         $this->isRouterChanged = true;
 

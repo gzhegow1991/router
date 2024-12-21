@@ -7,7 +7,7 @@ use Gzhegow\Router\Core\Router;
 use Gzhegow\Router\Exception\LogicException;
 
 
-class Pattern implements \Serializable
+class RouterPattern implements \Serializable
 {
     /**
      * @var string
@@ -31,7 +31,7 @@ class Pattern implements \Serializable
     /**
      * @return static
      */
-    public static function from($from) : self
+    public static function from($from) // : static
     {
         $instance = static::tryFrom($from, $error);
 
@@ -45,7 +45,7 @@ class Pattern implements \Serializable
     /**
      * @return static|null
      */
-    public static function tryFrom($from, \Throwable &$last = null) : ?self
+    public static function tryFrom($from, \Throwable &$last = null) // : ?static
     {
         $last = null;
 
@@ -70,7 +70,7 @@ class Pattern implements \Serializable
     /**
      * @return static|null
      */
-    public static function tryFromInstance($instance) : ?self
+    public static function tryFromInstance($instance) // : ?static
     {
         if (! is_a($instance, static::class)) {
             return Lib::php_error(
@@ -84,7 +84,7 @@ class Pattern implements \Serializable
     /**
      * @return static|null
      */
-    public static function tryFromArray($array) : ?self
+    public static function tryFromArray($array) // : ?static
     {
         if (! is_array($array)) {
             return Lib::php_error(

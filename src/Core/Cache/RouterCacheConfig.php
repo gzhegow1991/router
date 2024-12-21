@@ -20,16 +20,16 @@ use Gzhegow\Router\Exception\LogicException;
  * @property string|null                                   $cacheDirpath
  * @property string|null                                   $cacheFilename
  */
-class CacheConfig extends Config
+class RouterCacheConfig extends Config
 {
     /**
      * > тип кеширования - кешировать или не использовать кэш
      *
-     * @see Cache::LIST_CACHE_MODE
+     * @see RouterCache::LIST_CACHE_MODE
      *
      * @var string|null
      */
-    protected $cacheMode = Cache::CACHE_MODE_NO_CACHE;
+    protected $cacheMode = RouterCache::CACHE_MODE_NO_CACHE;
 
     /**
      * > можно установить пакет `composer require symfony/cache` и использовать адаптер, чтобы хранить кэш в redis или любым другим способом
@@ -58,11 +58,11 @@ class CacheConfig extends Config
 
     public function validate() : void
     {
-        if (! isset(Cache::LIST_CACHE_MODE[ $this->cacheMode ])) {
+        if (! isset(RouterCache::LIST_CACHE_MODE[ $this->cacheMode ])) {
             throw new LogicException(
                 [
                     'The `cacheMode` should be one of: '
-                    . implode('|', array_keys(Cache::LIST_CACHE_MODE)),
+                    . implode('|', array_keys(RouterCache::LIST_CACHE_MODE)),
                     $this,
                 ]
             );

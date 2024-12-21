@@ -2,24 +2,24 @@
 
 namespace Gzhegow\Router\Core\Collection;
 
-use Gzhegow\Router\Core\Pattern\Pattern;
+use Gzhegow\Router\Core\Pattern\RouterPattern;
 
 
-class PatternCollection
+class RouterPatternCollection
 {
     /**
-     * @var Pattern[]
+     * @var RouterPattern[]
      */
     public $patternDict = [];
 
 
-    public function getPattern(string $pattern) : Pattern
+    public function getPattern(string $pattern) : RouterPattern
     {
         return $this->patternDict[ $pattern ];
     }
 
 
-    public function registerPattern(Pattern $pattern) : string
+    public function registerPattern(RouterPattern $pattern) : string
     {
         if (! isset($this->patternDict[ $pattern->pattern ])) {
             $this->patternDict[ $pattern->pattern ] = $pattern;
