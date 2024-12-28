@@ -41,13 +41,13 @@ class Path
     {
         $last = null;
 
-        Lib::php_errors_start($b);
+        Lib::php()->errors_start($b);
 
         $instance = null
             ?? static::tryFromInstance($from)
             ?? static::tryFromString($from);
 
-        $errors = Lib::php_errors_end($b);
+        $errors = Lib::php()->errors_end($b);
 
         if (null === $instance) {
             foreach ( $errors as $error ) {
@@ -65,7 +65,7 @@ class Path
     public static function tryFromInstance($instance) // : ?static
     {
         if (! is_a($instance, static::class)) {
-            return Lib::php_error(
+            return Lib::php()->error(
                 [ 'The `from` should be instance of: ' . static::class, $instance ]
             );
         }
@@ -78,14 +78,14 @@ class Path
      */
     public static function tryFromString($string) // : ?static
     {
-        if (null === ($path = Lib::parse_path($string))) {
-            return Lib::php_error(
+        if (null === ($path = Lib::parse()->path($string))) {
+            return Lib::php()->error(
                 [ 'The `from` should be valid path', $string ]
             );
         }
 
         if (0 !== strpos($path, '/')) {
-            return Lib::php_error(
+            return Lib::php()->error(
                 [ 'The `from` should start with `/` sign', $string ]
             );
         }
@@ -100,7 +100,7 @@ class Path
         if (preg_match("/[^{$allowed}]/", $path)) {
             $regex = "/[{$allowed}]+/";
 
-            return Lib::php_error(
+            return Lib::php()->error(
                 [ 'The `from` should match the regex: ' . $regex, $string ]
             );
         }

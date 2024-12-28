@@ -49,13 +49,13 @@ class RouterPattern implements \Serializable
     {
         $last = null;
 
-        Lib::php_errors_start($b);
+        Lib::php()->errors_start($b);
 
         $instance = null
             ?? static::tryFromInstance($from)
             ?? static::tryFromArray($from);
 
-        $errors = Lib::php_errors_end($b);
+        $errors = Lib::php()->errors_end($b);
 
         if (null === $instance) {
             foreach ( $errors as $error ) {
@@ -73,7 +73,7 @@ class RouterPattern implements \Serializable
     public static function tryFromInstance($instance) // : ?static
     {
         if (! is_a($instance, static::class)) {
-            return Lib::php_error(
+            return Lib::php()->error(
                 [ 'The `from` should be instance of: ' . static::class, $instance ]
             );
         }
@@ -87,7 +87,7 @@ class RouterPattern implements \Serializable
     public static function tryFromArray($array) // : ?static
     {
         if (! is_array($array)) {
-            return Lib::php_error(
+            return Lib::php()->error(
                 [
                     'The `from` should be array',
                     $array,
@@ -97,8 +97,8 @@ class RouterPattern implements \Serializable
 
         [ $pattern, $regex ] = $array + [ null, null ];
 
-        if (null === ($_pattern = Lib::parse_string_not_empty($pattern))) {
-            return Lib::php_error(
+        if (null === ($_pattern = Lib::parse()->string_not_empty($pattern))) {
+            return Lib::php()->error(
                 [
                     'The `from[0]` should be non-empty string',
                     $array,
@@ -106,8 +106,8 @@ class RouterPattern implements \Serializable
             );
         }
 
-        if (null === ($_regex = Lib::parse_string_not_empty($regex))) {
-            return Lib::php_error(
+        if (null === ($_regex = Lib::parse()->string_not_empty($regex))) {
+            return Lib::php()->error(
                 [
                     'The `from[1]` should be non-empty string',
                     $array,
@@ -119,7 +119,7 @@ class RouterPattern implements \Serializable
             && (Router::PATTERN_ENCLOSURE[ 0 ] === $_pattern[ 0 ])
             && (Router::PATTERN_ENCLOSURE[ 1 ] === $_pattern[ strlen($_pattern) - 1 ])
         )) {
-            return Lib::php_error(
+            return Lib::php()->error(
                 [
                     'The `from[0]` should be wrapped with signs: '
                     . '`' . Router::PATTERN_ENCLOSURE[ 0 ] . '`'
@@ -132,7 +132,7 @@ class RouterPattern implements \Serializable
         $_attribute = substr($_pattern, 1, -1);
 
         if (! preg_match($var = '/[a-z][a-z0-9_]*/', $_attribute)) {
-            return Lib::php_error(
+            return Lib::php()->error(
                 [
                     'The `from[0]` should match regex: ' . $var . ' / ' . $_attribute,
                     $array,
@@ -150,7 +150,7 @@ class RouterPattern implements \Serializable
                 $vars[ $i ] = "`{$symbol}`";
             }
 
-            return Lib::php_error(
+            return Lib::php()->error(
                 [
                     'The `from[1]` should not contain symbols: ' . implode(',', $vars),
                     $array,
@@ -158,8 +158,8 @@ class RouterPattern implements \Serializable
             );
         }
 
-        if (null === Lib::parse_regex($var = "/{$_regex}/")) {
-            return Lib::php_error(
+        if (null === Lib::parse()->regex($var = "/{$_regex}/")) {
+            return Lib::php()->error(
                 [
                     'The `from[1]` caused invalid regex: ' . $var,
                     $array,

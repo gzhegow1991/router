@@ -40,13 +40,13 @@ class Tag
     {
         $last = null;
 
-        Lib::php_errors_start($b);
+        Lib::php()->errors_start($b);
 
         $instance = null
             ?? static::tryFromInstance($from)
             ?? static::tryFromString($from);
 
-        $errors = Lib::php_errors_end($b);
+        $errors = Lib::php()->errors_end($b);
 
         if (null === $instance) {
             foreach ( $errors as $error ) {
@@ -64,7 +64,7 @@ class Tag
     public static function tryFromInstance($instance) // : ?static
     {
         if (! is_a($instance, static::class)) {
-            return Lib::php_error(
+            return Lib::php()->error(
                 [ 'The `from` should be instance of: ' . static::class, $instance ]
             );
         }
@@ -77,8 +77,8 @@ class Tag
      */
     public static function tryFromString($string) // : ?static
     {
-        if (null === ($tag = Lib::parse_string_not_empty($string))) {
-            return Lib::php_error(
+        if (null === ($tag = Lib::parse()->string_not_empty($string))) {
+            return Lib::php()->error(
                 [ 'The `from` should be non-empty string', $string ]
             );
         }

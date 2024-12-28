@@ -8,8 +8,8 @@ namespace Gzhegow\Router\Core\Cache;
 
 use Gzhegow\Lib\Lib;
 use Gzhegow\Lib\Config\Config;
-use Gzhegow\Router\Core\Config\AbstractConfig;
 use Gzhegow\Router\Exception\LogicException;
+use Gzhegow\Router\Core\Config\AbstractConfig;
 
 
 /**
@@ -80,7 +80,7 @@ class RouterCacheConfig extends Config
         }
 
         if ((null !== $this->cacheDirpath)
-            && (null === Lib::parse_dirpath($this->cacheDirpath))
+            && (null === Lib::parse()->dirpath($this->cacheDirpath))
         ) {
             throw new LogicException(
                 [
@@ -91,7 +91,7 @@ class RouterCacheConfig extends Config
         }
 
         if ((null !== $this->cacheFilename)
-            && (null === Lib::parse_filename($this->cacheFilename))
+            && (null === Lib::parse()->filename($this->cacheFilename))
         ) {
             throw new LogicException(
                 [

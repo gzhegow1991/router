@@ -636,7 +636,7 @@ class Router implements RouterInterface
         }
 
         if ($intersect) {
-            $index = Lib::array_intersect_key(...$intersect);
+            $index = Lib::arr()->intersect_key(...$intersect);
 
         } else {
             $index = array_fill_keys(
@@ -949,7 +949,7 @@ class Router implements RouterInterface
             if (is_object($route)) {
                 $_routes[ $idx ] = $route;
 
-            } elseif (null !== ($_name = Lib::parse_string_not_empty($route))) {
+            } elseif (null !== ($_name = Lib::parse()->string_not_empty($route))) {
                 $_routeNames[ $idx ] = $_name;
 
             } else {
@@ -1305,7 +1305,7 @@ class Router implements RouterInterface
 
         unset($patternDict);
 
-        if (null === Lib::parse_regex('/^' . $pathRegex . '$/')) {
+        if (null === Lib::parse()->regex('/^' . $pathRegex . '$/')) {
             throw new RuntimeException(
                 'The output regex is not valid: ' . $pathRegex
             );

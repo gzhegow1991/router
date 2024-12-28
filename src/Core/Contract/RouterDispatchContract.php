@@ -45,13 +45,13 @@ class RouterDispatchContract
     {
         $last = null;
 
-        Lib::php_errors_start($b);
+        Lib::php()->errors_start($b);
 
         $instance = null
             ?? static::tryFromInstance($from)
             ?? static::tryFromArray($from);
 
-        $errors = Lib::php_errors_end($b);
+        $errors = Lib::php()->errors_end($b);
 
         if (null === $instance) {
             foreach ( $errors as $error ) {
@@ -69,7 +69,7 @@ class RouterDispatchContract
     public static function tryFromInstance($instance) // : ?static
     {
         if (! is_a($instance, static::class)) {
-            return Lib::php_error(
+            return Lib::php()->error(
                 [ 'The `from` should be instance of: ' . static::class, $instance ]
             );
         }
@@ -83,7 +83,7 @@ class RouterDispatchContract
     public static function tryFromArray($array) // : ?static
     {
         if (! is_array($array)) {
-            return Lib::php_error(
+            return Lib::php()->error(
                 [ 'The `from` should be array', $array ]
             );
         }
@@ -91,7 +91,7 @@ class RouterDispatchContract
         [ $httpMethod, $requestUri ] = $array;
 
         if (null === ($_httpMethod = HttpMethod::tryFrom($httpMethod))) {
-            return Lib::php_error(
+            return Lib::php()->error(
                 [
                     'The `from[0]` should be valid `httpMethod`',
                     $httpMethod,
@@ -100,8 +100,8 @@ class RouterDispatchContract
             );
         }
 
-        if (null === ($_requestUri = Lib::parse_path($requestUri))) {
-            return Lib::php_error(
+        if (null === ($_requestUri = Lib::parse()->path($requestUri))) {
+            return Lib::php()->error(
                 [
                     'The `from[0]` should be valid `path`',
                     $requestUri,

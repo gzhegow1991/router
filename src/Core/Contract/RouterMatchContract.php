@@ -57,13 +57,13 @@ class RouterMatchContract
     {
         $last = null;
 
-        Lib::php_errors_start($b);
+        Lib::php()->errors_start($b);
 
         $instance = null
             ?? static::tryFromInstance($from)
             ?? static::tryFromArray($from);
 
-        $errors = Lib::php_errors_end($b);
+        $errors = Lib::php()->errors_end($b);
 
         if (null === $instance) {
             foreach ( $errors as $error ) {
@@ -81,7 +81,7 @@ class RouterMatchContract
     public static function tryFromInstance($instance) // : ?static
     {
         if (! is_a($instance, static::class)) {
-            return Lib::php_error(
+            return Lib::php()->error(
                 [ 'The `from` should be instance of: ' . static::class, $instance ]
             );
         }
@@ -95,7 +95,7 @@ class RouterMatchContract
     public static function tryFromArray($array) // : ?static
     {
         if (! is_array($array)) {
-            return Lib::php_error(
+            return Lib::php()->error(
                 [ 'The `from` should be array', $array ]
             );
         }
@@ -123,12 +123,12 @@ class RouterMatchContract
 
         $instance = new static();
 
-        $instance->idIndex = Lib::array_index_int([], ...$ids);
-        $instance->nameIndex = Lib::array_index_string([], ...$names);
-        $instance->tagIndex = Lib::array_index_string([], ...$groups);
+        $instance->idIndex = Lib::arr()->index_int([], ...$ids);
+        $instance->nameIndex = Lib::arr()->index_string([], ...$names);
+        $instance->tagIndex = Lib::arr()->index_string([], ...$groups);
 
-        $instance->pathIndex = Lib::array_index_string([], ...$pathes);
-        $instance->httpMethodIndex = Lib::array_index_string([], ...$methods);
+        $instance->pathIndex = Lib::arr()->index_string([], ...$pathes);
+        $instance->httpMethodIndex = Lib::arr()->index_string([], ...$methods);
 
         return $instance;
     }

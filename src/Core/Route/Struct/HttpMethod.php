@@ -63,13 +63,13 @@ class HttpMethod
     {
         $last = null;
 
-        Lib::php_errors_start($b);
+        Lib::php()->errors_start($b);
 
         $instance = null
             ?? static::tryFromInstance($from)
             ?? static::tryFromString($from);
 
-        $errors = Lib::php_errors_end($b);
+        $errors = Lib::php()->errors_end($b);
 
         if (null === $instance) {
             foreach ( $errors as $error ) {
@@ -87,7 +87,7 @@ class HttpMethod
     public static function tryFromInstance($instance) // : ?static
     {
         if (! is_a($instance, static::class)) {
-            return Lib::php_error(
+            return Lib::php()->error(
                 [ 'The `from` should be instance of: ' . static::class, $instance ]
             );
         }
@@ -100,8 +100,8 @@ class HttpMethod
      */
     public static function tryFromString($string) // : ?static
     {
-        if (null === ($_string = Lib::parse_string_not_empty($string))) {
-            return Lib::php_error(
+        if (null === ($_string = Lib::parse()->string_not_empty($string))) {
+            return Lib::php()->error(
                 [ 'The `from` should be non-empty string', $string ]
             );
         }
@@ -109,7 +109,7 @@ class HttpMethod
         $_string = strtoupper($_string);
 
         if (! isset(static::LIST_METHOD[ $_string ])) {
-            return Lib::php_error(
+            return Lib::php()->error(
                 [
                     'The `from` should be one of: ' . implode(',', array_keys(static::LIST_METHOD)),
                     $string,
