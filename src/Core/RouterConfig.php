@@ -2,7 +2,7 @@
 
 namespace Gzhegow\Router\Core;
 
-use Gzhegow\Lib\Config\Config;
+use Gzhegow\Lib\Config\AbstractConfig;
 use Gzhegow\Router\Core\Route\Struct\HttpMethod;
 use Gzhegow\Router\Core\Cache\RouterCacheConfig;
 use Gzhegow\Router\Exception\LogicException;
@@ -17,7 +17,7 @@ use Gzhegow\Router\Exception\LogicException;
  * @property string|HttpMethod $dispatchForceMethod
  * @property int               $dispatchTrailingSlashMode
  */
-class RouterConfig extends Config
+class RouterConfig extends AbstractConfig
 {
     /**
      * @var RouterCacheConfig
