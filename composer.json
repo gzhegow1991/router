@@ -2,6 +2,7 @@
     "name": "gzhegow/router",
     "type": "library",
     "version": "1.4.0",
+    "license": "MIT",
 
     "minimum-stability": "dev",
     "prefer-stable": true,
