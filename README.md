@@ -33,33 +33,45 @@ ini_set('memory_limit', '32M');
 
 
 // > добавляем несколько функция для тестирования
-function _debug(...$values) : void
+function _debug(...$values) : string
 {
     $lines = [];
     foreach ( $values as $value ) {
-        $lines[] = \Gzhegow\Lib\Lib::debug()->type_id($value);
+        $lines[] = \Gzhegow\Lib\Lib::debug()->type($value);
     }
 
-    echo implode(' | ', $lines) . PHP_EOL;
+    $ret = implode(' | ', $lines) . PHP_EOL;
+
+    echo $ret;
+
+    return $ret;
 }
 
-function _dump(...$values) : void
+function _dump(...$values) : string
 {
     $lines = [];
     foreach ( $values as $value ) {
         $lines[] = \Gzhegow\Lib\Lib::debug()->value($value);
     }
 
-    echo implode(' | ', $lines) . PHP_EOL;
+    $ret = implode(' | ', $lines) . PHP_EOL;
+
+    echo $ret;
+
+    return $ret;
 }
 
-function _dump_array($value, int $maxLevel = null, bool $multiline = false) : void
+function _dump_array($value, int $maxLevel = null, bool $multiline = false) : string
 {
     $content = $multiline
         ? \Gzhegow\Lib\Lib::debug()->array_multiline($value, $maxLevel)
         : \Gzhegow\Lib\Lib::debug()->array($value, $maxLevel);
 
-    echo $content . PHP_EOL;
+    $ret = $content . PHP_EOL;
+
+    echo $ret;
+
+    return $ret;
 }
 
 function _assert_output(
@@ -68,8 +80,16 @@ function _assert_output(
 {
     $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
 
-    \Gzhegow\Lib\Lib::assert()->resource_static(STDOUT);
     \Gzhegow\Lib\Lib::assert()->output($trace, $fn, $expect);
+}
+
+function _assert_microtime(
+    \Closure $fn, float $expectMax = null, float $expectMin = null
+) : void
+{
+    $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
+
+    \Gzhegow\Lib\Lib::assert()->microtime($trace, $fn, $expectMax, $expectMin);
 }
 
 
@@ -275,6 +295,7 @@ $router->cacheRemember(static function (\Gzhegow\Router\Core\RouterInterface $ro
 // $route = $router->matchFirstByTag('user');
 $fn = function () use ($router) {
     _dump('TEST 1');
+    echo PHP_EOL;
 
     $ids = [ 1, 2 ];
     $names = [ 'user.main' ];
@@ -304,25 +325,23 @@ $fn = function () use ($router) {
 
     $route = $router->matchFirstByTags($tags);
     _dump('[ RESULT ]', $route);
-
-    echo '';
 };
-_assert_output($fn, <<<HEREDOC
+_assert_output($fn, '
 "TEST 1"
+
 "[ RESULT ]" | [ 1 => "{ object # Gzhegow\Router\Core\Route\Route }", 2 => "{ object # Gzhegow\Router\Core\Route\Route }" ]
 "[ RESULT ]" | 0 | [ 1 => "{ object # Gzhegow\Router\Core\Route\Route }", 2 => "{ object # Gzhegow\Router\Core\Route\Route }", 3 => "{ object # Gzhegow\Router\Core\Route\Route }" ]
 "[ RESULT ]" | 0 | [ 1 => "{ object # Gzhegow\Router\Core\Route\Route }", 2 => "{ object # Gzhegow\Router\Core\Route\Route }", 3 => "{ object # Gzhegow\Router\Core\Route\Route }", 4 => "{ object # Gzhegow\Router\Core\Route\Route }", 5 => "{ object # Gzhegow\Router\Core\Route\Route }" ]
 "[ RESULT ]" | { object # Gzhegow\Router\Core\Route\Route }
 "[ RESULT ]" | { object # Gzhegow\Router\Core\Route\Route }
 "[ RESULT ]" | { object # Gzhegow\Router\Core\Route\Route }
-""
-HEREDOC
-);
+');
 
 // // > TEST
 // // > так можно искать маршруты с помощью нескольких фильтров (если указать массивы - они работают как логическое ИЛИ, тогда как сами фильтры работают через логическое И
 $fn = function () use ($router) {
     _dump('TEST 2');
+    echo PHP_EOL;
 
     $contract = \Gzhegow\Router\Core\Contract\RouterMatchContract::from([
         // 'id'          => 1,
@@ -346,21 +365,19 @@ $fn = function () use ($router) {
     foreach ( $routes as $id => $route ) {
         _dump('[ RESULT ]', $id, $route);
     }
-
-    echo '';
 };
-_assert_output($fn, <<<HEREDOC
+_assert_output($fn, '
 "TEST 2"
+
 "[ RESULT ]" | 1 | { object # Gzhegow\Router\Core\Route\Route }
 "[ RESULT ]" | 2 | { object # Gzhegow\Router\Core\Route\Route }
-""
-HEREDOC
-);
+');
 
 // > TEST
 // > так можно сгенерировать ссылки для зарегистрированных маршрутов
 $fn = function () use ($router) {
     _dump('TEST 3');
+    echo PHP_EOL;
 
     $instances = [];
     $instances[ 'a' ] = $router->matchFirstByNames('user.main');
@@ -381,33 +398,28 @@ $fn = function () use ($router) {
     //
     // > можно передать либо список объектов (instance of Route::class) и/или список строк (route `name`)
     $result = $router->urls($routes, $attributes);
-
     _dump('[ RESULT ]', $result);
-
-    echo '';
 };
-_assert_output($fn, <<<HEREDOC
+_assert_output($fn, '
 "TEST 3"
+
 "[ RESULT ]" | [ "a" => "/api/v1/user/1/main", "b" => "/api/v1/user/2/main", "c" => "/api/v1/user/3/main" ]
-""
-HEREDOC
-);
+');
 
 // > TEST
 // > так можно запустить выполнение маршрута в вашем файле index.php, на который указывает apache2/nginx
 $fn = function () use ($router) {
     _dump('TEST 4');
+    echo PHP_EOL;
 
     $contract = \Gzhegow\Router\Core\Contract\RouterDispatchContract::from([ 'GET', '/api/v1/user/1/main' ]);
 
     $result = $router->dispatch($contract);
-
     _dump('[ RESULT ]', $result);
-
-    echo '';
 };
-_assert_output($fn, <<<HEREDOC
+_assert_output($fn, '
 "TEST 4"
+
 @before :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
 @before :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
 @before :: Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware::__invoke
@@ -416,25 +428,22 @@ Gzhegow\Router\Demo\Handler\Controller\DemoController::mainGet
 @after :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
 @after :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
 "[ RESULT ]" | 1
-""
-HEREDOC
-);
+');
 
 // > TEST
 // > такого маршрута нет, запустится ранее указанный fallback-обработчик
 $fn = function () use ($router) {
     _dump('TEST 5');
+    echo PHP_EOL;
 
     $contract = \Gzhegow\Router\Core\Contract\RouterDispatchContract::from([ 'GET', '/api/v1/user/not-found' ]);
 
     $result = $router->dispatch($contract);
-
     _dump('[ RESULT ]', $result);
-
-    echo '';
 };
-_assert_output($fn, <<<HEREDOC
+_assert_output($fn, '
 "TEST 5"
+
 @before :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
 @before :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
 @before :: Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware::__invoke
@@ -443,14 +452,13 @@ Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback::__invoke
 @after :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
 @after :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
 "[ RESULT ]" | "Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback::__invoke result."
-""
-HEREDOC
-);
+');
 
 // > TEST
 // > такого маршрута нет, и одновременно с этим обработчик ошибок не был задан (либо был задан, но вернул NULL, что трактуется как "обработка не удалась")
 $fn = function () use ($router) {
     _dump('TEST 6');
+    echo PHP_EOL;
 
     $contract = \Gzhegow\Router\Core\Contract\RouterDispatchContract::from([ 'GET', '/api/v1/not-found/not-found' ]);
 
@@ -466,33 +474,29 @@ $fn = function () use ($router) {
         }
     }
     _dump('[ RESULT ]', $result);
-
-    echo '';
 };
-_assert_output($fn, <<<HEREDOC
+_assert_output($fn, '
 "TEST 6"
+
 "[ CATCH ]" | "Gzhegow\Router\Exception\Exception\DispatchException" | "Unhandled exception occured during dispatch"
 "[ CATCH ]" | "Gzhegow\Router\Exception\Runtime\NotFoundException" | "Route not found: `/api/v1/not-found/not-found` / `GET`"
 "[ RESULT ]" | NULL
-""
-HEREDOC
-);
+');
 
 // > TEST
 // > этот маршрут бросает \LogicException, запустятся DemoLogicExceptionFallback и DemoThrowableFallback
 $fn = function () use ($router) {
     _dump('TEST 7');
+    echo PHP_EOL;
 
     $contract = \Gzhegow\Router\Core\Contract\RouterDispatchContract::from([ 'GET', '/api/v1/user/1/logic' ]);
 
     $result = $router->dispatch($contract);
-
     _dump('[ RESULT ]', $result);
-
-    echo '';
 };
-_assert_output($fn, <<<HEREDOC
+_assert_output($fn, '
 "TEST 7"
+
 @before :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
 @before :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
 @before :: Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware::__invoke
@@ -502,25 +506,22 @@ Gzhegow\Router\Demo\Handler\Fallback\DemoLogicExceptionFallback::__invoke
 @after :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
 @after :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
 "[ RESULT ]" | "Gzhegow\Router\Demo\Handler\Fallback\DemoLogicExceptionFallback::__invoke result."
-""
-HEREDOC
-);
+');
 
 // > TEST
 // > этот маршрут бросает \RuntimeException, запустятся DemoThrowableFallback и DemoRuntimeExceptionFallback
 $fn = function () use ($router) {
     _dump('TEST 8');
+    echo PHP_EOL;
 
     $contract = \Gzhegow\Router\Core\Contract\RouterDispatchContract::from([ 'GET', '/api/v1/user/1/runtime' ]);
 
     $result = $router->dispatch($contract);
-
     _dump('[ RESULT ]', $result);
-
-    echo '';
 };
-_assert_output($fn, <<<HEREDOC
+_assert_output($fn, '
 "TEST 8"
+
 @before :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
 @before :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
 @before :: Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware::__invoke
@@ -530,7 +531,5 @@ Gzhegow\Router\Demo\Handler\Fallback\DemoRuntimeExceptionFallback::__invoke
 @after :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
 @after :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
 "[ RESULT ]" | "Gzhegow\Router\Demo\Handler\Fallback\DemoRuntimeExceptionFallback::__invoke result."
-""
-HEREDOC
-);
+');
 ```
