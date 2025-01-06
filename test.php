@@ -320,8 +320,9 @@ _assert_output($fn, '
 "[ RESULT ]" | { object # Gzhegow\Router\Core\Route\Route }
 ');
 
-// // > TEST
-// // > так можно искать маршруты с помощью нескольких фильтров (если указать массивы - они работают как логическое ИЛИ, тогда как сами фильтры работают через логическое И
+
+// > TEST
+// > так можно искать маршруты с помощью нескольких фильтров (если указать массивы - они работают как логическое ИЛИ, тогда как сами фильтры работают через логическое И
 $fn = function () use ($router) {
     _dump('TEST 2');
     echo PHP_EOL;
@@ -356,6 +357,7 @@ _assert_output($fn, '
 "[ RESULT ]" | 2 | { object # Gzhegow\Router\Core\Route\Route }
 ');
 
+
 // > TEST
 // > так можно сгенерировать ссылки для зарегистрированных маршрутов
 $fn = function () use ($router) {
@@ -389,6 +391,7 @@ _assert_output($fn, '
 "[ RESULT ]" | [ "a" => "/api/v1/user/1/main", "b" => "/api/v1/user/2/main", "c" => "/api/v1/user/3/main" ]
 ');
 
+
 // > TEST
 // > так можно запустить выполнение маршрута в вашем файле index.php, на который указывает apache2/nginx
 $fn = function () use ($router) {
@@ -413,6 +416,7 @@ Gzhegow\Router\Demo\Handler\Controller\DemoController::mainGet
 "[ RESULT ]" | 1
 ');
 
+
 // > TEST
 // > такого маршрута нет, запустится ранее указанный fallback-обработчик
 $fn = function () use ($router) {
@@ -436,6 +440,7 @@ Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback::__invoke
 @after :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
 "[ RESULT ]" | "Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback::__invoke result."
 ');
+
 
 // > TEST
 // > такого маршрута нет, и одновременно с этим обработчик ошибок не был задан (либо был задан, но вернул NULL, что трактуется как "обработка не удалась")
@@ -466,6 +471,7 @@ _assert_output($fn, '
 "[ RESULT ]" | NULL
 ');
 
+
 // > TEST
 // > этот маршрут бросает \LogicException, запустятся DemoLogicExceptionFallback и DemoThrowableFallback
 $fn = function () use ($router) {
@@ -490,6 +496,7 @@ Gzhegow\Router\Demo\Handler\Fallback\DemoLogicExceptionFallback::__invoke
 @after :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
 "[ RESULT ]" | "Gzhegow\Router\Demo\Handler\Fallback\DemoLogicExceptionFallback::__invoke result."
 ');
+
 
 // > TEST
 // > этот маршрут бросает \RuntimeException, запустятся DemoThrowableFallback и DemoRuntimeExceptionFallback
