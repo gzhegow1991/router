@@ -55,7 +55,7 @@ class RouterDispatchContract
 
         if (null === $instance) {
             foreach ( $errors as $error ) {
-                $last = new LogicException($error, null, $last);
+                $last = new LogicException($error, $last);
             }
         }
 
@@ -92,21 +92,13 @@ class RouterDispatchContract
 
         if (null === ($_httpMethod = HttpMethod::tryFrom($httpMethod))) {
             return Lib::php()->error(
-                [
-                    'The `from[0]` should be valid `httpMethod`',
-                    $httpMethod,
-                    $array,
-                ]
+                [ 'The `from[0]` should be valid `httpMethod`', $httpMethod, $array ]
             );
         }
 
         if (null === ($_requestUri = Lib::parse()->path($requestUri))) {
             return Lib::php()->error(
-                [
-                    'The `from[0]` should be valid `path`',
-                    $requestUri,
-                    $array,
-                ]
+                [ 'The `from[0]` should be valid `path`', $requestUri, $array ]
             );
         }
 

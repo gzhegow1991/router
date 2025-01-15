@@ -73,7 +73,7 @@ class HttpMethod
 
         if (null === $instance) {
             foreach ( $errors as $error ) {
-                $last = new LogicException($error, null, $last);
+                $last = new LogicException($error, $last);
             }
         }
 
@@ -111,7 +111,9 @@ class HttpMethod
         if (! isset(static::LIST_METHOD[ $_string ])) {
             return Lib::php()->error(
                 [
-                    'The `from` should be one of: ' . implode(',', array_keys(static::LIST_METHOD)),
+                    ''
+                    . 'The `from` should be one of: '
+                    . implode(',', array_keys(static::LIST_METHOD)),
                     $string,
                 ]
             );
