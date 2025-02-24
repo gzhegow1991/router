@@ -914,13 +914,12 @@ class Router implements RouterInterface
             $result = $this->pipelineProcessManager->run($pipeline, $input, $context);
         }
         catch ( \Gzhegow\Pipeline\Exception\Runtime\PipelineException $throwable ) {
-            $e = new DispatchException(
-                "Unhandled exception occured during dispatch", -1
-            );
+            $throwables = $throwable->getPreviousList();
 
-            foreach ( $throwable->getPreviousList() as $ee ) {
-                $e->addPrevious($ee);
-            }
+            $e = new DispatchException(
+                "Unhandled exception occured during dispatch", -1,
+                ...$throwables
+            );
 
             throw $e;
         }

@@ -16,63 +16,28 @@ ini_set('memory_limit', '32M');
 
 
 // > добавляем несколько функция для тестирования
-function _debug(...$values) : string
+function _values($separator = null, ...$values) : string
 {
-    $lines = [];
-    foreach ( $values as $value ) {
-        $lines[] = \Gzhegow\Lib\Lib::debug()->type($value);
-    }
-
-    $ret = implode(' | ', $lines) . PHP_EOL;
-
-    echo $ret;
-
-    return $ret;
+    return \Gzhegow\Lib\Lib::debug()->values($separator, [], ...$values);
 }
 
-function _dump(...$values) : string
+function _print(...$values) : void
 {
-    $lines = [];
-    foreach ( $values as $value ) {
-        $lines[] = \Gzhegow\Lib\Lib::debug()->value($value);
-    }
-
-    $ret = implode(' | ', $lines) . PHP_EOL;
-
-    echo $ret;
-
-    return $ret;
+    echo _values(' | ', ...$values) . PHP_EOL;
 }
 
-function _dump_array($value, int $maxLevel = null, bool $multiline = false) : string
-{
-    $content = $multiline
-        ? \Gzhegow\Lib\Lib::debug()->array_multiline($value, $maxLevel)
-        : \Gzhegow\Lib\Lib::debug()->array($value, $maxLevel);
-
-    $ret = $content . PHP_EOL;
-
-    echo $ret;
-
-    return $ret;
-}
-
-function _assert_output(
-    \Closure $fn, string $expect = null
+function _assert_stdout(
+    \Closure $fn, array $fnArgs = [],
+    string $expectedStdout = null
 ) : void
 {
     $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
 
-    \Gzhegow\Lib\Lib::assert()->output($trace, $fn, $expect);
-}
-
-function _assert_microtime(
-    \Closure $fn, float $expectMax = null, float $expectMin = null
-) : void
-{
-    $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
-
-    \Gzhegow\Lib\Lib::assert()->microtime($trace, $fn, $expectMax, $expectMin);
+    \Gzhegow\Lib\Lib::test()->assertStdout(
+        $trace,
+        $fn, $fnArgs,
+        $expectedStdout
+    );
 }
 
 
@@ -277,7 +242,7 @@ $router->cacheRemember(static function (\Gzhegow\Router\Core\RouterInterface $ro
 // $route = $router->matchFirstByName('user.main');
 // $route = $router->matchFirstByTag('user');
 $fn = function () use ($router) {
-    _dump('TEST 1');
+    _print('TEST 1');
     echo PHP_EOL;
 
     $ids = [ 1, 2 ];
@@ -286,30 +251,30 @@ $fn = function () use ($router) {
 
 
     $routes = $router->matchAllByIds($ids);
-    _dump('[ RESULT ]', $routes);
+    _print('[ RESULT ]', $routes);
 
 
     $batch = $router->matchAllByNames($names);
     foreach ( $batch as $i => $routes ) {
-        _dump('[ RESULT ]', $i, $routes);
+        _print('[ RESULT ]', $i, $routes);
     }
 
     $batch = $router->matchAllByTags($tags);
     foreach ( $batch as $i => $routes ) {
-        _dump('[ RESULT ]', $i, $routes);
+        _print('[ RESULT ]', $i, $routes);
     }
 
 
     $route = $router->matchFirstByIds($ids);
-    _dump('[ RESULT ]', $route);
+    _print('[ RESULT ]', $route);
 
     $route = $router->matchFirstByNames($names);
-    _dump('[ RESULT ]', $route);
+    _print('[ RESULT ]', $route);
 
     $route = $router->matchFirstByTags($tags);
-    _dump('[ RESULT ]', $route);
+    _print('[ RESULT ]', $route);
 };
-_assert_output($fn, '
+_assert_stdout($fn, [], '
 "TEST 1"
 
 "[ RESULT ]" | [ 1 => "{ object # Gzhegow\Router\Core\Route\Route }", 2 => "{ object # Gzhegow\Router\Core\Route\Route }" ]
@@ -324,7 +289,7 @@ _assert_output($fn, '
 // > TEST
 // > так можно искать маршруты с помощью нескольких фильтров (если указать массивы - они работают как логическое ИЛИ, тогда как сами фильтры работают через логическое И
 $fn = function () use ($router) {
-    _dump('TEST 2');
+    _print('TEST 2');
     echo PHP_EOL;
 
     $contract = \Gzhegow\Router\Core\Contract\RouterMatchContract::from([
@@ -347,10 +312,10 @@ $fn = function () use ($router) {
     $routes = $router->matchByContract($contract);
 
     foreach ( $routes as $id => $route ) {
-        _dump('[ RESULT ]', $id, $route);
+        _print('[ RESULT ]', $id, $route);
     }
 };
-_assert_output($fn, '
+_assert_stdout($fn, [], '
 "TEST 2"
 
 "[ RESULT ]" | 1 | { object # Gzhegow\Router\Core\Route\Route }
@@ -361,7 +326,7 @@ _assert_output($fn, '
 // > TEST
 // > так можно сгенерировать ссылки для зарегистрированных маршрутов
 $fn = function () use ($router) {
-    _dump('TEST 3');
+    _print('TEST 3');
     echo PHP_EOL;
 
     $instances = [];
@@ -383,9 +348,9 @@ $fn = function () use ($router) {
     //
     // > можно передать либо список объектов (instance of Route::class) и/или список строк (route `name`)
     $result = $router->urls($routes, $attributes);
-    _dump('[ RESULT ]', $result);
+    _print('[ RESULT ]', $result);
 };
-_assert_output($fn, '
+_assert_stdout($fn, [], '
 "TEST 3"
 
 "[ RESULT ]" | [ "a" => "/api/v1/user/1/main", "b" => "/api/v1/user/2/main", "c" => "/api/v1/user/3/main" ]
@@ -395,15 +360,15 @@ _assert_output($fn, '
 // > TEST
 // > так можно запустить выполнение маршрута в вашем файле index.php, на который указывает apache2/nginx
 $fn = function () use ($router) {
-    _dump('TEST 4');
+    _print('TEST 4');
     echo PHP_EOL;
 
     $contract = \Gzhegow\Router\Core\Contract\RouterDispatchContract::from([ 'GET', '/api/v1/user/1/main' ]);
 
     $result = $router->dispatch($contract);
-    _dump('[ RESULT ]', $result);
+    _print('[ RESULT ]', $result);
 };
-_assert_output($fn, '
+_assert_stdout($fn, [], '
 "TEST 4"
 
 @before :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
@@ -420,15 +385,15 @@ Gzhegow\Router\Demo\Handler\Controller\DemoController::mainGet
 // > TEST
 // > такого маршрута нет, запустится ранее указанный fallback-обработчик
 $fn = function () use ($router) {
-    _dump('TEST 5');
+    _print('TEST 5');
     echo PHP_EOL;
 
     $contract = \Gzhegow\Router\Core\Contract\RouterDispatchContract::from([ 'GET', '/api/v1/user/not-found' ]);
 
     $result = $router->dispatch($contract);
-    _dump('[ RESULT ]', $result);
+    _print('[ RESULT ]', $result);
 };
-_assert_output($fn, '
+_assert_stdout($fn, [], '
 "TEST 5"
 
 @before :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
@@ -445,7 +410,7 @@ Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback::__invoke
 // > TEST
 // > такого маршрута нет, и одновременно с этим обработчик ошибок не был задан (либо был задан, но вернул NULL, что трактуется как "обработка не удалась")
 $fn = function () use ($router) {
-    _dump('TEST 6');
+    _print('TEST 6');
     echo PHP_EOL;
 
     $contract = \Gzhegow\Router\Core\Contract\RouterDispatchContract::from([ 'GET', '/api/v1/not-found/not-found' ]);
@@ -455,15 +420,15 @@ $fn = function () use ($router) {
         $result = $router->dispatch($contract);
     }
     catch ( \Gzhegow\Router\Exception\Exception\DispatchException $e ) {
-        _dump('[ CATCH ]', get_class($e), $e->getMessage());
+        _print('[ CATCH ]', get_class($e), $e->getMessage());
 
         foreach ( $e->getPreviousList() as $ee ) {
-            _dump('[ CATCH ]', get_class($ee), $ee->getMessage());
+            _print('[ CATCH ]', get_class($ee), $ee->getMessage());
         }
     }
-    _dump('[ RESULT ]', $result);
+    _print('[ RESULT ]', $result);
 };
-_assert_output($fn, '
+_assert_stdout($fn, [], '
 "TEST 6"
 
 "[ CATCH ]" | "Gzhegow\Router\Exception\Exception\DispatchException" | "Unhandled exception occured during dispatch"
@@ -475,15 +440,15 @@ _assert_output($fn, '
 // > TEST
 // > этот маршрут бросает \LogicException, запустятся DemoLogicExceptionFallback и DemoThrowableFallback
 $fn = function () use ($router) {
-    _dump('TEST 7');
+    _print('TEST 7');
     echo PHP_EOL;
 
     $contract = \Gzhegow\Router\Core\Contract\RouterDispatchContract::from([ 'GET', '/api/v1/user/1/logic' ]);
 
     $result = $router->dispatch($contract);
-    _dump('[ RESULT ]', $result);
+    _print('[ RESULT ]', $result);
 };
-_assert_output($fn, '
+_assert_stdout($fn, [], '
 "TEST 7"
 
 @before :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
@@ -501,15 +466,15 @@ Gzhegow\Router\Demo\Handler\Fallback\DemoLogicExceptionFallback::__invoke
 // > TEST
 // > этот маршрут бросает \RuntimeException, запустятся DemoThrowableFallback и DemoRuntimeExceptionFallback
 $fn = function () use ($router) {
-    _dump('TEST 8');
+    _print('TEST 8');
     echo PHP_EOL;
 
     $contract = \Gzhegow\Router\Core\Contract\RouterDispatchContract::from([ 'GET', '/api/v1/user/1/runtime' ]);
 
     $result = $router->dispatch($contract);
-    _dump('[ RESULT ]', $result);
+    _print('[ RESULT ]', $result);
 };
-_assert_output($fn, '
+_assert_stdout($fn, [], '
 "TEST 8"
 
 @before :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
