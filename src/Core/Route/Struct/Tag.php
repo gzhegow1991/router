@@ -11,7 +11,7 @@ class Tag
     /**
      * @var string
      */
-    public $value;
+    protected $value;
 
 
     private function __construct()

@@ -238,6 +238,7 @@ $router->cacheRemember(static function (\Gzhegow\Router\Core\RouterInterface $ro
     $router->middlewareOnPath('/api/v1/user', '\Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware');
     $router->middlewareOnPath('/api/v1/user', '\Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware');
     $router->middlewareOnPath('/api/v1/user', '\Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware');
+
     // // > можно привязывать посредники так же по тегу, теги в свою очередь привязывать к маршрутам
     // $router->middlewareOnTag('user', '\Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware');
 
@@ -245,6 +246,7 @@ $router->cacheRemember(static function (\Gzhegow\Router\Core\RouterInterface $ro
     // > несколько fallback-обработчиков запустятся один за другим, пока какой-либо из них не вернет not-NULL результат, и если ни один - будет брошено \Gzhegow\Pipeline\PipelineException
     // > будьте внимательны, fallback-обработчики отрабатывают в той последовательности, в которой заданы, если задать их до группы, то и отработают они раньше
     $router->fallbackOnPath('/api/v1/user', '\Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback');
+
     // // > можно привязывать fallback-обработчики так же по тегу, теги в свою очередь привязывать к маршрутам
     // $router->fallbackOnTag('user', '\Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback');
 
@@ -416,10 +418,10 @@ _assert_stdout($fn, [], '
 @before :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
 @before :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
 @before :: Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware::__invoke
-Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback::__invoke
 @after :: Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware::__invoke
 @after :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
 @after :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
+Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback::__invoke
 "[ RESULT ]" | "Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback::__invoke result."
 ');
 
@@ -472,16 +474,17 @@ _assert_stdout($fn, [], '
 @before :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
 @before :: Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware::__invoke
 Gzhegow\Router\Demo\Handler\Controller\DemoController::logic
-Gzhegow\Router\Demo\Handler\Fallback\DemoLogicExceptionFallback::__invoke
 @after :: Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware::__invoke
 @after :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
 @after :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
+Gzhegow\Router\Demo\Handler\Fallback\DemoRuntimeExceptionFallback::__invoke
+Gzhegow\Router\Demo\Handler\Fallback\DemoLogicExceptionFallback::__invoke
 "[ RESULT ]" | "Gzhegow\Router\Demo\Handler\Fallback\DemoLogicExceptionFallback::__invoke result."
 ');
 
 
 // > TEST
-// > этот маршрут бросает \RuntimeException, запустятся DemoThrowableFallback и DemoRuntimeExceptionFallback
+// > этот маршрут бросает \RuntimeException, запустится DemoRuntimeExceptionFallback (т.к. он объявлен первым)
 $fn = function () use ($router) {
     _print('TEST 8');
     echo PHP_EOL;
@@ -498,10 +501,10 @@ _assert_stdout($fn, [], '
 @before :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
 @before :: Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware::__invoke
 Gzhegow\Router\Demo\Handler\Controller\DemoController::runtime
-Gzhegow\Router\Demo\Handler\Fallback\DemoRuntimeExceptionFallback::__invoke
 @after :: Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware::__invoke
 @after :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
 @after :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
+Gzhegow\Router\Demo\Handler\Fallback\DemoRuntimeExceptionFallback::__invoke
 "[ RESULT ]" | "Gzhegow\Router\Demo\Handler\Fallback\DemoRuntimeExceptionFallback::__invoke result."
 ');
 ```

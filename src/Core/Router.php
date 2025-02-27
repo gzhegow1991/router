@@ -8,24 +8,24 @@ namespace Gzhegow\Router\Core;
 
 use Gzhegow\Lib\Lib;
 use Gzhegow\Router\Core\Route\Route;
-use Gzhegow\Router\Core\Pattern\RouterPattern;
 use Gzhegow\Router\Core\Node\RouterNode;
 use Gzhegow\Router\Core\Route\Struct\Tag;
 use Gzhegow\Router\Core\Route\RouteGroup;
 use Gzhegow\Router\Core\Route\Struct\Path;
-use Gzhegow\Router\Core\Route\RouteBlueprint;
 use Gzhegow\Router\Exception\LogicException;
+use Gzhegow\Router\Core\Route\RouteBlueprint;
+use Gzhegow\Router\Core\Pattern\RouterPattern;
 use Gzhegow\Router\Exception\RuntimeException;
-use Gzhegow\Router\Core\Collection\RouterRouteCollection;
 use Gzhegow\Router\Core\Cache\RouterCacheInterface;
-use Gzhegow\Router\Core\Collection\RouterPatternCollection;
 use Gzhegow\Router\Core\Contract\RouterMatchContract;
-use Gzhegow\Router\Core\Collection\RouterFallbackCollection;
-use Gzhegow\Router\Core\Contract\RouterDispatchContract;
-use Gzhegow\Router\Core\Collection\RouterMiddlewareCollection;
 use Gzhegow\Router\Exception\Runtime\NotFoundException;
-use Gzhegow\Router\Core\Handler\Action\Internal\ThrowAction;
+use Gzhegow\Router\Core\Contract\RouterDispatchContract;
+use Gzhegow\Router\Core\Collection\RouterRouteCollection;
 use Gzhegow\Router\Exception\Exception\DispatchException;
+use Gzhegow\Router\Core\Collection\RouterPatternCollection;
+use Gzhegow\Router\Core\Collection\RouterFallbackCollection;
+use Gzhegow\Router\Core\Handler\Action\Internal\ThrowAction;
+use Gzhegow\Router\Core\Collection\RouterMiddlewareCollection;
 use Gzhegow\Router\Core\Handler\Fallback\GenericHandlerFallback;
 use Gzhegow\Router\Core\Handler\Middleware\GenericHandlerMiddleware;
 use Gzhegow\Router\Package\Gzhegow\Pipeline\RouterPipelineFactoryInterface;
@@ -683,7 +683,7 @@ class Router implements RouterInterface
     public function dispatch(
         RouterDispatchContract $contract,
         $input = null, $context = null
-    ) // : mixed
+    )
     {
         $contractHttpMethod = $contract->httpMethod->getValue();
         $contractRequestUri = $contract->requestUri;
@@ -837,9 +837,7 @@ class Router implements RouterInterface
         }
 
         $fnSort = static function ($a, $b) {
-            return 0
-                || (strlen($b) - strlen($a))
-                || strcasecmp($a, $b);
+            return strlen($b) <=> strlen($a);
         };
 
         uksort($middlewareIndexes[ 'path' ], $fnSort);
@@ -902,12 +900,12 @@ class Router implements RouterInterface
             $chain->throwable($throwable);
         }
 
-        foreach ( $fallbackList as $fallback ) {
-            $chain->fallback($fallback);
-        }
-
         for ( $i = 0; $i < count($middlewareList); $i++ ) {
             $chain = $chain->endMiddleware();
+        }
+
+        foreach ( $fallbackList as $fallback ) {
+            $chain->fallback($fallback);
         }
 
         try {
@@ -1046,11 +1044,11 @@ class Router implements RouterInterface
 
         if (! $this->config->registerAllowObjectsAndClosures) {
             $runtimeAction = null
-                ?? $route->action->closure
-                ?? $route->action->methodObject
-                ?? $route->action->invokableObject;
+                ?? $route->action->hasClosureObject()
+                ?? $route->action->hasMethodObject()
+                ?? $route->action->hasInvokableObject();
 
-            if ($route->action->closure || $route->action->methodObject || $route->action->invokableObject) {
+            if (null !== $runtimeAction) {
                 throw new RuntimeException(
                     [
                         'The `action` should not be runtime object or \Closure',
@@ -1142,7 +1140,11 @@ class Router implements RouterInterface
         $this->isRouterChanged = true;
 
         if (! $this->config->registerAllowObjectsAndClosures) {
-            if ($middleware->closure || $middleware->methodObject || $middleware->invokableObject) {
+            if (false
+                || $middleware->isClosure()
+                || $middleware->hasMethodObject()
+                || $middleware->hasInvokableObject()
+            ) {
                 throw new RuntimeException(
                     [
                         'This `middleware` should not be runtime object or \Closure',
@@ -1162,7 +1164,11 @@ class Router implements RouterInterface
         $this->isRouterChanged = true;
 
         if (! $this->config->registerAllowObjectsAndClosures) {
-            if ($fallback->closure || $fallback->methodObject || $fallback->invokableObject) {
+            if (false
+                || $fallback->isClosure()
+                || $fallback->hasMethodObject()
+                || $fallback->hasInvokableObject()
+            ) {
                 throw new RuntimeException(
                     [
                         'This `fallback` should not be runtime object or \Closure',

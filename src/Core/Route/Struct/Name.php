@@ -11,7 +11,7 @@ class Name
     /**
      * @var string
      */
-    public $value;
+    protected $value;
 
 
     private function __construct()
@@ -77,14 +77,14 @@ class Name
      */
     public static function tryFromString($string) // : ?static
     {
-        if (null === ($tag = Lib::parse()->string_not_empty($string))) {
+        if (null === ($_string = Lib::parse()->string_not_empty($string))) {
             return Lib::php()->error(
                 [ 'The `from` should be non-empty string', $string ]
             );
         }
 
         $instance = new static();
-        $instance->value = $tag;
+        $instance->value = $_string;
 
         return $instance;
     }

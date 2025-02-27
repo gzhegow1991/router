@@ -34,7 +34,7 @@ class HttpMethod
     /**
      * @var string
      */
-    public $value;
+    protected $value;
 
 
     private function __construct()
@@ -111,8 +111,7 @@ class HttpMethod
         if (! isset(static::LIST_METHOD[ $_string ])) {
             return Lib::php()->error(
                 [
-                    ''
-                    . 'The `from` should be one of: '
+                    'The `from` should be one of: '
                     . implode(',', array_keys(static::LIST_METHOD)),
                     $string,
                 ]
