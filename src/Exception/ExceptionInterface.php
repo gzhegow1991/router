@@ -2,6 +2,6 @@
 
 namespace Gzhegow\Router\Exception;
 
-interface ExceptionInterface
+interface ExceptionInterface extends \Throwable
 {
 }
