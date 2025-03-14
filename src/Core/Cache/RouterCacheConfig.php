@@ -55,49 +55,55 @@ class RouterCacheConfig extends AbstractConfig
     protected $cacheFilename = 'router.cache';
 
 
-    public function validate() : void
+    protected function validation(array &$context = []) : bool
     {
+        $theType = Lib::type();
+
+        if (null !== $this->cacheAdapter) {
+            if (! is_a($this->cacheAdapter, $class = '\Psr\Cache\CacheItemPoolInterface')) {
+                throw new LogicException(
+                    [
+                        'The `cacheAdapter` should be instance of: ' . $class,
+                        $this,
+                    ]
+                );
+            }
+        }
+
+        if (null !== $this->cacheDirpath) {
+            if (! $theType->dirpath($result, $this->cacheDirpath)) {
+                throw new LogicException(
+                    [
+                        'The `cacheDirpath` should be valid directory path',
+                        $this,
+                    ]
+                );
+            }
+        }
+
+        if (null !== $this->cacheFilename) {
+            if (! $theType->filename($result, $this->cacheFilename)) {
+                throw new LogicException(
+                    [
+                        'The `cacheFilename` should be valid filename',
+                        $this,
+                    ]
+                );
+            }
+        }
+
         if (! isset(RouterCache::LIST_CACHE_MODE[ $this->cacheMode ])) {
             throw new LogicException(
                 [
-                    'The `cacheMode` should be one of: '
+                    ''
+                    . 'The `cacheMode` should be one of: '
                     . implode('|', array_keys(RouterCache::LIST_CACHE_MODE)),
+                    //
                     $this,
                 ]
             );
         }
 
-        if ((null !== $this->cacheAdapter)
-            && ! is_a($this->cacheAdapter, $class = '\Psr\Cache\CacheItemPoolInterface')
-        ) {
-            throw new LogicException(
-                [
-                    'The `cacheAdapter` should be instance of: ' . $class,
-                    $this,
-                ]
-            );
-        }
-
-        if ((null !== $this->cacheDirpath)
-            && (null === Lib::parse()->dirpath($this->cacheDirpath))
-        ) {
-            throw new LogicException(
-                [
-                    'The `cacheDirpath` should be valid directory path',
-                    $this,
-                ]
-            );
-        }
-
-        if ((null !== $this->cacheFilename)
-            && (null === Lib::parse()->filename($this->cacheFilename))
-        ) {
-            throw new LogicException(
-                [
-                    'The `cacheFilename` should be valid filename',
-                    $this,
-                ]
-            );
-        }
+        return true;
     }
 }

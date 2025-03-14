@@ -3,9 +3,9 @@
 namespace Gzhegow\Router\Core;
 
 use Gzhegow\Lib\Config\AbstractConfig;
-use Gzhegow\Router\Core\Route\Struct\HttpMethod;
-use Gzhegow\Router\Core\Cache\RouterCacheConfig;
 use Gzhegow\Router\Exception\LogicException;
+use Gzhegow\Router\Core\Cache\RouterCacheConfig;
+use Gzhegow\Router\Core\Route\Struct\HttpMethod;
 
 
 /**
@@ -60,14 +60,14 @@ class RouterConfig extends AbstractConfig
 
     public function __construct()
     {
-        $this->__sections[ 'cache' ] = $this->cache = new RouterCacheConfig();
+        $this->cache = new RouterCacheConfig();
+
+        parent::__construct();
     }
 
 
-    public function validate() : void
+    protected function validation(array &$context = []) : bool
     {
-        $this->cache->validate();
-
         $this->registerAllowObjectsAndClosures = (bool) $this->registerAllowObjectsAndClosures;
         $this->dispatchIgnoreMethod = (bool) $this->dispatchIgnoreMethod;
 
@@ -78,8 +78,10 @@ class RouterConfig extends AbstractConfig
         if (! isset(Router::LIST_TRAILING_SLASH[ $this->compileTrailingSlashMode ])) {
             throw new LogicException(
                 [
-                    'The `compileTrailingSlashMode` should be one of: '
+                    ''
+                    . 'The `compileTrailingSlashMode` should be one of: '
                     . implode(',', array_keys(Router::LIST_TRAILING_SLASH)),
+                    //
                     $this,
                 ]
             );
@@ -88,11 +90,15 @@ class RouterConfig extends AbstractConfig
         if (! isset(Router::LIST_TRAILING_SLASH[ $this->dispatchTrailingSlashMode ])) {
             throw new LogicException(
                 [
-                    'The `dispatchTrailingSlashMode` should be one of: '
+                    ''
+                    . 'The `dispatchTrailingSlashMode` should be one of: '
                     . implode(',', array_keys(Router::LIST_TRAILING_SLASH)),
+                    //
                     $this,
                 ]
             );
         }
+
+        return true;
     }
 }
