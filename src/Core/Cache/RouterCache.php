@@ -82,7 +82,10 @@ class RouterCache implements RouterCacheInterface
 
             $content = Lib::php()->serialize($cacheData);
 
-            Lib::fs()->file_put_contents($cacheFilepath, $content, [ 0775, true ]);
+            Lib::fs()->file_put_contents(
+                $cacheFilepath, $content,
+                [], [ 0775, true ]
+            );
         }
 
         return $this;
