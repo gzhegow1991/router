@@ -635,8 +635,10 @@ class Router implements RouterInterface
             $intersect[] = $index;
         }
 
-        if ($intersect) {
-            $index = Lib::arr()->intersect_key(...$intersect);
+        if ([] !== $intersect) {
+            $index = (count($intersect) > 1)
+                ? array_intersect_key(...$intersect)
+                : $intersect;
 
         } else {
             $index = array_fill_keys(
