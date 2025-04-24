@@ -205,7 +205,8 @@ $router->cacheRemember(static function (\Gzhegow\Router\Core\RouterInterface $ro
             //     ->tags($tags = [ 'user' ])
             // ;
 
-            // > можно указывать теги и поведение и для конкретного роута, при этом если такие же поведения уже были зарегистрированы раньше, то повторно они не добавятся
+            // > можно указывать теги и мидлвары/фолбэки и для конкретного роута
+            // > при этом, если такие же уже были зарегистрированы раньше, то повторно они не добавятся
             // $group->route('/api/v1/user/{id}/main', 'GET', '\Gzhegow\Router\Demo\Handler\Action\DemoCorsAction')
             //     ->name('user.main')
             //     ->tags([ 'user' ])
@@ -221,12 +222,14 @@ $router->cacheRemember(static function (\Gzhegow\Router\Core\RouterInterface $ro
             //     ])
             // ;
 
+            // > имя роута и путь URL совпадают во всех трех строках, однако HTTP-методы разные и так делать можно
             $group->route('/api/v1/user/{id}/main', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'mainGet' ], 'user.main');
-            // > это же имя мы уже использовали выше, однако `path` совпадает и так можно
             $group->route('/api/v1/user/{id}/main', 'POST', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'mainPost' ], 'user.main');
             $group->route('/api/v1/user/{id}/main', 'OPTIONS', '\Gzhegow\Router\Demo\Handler\Action\DemoCorsAction', 'user.main');
 
-            // > можно задавать группу в группе, метод ->register() передаст все роуты в родительскую группу и соединит групповые настройки с основными
+            // > можно задавать группу в группе
+            // > метод ->register() передаст все роуты в родительскую группу
+            // > не рекомендуется так делать - путь к маршруту надо оставлять цельным, чтобы по нему можно было искать поиском
             $group->group()
                 ->name('user.main')
                 ->path('/api/v1/user/{id}')
@@ -467,11 +470,12 @@ $fn = function () use ($router, $ffn) {
         $result = $router->dispatch($contract);
     }
     catch ( \Gzhegow\Router\Exception\Exception\DispatchException $e ) {
-        $ffn->print('[ CATCH ]', get_class($e), $e->getMessage());
+        $lines = \Gzhegow\Lib\Exception\ErrorHandler::getThrowableMessageListLines(
+            $e, [ 'with_file' => false ]
+        );
 
-        foreach ( $e->getPreviousList() as $ee ) {
-            $ffn->print('[ CATCH ]', get_class($ee), $ee->getMessage());
-        }
+        echo '[ CATCH ]' . PHP_EOL;
+        echo implode(PHP_EOL, $lines) . PHP_EOL;
     }
     echo PHP_EOL;
 
@@ -480,8 +484,15 @@ $fn = function () use ($router, $ffn) {
 $ffn->assert_stdout($fn, [], '
 "TEST 6"
 
-"[ CATCH ]" | "Gzhegow\Router\Exception\Exception\DispatchException" | "Unhandled exception occured during dispatch"
-"[ CATCH ]" | "Gzhegow\Router\Exception\Runtime\NotFoundException" | "Route not found: `/api/v1/not-found/not-found` / `GET`"
+[ CATCH ]
+[ 0 ] Unhandled exception occured during dispatch
+{ object # Gzhegow\Router\Exception\Exception\DispatchException }
+--
+-- [ 0.0 ] Unhandled exception occured during processing pipeline
+-- { object # Gzhegow\Pipeline\Exception\Runtime\PipelineException }
+----
+---- [ 0.0.0 ] Route not found: `/api/v1/not-found/not-found` / `GET`
+---- { object # Gzhegow\Router\Exception\Runtime\NotFoundException }
 
 "[ RESULT ]" | NULL
 ');

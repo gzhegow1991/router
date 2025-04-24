@@ -1,13 +1,10 @@
 <?php
-/**
- * @noinspection PhpUndefinedNamespaceInspection
- * @noinspection PhpUndefinedClassInspection
- */
 
 namespace Gzhegow\Router\Core;
 
 use Gzhegow\Lib\Lib;
 use Gzhegow\Router\Core\Route\Route;
+use Gzhegow\Lib\Exception\ErrorHandler;
 use Gzhegow\Router\Core\Node\RouterNode;
 use Gzhegow\Router\Core\Route\Struct\Tag;
 use Gzhegow\Router\Core\Route\RouteGroup;
@@ -24,7 +21,6 @@ use Gzhegow\Router\Core\Collection\RouterRouteCollection;
 use Gzhegow\Router\Exception\Exception\DispatchException;
 use Gzhegow\Router\Core\Collection\RouterPatternCollection;
 use Gzhegow\Router\Core\Collection\RouterFallbackCollection;
-use Gzhegow\Router\Core\Handler\Action\Internal\ThrowAction;
 use Gzhegow\Router\Core\Collection\RouterMiddlewareCollection;
 use Gzhegow\Router\Core\Handler\Fallback\GenericHandlerFallback;
 use Gzhegow\Router\Core\Handler\Middleware\GenericHandlerMiddleware;
@@ -138,7 +134,7 @@ class Router implements RouterInterface
     /**
      * @return static
      */
-    public function cacheClear() // : static
+    public function cacheClear()
     {
         $this->routerCache->clearCache();
 
@@ -150,7 +146,7 @@ class Router implements RouterInterface
      *
      * @return static
      */
-    public function cacheRemember($fn) // : static
+    public function cacheRemember($fn)
     {
         if ($this->cacheLoad()) {
             return $this;
@@ -196,7 +192,10 @@ class Router implements RouterInterface
         return true;
     }
 
-    protected function cacheSave() // : static
+    /**
+     * @return static
+     */
+    protected function cacheSave()
     {
         if (! $this->isRouterChanged) return $this;
         if ($this->config->registerAllowObjectsAndClosures) return $this;
@@ -279,7 +278,7 @@ class Router implements RouterInterface
     /**
      * @return static
      */
-    public function addRoute(RouteBlueprint $routeBlueprint) // : static
+    public function addRoute(RouteBlueprint $routeBlueprint)
     {
         $this->routeGroupRoot->addRoute($routeBlueprint);
 
@@ -291,7 +290,7 @@ class Router implements RouterInterface
      * @param string $pattern
      * @param string $regex
      */
-    public function pattern($pattern, $regex) // : static
+    public function pattern($pattern, $regex)
     {
         $pattern = RouterPattern::from([ $pattern, $regex ]);
 
@@ -305,13 +304,13 @@ class Router implements RouterInterface
      * @param string                                    $path
      * @param callable|object|array|class-string|string $middleware
      */
-    public function middlewareOnPath($path, $middleware) // : static
+    public function middlewareOnPath($path, $middleware)
     {
-        $path = Path::from($path);
-        $middleware = GenericHandlerMiddleware::from($middleware);
+        $pathObject = Path::from($path);
+        $middlewareObject = GenericHandlerMiddleware::from($middleware);
 
         if ($this->config->compileTrailingSlashMode) {
-            $pathValue = $path->getValue();
+            $pathValue = $pathObject->getValue();
 
             $isEndsWithSlash = ('/' === $pathValue[ strlen($pathValue) - 1 ]);
 
@@ -327,9 +326,9 @@ class Router implements RouterInterface
             }
         }
 
-        $this->registerMiddleware($middleware);
+        $this->registerMiddleware($middlewareObject);
 
-        $this->middlewareCollection->addPathMiddleware($path, $middleware);
+        $this->middlewareCollection->addPathMiddleware($pathObject, $middlewareObject);
 
         return $this;
     }
@@ -338,14 +337,14 @@ class Router implements RouterInterface
      * @param string                                    $tag
      * @param callable|object|array|class-string|string $middleware
      */
-    public function middlewareOnTag($tag, $middleware) // : static
+    public function middlewareOnTag($tag, $middleware)
     {
-        $tag = Tag::from($tag);
-        $middleware = GenericHandlerMiddleware::from($middleware);
+        $tagObject = Tag::from($tag);
+        $middlewareObject = GenericHandlerMiddleware::from($middleware);
 
-        $this->registerMiddleware($middleware);
+        $this->registerMiddleware($middlewareObject);
 
-        $this->middlewareCollection->addTagMiddleware($tag, $middleware);
+        $this->middlewareCollection->addTagMiddleware($tagObject, $middlewareObject);
 
         return $this;
     }
@@ -355,13 +354,13 @@ class Router implements RouterInterface
      * @param string                                    $path
      * @param callable|object|array|class-string|string $fallback
      */
-    public function fallbackOnPath($path, $fallback) // : static
+    public function fallbackOnPath($path, $fallback)
     {
-        $path = Path::from($path);
-        $fallback = GenericHandlerFallback::from($fallback);
+        $pathObject = Path::from($path);
+        $fallbackObject = GenericHandlerFallback::from($fallback);
 
         if (! $this->config->compileTrailingSlashMode) {
-            $pathValue = $path->getValue();
+            $pathValue = $pathObject->getValue();
 
             $isEndsWithSlash = ('/' === $pathValue[ strlen($pathValue) - 1 ]);
 
@@ -377,9 +376,9 @@ class Router implements RouterInterface
             }
         }
 
-        $this->registerFallback($fallback);
+        $this->registerFallback($fallbackObject);
 
-        $this->fallbackCollection->addPathFallback($path, $fallback);
+        $this->fallbackCollection->addPathFallback($pathObject, $fallbackObject);
 
         return $this;
     }
@@ -388,14 +387,14 @@ class Router implements RouterInterface
      * @param string                                    $tag
      * @param callable|object|array|class-string|string $fallback
      */
-    public function fallbackOnTag($tag, $fallback) // : static
+    public function fallbackOnTag($tag, $fallback)
     {
-        $tag = Tag::from($tag);
-        $fallback = GenericHandlerFallback::from($fallback);
+        $tagObject = Tag::from($tag);
+        $fallbackObject = GenericHandlerFallback::from($fallback);
 
-        $this->registerFallback($fallback);
+        $this->registerFallback($fallbackObject);
 
-        $this->fallbackCollection->addTagFallback($tag, $fallback);
+        $this->fallbackCollection->addTagFallback($tagObject, $fallbackObject);
 
         return $this;
     }
@@ -404,7 +403,7 @@ class Router implements RouterInterface
     /**
      * @return static
      */
-    public function commit() // : static
+    public function commit()
     {
         $this->registerRouteGroup($this->routeGroupRoot);
 
@@ -858,13 +857,16 @@ class Router implements RouterInterface
         $middlewareIndex += $middlewareIndexes[ 'tags' ];
         $fallbackIndex += $fallbackIndexes[ 'tags' ];
 
-        /** @var GenericHandlerMiddleware[] $middlewareList */
+        /**
+         * @var GenericHandlerMiddleware[] $middlewareList
+         * @var GenericHandlerFallback[]   $fallbackList
+         */
+
         $middlewareList = [];
         foreach ( $middlewareIndex as $i => $bool ) {
             $middlewareList[ $i ] = $this->middlewareCollection->middlewareList[ $i ];
         }
 
-        /** @var GenericHandlerFallback[] $fallbackList */
         $fallbackList = [];
         foreach ( $fallbackIndex as $i => $bool ) {
             $fallbackList[ $i ] = $this->fallbackCollection->fallbackList[ $i ];
@@ -914,14 +916,9 @@ class Router implements RouterInterface
             $result = $this->pipelineProcessManager->run($pipeline, $input, $context);
         }
         catch ( \Gzhegow\Pipeline\Exception\Runtime\PipelineException $throwable ) {
-            $throwables = $throwable->getPreviousList();
-
-            $e = new DispatchException(
-                "Unhandled exception occured during dispatch", -1,
-                ...$throwables
+            throw new DispatchException(
+                "Unhandled exception occured during dispatch", $throwable
             );
-
-            throw $e;
         }
 
         return $result;

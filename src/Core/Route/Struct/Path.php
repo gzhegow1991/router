@@ -20,73 +20,71 @@ class Path
     }
 
 
-    /**
-     * @return static
-     */
-    public static function from($from) // : static
+    public function __toString()
     {
-        $instance = static::tryFrom($from, $error);
-
-        if (null === $instance) {
-            throw $error;
-        }
-
-        return $instance;
+        return $this->value;
     }
 
-    /**
-     * @return static|null
-     */
-    public static function tryFrom($from, \Throwable &$last = null) // : ?static
-    {
-        $last = null;
 
-        Lib::php()->errors_start($b);
+    /**
+     * @return static|bool|null
+     */
+    public static function from($from, array $refs = [])
+    {
+        $withErrors = array_key_exists(0, $refs);
+
+        $refs[ 0 ] = $refs[ 0 ] ?? null;
 
         $instance = null
-            ?? static::tryFromInstance($from)
-            ?? static::tryFromString($from);
+            ?? static::fromStatic($from, $refs)
+            ?? static::fromString($from, $refs);
 
-        $errors = Lib::php()->errors_end($b);
-
-        if (null === $instance) {
-            foreach ( $errors as $error ) {
-                $last = new LogicException($error, $last);
+        if (! $withErrors) {
+            if (null === $instance) {
+                throw $refs[ 0 ];
             }
         }
 
         return $instance;
     }
 
-
     /**
-     * @return static|null
+     * @return static|bool|null
      */
-    public static function tryFromInstance($instance) // : ?static
+    public static function fromStatic($from, array $refs = [])
     {
-        if (! is_a($instance, static::class)) {
-            return Lib::php()->error(
-                [ 'The `from` should be instance of: ' . static::class, $instance ]
-            );
+        if ($from instanceof static) {
+            return Lib::refsResult($refs, $from);
         }
 
-        return $instance;
+        return Lib::refsError(
+            $refs,
+            new LogicException(
+                [ 'The `from` should be instance of: ' . static::class, $from ]
+            )
+        );
     }
 
     /**
-     * @return static|null
+     * @return static|bool|null
      */
-    public static function tryFromString($string) // : ?static
+    public static function fromString($from, array $refs = [])
     {
-        if (null === ($path = Lib::parse()->path($string))) {
-            return Lib::php()->error(
-                [ 'The `from` should be valid path', $string ]
+        if (! Lib::type()->path($fromPath, $from)) {
+            return Lib::refsError(
+                $refs,
+                new LogicException(
+                    [ 'The `from` should be valid path', $from ]
+                )
             );
         }
 
-        if (0 !== strpos($path, '/')) {
-            return Lib::php()->error(
-                [ 'The `from` should start with `/` sign', $string ]
+        if (0 !== strpos($fromPath, '/')) {
+            return Lib::refsError(
+                $refs,
+                new LogicException(
+                    [ 'The `from` should start with `/` sign', $from ]
+                )
             );
         }
 
@@ -97,24 +95,21 @@ class Path
             . preg_quote(Router::PATTERN_ENCLOSURE, '/')
             . '-';
 
-        if (preg_match("/[^{$allowed}]/", $path)) {
+        if (preg_match("/[^{$allowed}]/", $fromPath)) {
             $regex = "/[{$allowed}]+/";
 
-            return Lib::php()->error(
-                [ 'The `from` should match the regex: ' . $regex, $string ]
+            return Lib::refsError(
+                $refs,
+                new LogicException(
+                    [ 'The `from` should match the regex: ' . $regex, $from ]
+                )
             );
         }
 
         $instance = new static();
-        $instance->value = $path;
+        $instance->value = $fromPath;
 
-        return $instance;
-    }
-
-
-    public function __toString()
-    {
-        return $this->value;
+        return Lib::refsResult($refs, $instance);
     }
 
 

@@ -18,14 +18,14 @@ interface RouterInterface
     /**
      * @return static
      */
-    public function cacheClear(); // : static
+    public function cacheClear();
 
     /**
      * @param callable $fn
      *
      * @return static
      */
-    public function cacheRemember($fn); // : static
+    public function cacheRemember($fn);
 
 
     public function newBlueprint(RouteBlueprint $from = null) : RouteBlueprint;
@@ -62,7 +62,7 @@ interface RouterInterface
     /**
      * @return static
      */
-    public function addRoute(RouteBlueprint $routeBlueprint); // : static
+    public function addRoute(RouteBlueprint $routeBlueprint);
 
 
     /**
@@ -101,7 +101,7 @@ interface RouterInterface
     /**
      * @return static
      */
-    public function commit(); // : static
+    public function commit();
 
 
     /**

@@ -37,66 +37,55 @@ class RouterMatchContract
 
 
     /**
-     * @return static
+     * @return static|bool|null
      */
-    public static function from($from) // : static
+    public static function from($from, array $refs = [])
     {
-        $instance = static::tryFrom($from, $error);
+        $withErrors = array_key_exists(0, $refs);
 
-        if (null === $instance) {
-            throw $error;
-        }
-
-        return $instance;
-    }
-
-    /**
-     * @return static|null
-     */
-    public static function tryFrom($from, \Throwable &$last = null) // : ?static
-    {
-        $last = null;
-
-        Lib::php()->errors_start($b);
+        $refs[ 0 ] = $refs[ 0 ] ?? null;
 
         $instance = null
-            ?? static::tryFromInstance($from)
-            ?? static::tryFromArray($from);
+            ?? static::fromStatic($from, $refs)
+            ?? static::fromArray($from, $refs);
 
-        $errors = Lib::php()->errors_end($b);
-
-        if (null === $instance) {
-            foreach ( $errors as $error ) {
-                $last = new LogicException($error, $last);
+        if (! $withErrors) {
+            if (null === $instance) {
+                throw $refs[ 0 ];
             }
         }
 
         return $instance;
     }
 
-
     /**
-     * @return static|null
+     * @return static|bool|null
      */
-    public static function tryFromInstance($instance) // : ?static
+    public static function fromStatic($from, array $refs = [])
     {
-        if (! is_a($instance, static::class)) {
-            return Lib::php()->error(
-                [ 'The `from` should be instance of: ' . static::class, $instance ]
-            );
+        if ($from instanceof static) {
+            return Lib::refsResult($refs, $from);
         }
 
-        return $instance;
+        return Lib::refsError(
+            $refs,
+            new LogicException(
+                [ 'The `from` should be instance of: ' . static::class, $from ]
+            )
+        );
     }
 
     /**
-     * @return static
+     * @return static|bool|null
      */
-    public static function tryFromArray($array) // : ?static
+    public static function fromArray($array, array $refs = [])
     {
         if (! is_array($array)) {
-            return Lib::php()->error(
-                [ 'The `from` should be array', $array ]
+            return Lib::refsError(
+                $refs,
+                new LogicException(
+                    [ 'The `from` should be array', $array ]
+                )
             );
         }
 
@@ -130,6 +119,6 @@ class RouterMatchContract
         $instance->pathIndex = Lib::arr()->index_string([], ...$pathes);
         $instance->httpMethodIndex = Lib::arr()->index_string([], ...$methods);
 
-        return $instance;
+        return Lib::refsResult($refs, $instance);
     }
 }

@@ -48,7 +48,7 @@ class RouteBlueprint
     /**
      * @return static
      */
-    public function reset() // : static
+    public function reset()
     {
         $this->path = null;
         $this->action = null;
@@ -67,7 +67,7 @@ class RouteBlueprint
     /**
      * @return static
      */
-    public function action($action) // : static
+    public function action($action)
     {
         $actionObject = GenericHandlerAction::from($action);
 
@@ -79,7 +79,7 @@ class RouteBlueprint
     /**
      * @return static
      */
-    public function resetAction() // : static
+    public function resetAction()
     {
         $this->action = null;
 
@@ -90,7 +90,7 @@ class RouteBlueprint
     /**
      * @return static
      */
-    public function path($path) // : static
+    public function path($path)
     {
         $pathObject = Path::from($path);
 
@@ -102,7 +102,7 @@ class RouteBlueprint
     /**
      * @return static
      */
-    public function name($name) // : static
+    public function name($name)
     {
         $nameObject = Name::from($name);
 
@@ -115,7 +115,7 @@ class RouteBlueprint
     /**
      * @return static
      */
-    public function setHttpMethods(array $httpMethods) // : static
+    public function setHttpMethods(array $httpMethods)
     {
         $this->httpMethodIndex = [];
 
@@ -127,7 +127,7 @@ class RouteBlueprint
     /**
      * @return static
      */
-    public function httpMethods(array $httpMethods) // : static
+    public function httpMethods(array $httpMethods)
     {
         foreach ( $httpMethods as $httpMethod ) {
             $this->httpMethod($httpMethod);
@@ -139,11 +139,11 @@ class RouteBlueprint
     /**
      * @return static
      */
-    public function httpMethod($httpMethod) // : static
+    public function httpMethod($httpMethod)
     {
-        $_httpMethod = HttpMethod::from($httpMethod);
+        $httpMethodObject = HttpMethod::from($httpMethod);
 
-        $this->httpMethodIndex[ $_httpMethod->getValue() ] = true;
+        $this->httpMethodIndex[ $httpMethodObject->getValue() ] = true;
 
         return $this;
     }
@@ -152,7 +152,7 @@ class RouteBlueprint
     /**
      * @return static
      */
-    public function setTags(array $tags) // : static
+    public function setTags(array $tags)
     {
         $this->tagIndex = [];
 
@@ -164,7 +164,7 @@ class RouteBlueprint
     /**
      * @return static
      */
-    public function tags(array $tags) // : static
+    public function tags(array $tags)
     {
         foreach ( $tags as $tag ) {
             $this->tag($tag);
@@ -176,7 +176,7 @@ class RouteBlueprint
     /**
      * @return static
      */
-    public function tag($tag) // : static
+    public function tag($tag)
     {
         $_tag = Tag::from($tag);
 
@@ -189,7 +189,7 @@ class RouteBlueprint
     /**
      * @return static
      */
-    public function setMiddlewares(array $middlewares) // : static
+    public function setMiddlewares(array $middlewares)
     {
         $this->middlewareDict = [];
 
@@ -201,7 +201,7 @@ class RouteBlueprint
     /**
      * @return static
      */
-    public function middlewares(array $middlewares) // : static
+    public function middlewares(array $middlewares)
     {
         foreach ( $middlewares as $middleware ) {
             $this->middleware($middleware);
@@ -213,7 +213,7 @@ class RouteBlueprint
     /**
      * @return static
      */
-    public function middleware($middleware) // : static
+    public function middleware($middleware)
     {
         $_middleware = GenericHandlerMiddleware::from($middleware);
 
@@ -226,7 +226,7 @@ class RouteBlueprint
     /**
      * @return static
      */
-    public function setFallbacks(array $fallbacks) // : static
+    public function setFallbacks(array $fallbacks)
     {
         $this->fallbackDict = [];
 
@@ -238,7 +238,7 @@ class RouteBlueprint
     /**
      * @return static
      */
-    public function fallbacks(array $fallbacks) // : static
+    public function fallbacks(array $fallbacks)
     {
         foreach ( $fallbacks as $fallback ) {
             $this->fallback($fallback);
@@ -250,7 +250,7 @@ class RouteBlueprint
     /**
      * @return static
      */
-    public function fallback($fallback) // : static
+    public function fallback($fallback)
     {
         $_fallback = GenericHandlerFallback::from($fallback);
 

@@ -72,7 +72,9 @@ class RouterConfig extends AbstractConfig
         $this->dispatchIgnoreMethod = (bool) $this->dispatchIgnoreMethod;
 
         if (null !== $this->dispatchForceMethod) {
-            $this->dispatchForceMethod = HttpMethod::from($this->dispatchForceMethod)->getValue();
+            $httpMethodObject = HttpMethod::from($this->dispatchForceMethod);
+
+            $this->dispatchForceMethod = $httpMethodObject->getValue();
         }
 
         if (! isset(Router::LIST_TRAILING_SLASH[ $this->compileTrailingSlashMode ])) {

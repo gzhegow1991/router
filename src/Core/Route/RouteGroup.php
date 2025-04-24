@@ -49,7 +49,7 @@ class RouteGroup
     /**
      * @return static
      */
-    public function reset() // : static
+    public function reset()
     {
         $this->routeBlueprint->reset();
 
@@ -108,7 +108,7 @@ class RouteGroup
     /**
      * @return static
      */
-    public function addRoute(RouteBlueprint $routeBlueprint) // : static
+    public function addRoute(RouteBlueprint $routeBlueprint)
     {
         $this->routeList[] = $routeBlueprint;
 
@@ -165,7 +165,7 @@ class RouteGroup
     /**
      * @return static
      */
-    public function path($path) // : static
+    public function path($path)
     {
         $this->routeBlueprint->path($path);
 
@@ -175,7 +175,7 @@ class RouteGroup
     /**
      * @return static
      */
-    public function name($name) // : static
+    public function name($name)
     {
         $this->routeBlueprint->name($name);
 
@@ -186,7 +186,7 @@ class RouteGroup
     /**
      * @return static
      */
-    public function setHttpMethods(array $httpMethods) // : static
+    public function setHttpMethods(array $httpMethods)
     {
         $this->routeBlueprint->setHttpMethods($httpMethods);
 
@@ -196,7 +196,7 @@ class RouteGroup
     /**
      * @return static
      */
-    public function httpMethods(array $httpMethods) // : static
+    public function httpMethods(array $httpMethods)
     {
         $this->routeBlueprint->httpMethods($httpMethods);
 
@@ -206,7 +206,7 @@ class RouteGroup
     /**
      * @return static
      */
-    public function httpMethod($httpMethod) // : static
+    public function httpMethod($httpMethod)
     {
         $this->routeBlueprint->httpMethod($httpMethod);
 
@@ -217,7 +217,7 @@ class RouteGroup
     /**
      * @return static
      */
-    public function setTags(array $tags) // : static
+    public function setTags(array $tags)
     {
         $this->routeBlueprint->setTags($tags);
 
@@ -227,7 +227,7 @@ class RouteGroup
     /**
      * @return static
      */
-    public function tags(array $tags) // : static
+    public function tags(array $tags)
     {
         $this->routeBlueprint->tags($tags);
 
@@ -237,7 +237,7 @@ class RouteGroup
     /**
      * @return static
      */
-    public function tag($tag) // : static
+    public function tag($tag)
     {
         $this->routeBlueprint->tag($tag);
 
@@ -248,7 +248,7 @@ class RouteGroup
     /**
      * @return static
      */
-    public function setMiddlewares(array $middlewares) // : static
+    public function setMiddlewares(array $middlewares)
     {
         $this->routeBlueprint->setMiddlewares($middlewares);
 
@@ -258,7 +258,7 @@ class RouteGroup
     /**
      * @return static
      */
-    public function middlewares(array $middlewares) // : static
+    public function middlewares(array $middlewares)
     {
         $this->routeBlueprint->middlewares($middlewares);
 
@@ -268,7 +268,7 @@ class RouteGroup
     /**
      * @return static
      */
-    public function middleware($middleware) // : static
+    public function middleware($middleware)
     {
         $this->routeBlueprint->middleware($middleware);
 
@@ -279,7 +279,7 @@ class RouteGroup
     /**
      * @return static
      */
-    public function setFallbacks(array $fallbacks) // : static
+    public function setFallbacks(array $fallbacks)
     {
         $this->routeBlueprint->setFallbacks($fallbacks);
 
@@ -289,7 +289,7 @@ class RouteGroup
     /**
      * @return static
      */
-    public function fallbacks(array $fallbacks) // : static
+    public function fallbacks(array $fallbacks)
     {
         $this->routeBlueprint->fallbacks($fallbacks);
 
@@ -299,7 +299,7 @@ class RouteGroup
     /**
      * @return static
      */
-    public function fallback($fallback) // : static
+    public function fallback($fallback)
     {
         $this->routeBlueprint->fallback($fallback);
 
@@ -312,7 +312,7 @@ class RouteGroup
      *
      * @return static
      */
-    public function register($fn) // : static
+    public function register($fn)
     {
         $fn($this);
 

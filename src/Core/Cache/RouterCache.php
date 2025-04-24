@@ -67,7 +67,10 @@ class RouterCache implements RouterCacheInterface
         return $cacheData;
     }
 
-    public function saveCache(array $cacheData) // : static
+    /**
+     * @return static
+     */
+    public function saveCache(array $cacheData)
     {
         if (static::CACHE_MODE_STORAGE !== $this->config->cacheMode) return $this;
 
@@ -91,7 +94,10 @@ class RouterCache implements RouterCacheInterface
         return $this;
     }
 
-    public function clearCache() // : static
+    /**
+     * @return static
+     */
+    public function clearCache()
     {
         if (static::CACHE_MODE_STORAGE !== $this->config->cacheMode) return $this;
 
@@ -113,7 +119,7 @@ class RouterCache implements RouterCacheInterface
     /**
      * @return \Psr\Cache\CacheItemInterface|null
      */
-    protected function cacheAdapterGetItem() // : \Psr\Cache\CacheItemInterface
+    protected function cacheAdapterGetItem()
     {
         if (static::CACHE_MODE_STORAGE !== $this->config->cacheMode) return null;
         if (null === $this->config->cacheAdapter) return null;

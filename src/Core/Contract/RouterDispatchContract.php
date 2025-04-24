@@ -3,8 +3,8 @@
 namespace Gzhegow\Router\Core\Contract;
 
 use Gzhegow\Lib\Lib;
-use Gzhegow\Router\Core\Route\Struct\HttpMethod;
 use Gzhegow\Router\Exception\LogicException;
+use Gzhegow\Router\Core\Route\Struct\HttpMethod;
 
 
 class RouterDispatchContract
@@ -25,87 +25,75 @@ class RouterDispatchContract
 
 
     /**
-     * @return static
+     * @return static|bool|null
      */
-    public static function from($from) // : static
+    public static function from($from, array $refs = [])
     {
-        $instance = static::tryFrom($from, $error);
+        $withErrors = array_key_exists(0, $refs);
 
-        if (null === $instance) {
-            throw $error;
-        }
-
-        return $instance;
-    }
-
-    /**
-     * @return static|null
-     */
-    public static function tryFrom($from, \Throwable &$last = null) // : ?static
-    {
-        $last = null;
-
-        Lib::php()->errors_start($b);
+        $refs[ 0 ] = $refs[ 0 ] ?? null;
 
         $instance = null
-            ?? static::tryFromInstance($from)
-            ?? static::tryFromArray($from);
+            ?? static::fromStatic($from, $refs)
+            ?? static::fromArray($from, $refs);
 
-        $errors = Lib::php()->errors_end($b);
-
-        if (null === $instance) {
-            foreach ( $errors as $error ) {
-                $last = new LogicException($error, $last);
+        if (! $withErrors) {
+            if (null === $instance) {
+                throw $refs[ 0 ];
             }
         }
 
         return $instance;
     }
 
-
     /**
-     * @return static|null
+     * @return static|bool|null
      */
-    public static function tryFromInstance($instance) // : ?static
+    public static function fromStatic($from, array $refs = [])
     {
-        if (! is_a($instance, static::class)) {
-            return Lib::php()->error(
-                [ 'The `from` should be instance of: ' . static::class, $instance ]
-            );
+        if ($from instanceof static) {
+            return Lib::refsResult($refs, $from);
         }
 
-        return $instance;
+        return Lib::refsError(
+            $refs,
+            new LogicException(
+                [ 'The `from` should be instance of: ' . static::class, $from ]
+            )
+        );
     }
 
     /**
-     * @return static|null
+     * @return static|bool|null
      */
-    public static function tryFromArray($array) // : ?static
+    public static function fromArray($from, array $refs = [])
     {
-        if (! is_array($array)) {
-            return Lib::php()->error(
-                [ 'The `from` should be array', $array ]
+        if (! is_array($from)) {
+            return Lib::refsError(
+                $refs,
+                new LogicException(
+                    [ 'The `from` should be array', $from ]
+                )
             );
         }
 
-        [ $httpMethod, $requestUri ] = $array;
+        [ $httpMethod, $requestUri ] = $from;
 
-        if (null === ($_httpMethod = HttpMethod::tryFrom($httpMethod))) {
-            return Lib::php()->error(
-                [ 'The `from[0]` should be valid `httpMethod`', $httpMethod, $array ]
-            );
-        }
+        $httpMethodObject = HttpMethod::from($httpMethod);
 
-        if (null === ($_requestUri = Lib::parse()->path($requestUri))) {
-            return Lib::php()->error(
-                [ 'The `from[0]` should be valid `path`', $requestUri, $array ]
+        if (! Lib::type()->path($requestUriString, $requestUri)) {
+            return Lib::refsError(
+                $refs,
+                new LogicException(
+                    [ 'The `from[0]` should be valid `path`', $requestUri, $from ]
+                )
             );
         }
 
         $instance = new static();
-        $instance->httpMethod = $_httpMethod;
-        $instance->requestUri = $_requestUri;
+        $instance->httpMethod = $httpMethodObject;
+        $instance->requestUri = $requestUriString;
 
-        return $instance;
+        return Lib::refsResult($refs, $instance);
     }
 }
