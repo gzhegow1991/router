@@ -4,7 +4,7 @@ namespace Gzhegow\Router\Core\Route\Struct;
 
 use Gzhegow\Lib\Lib;
 use Gzhegow\Router\Core\Router;
-use Gzhegow\Router\Exception\LogicException;
+use Gzhegow\Lib\Modules\Php\Result\Result;
 
 
 class Path
@@ -29,62 +29,55 @@ class Path
     /**
      * @return static|bool|null
      */
-    public static function from($from, array $refs = [])
+    public static function from($from, $ctx = null)
     {
-        $withErrors = array_key_exists(0, $refs);
-
-        $refs[ 0 ] = $refs[ 0 ] ?? null;
+        Result::parse($cur);
 
         $instance = null
-            ?? static::fromStatic($from, $refs)
-            ?? static::fromString($from, $refs);
+            ?? static::fromStatic($from, $cur)
+            ?? static::fromString($from, $cur);
 
-        if (! $withErrors) {
-            if (null === $instance) {
-                throw $refs[ 0 ];
-            }
+        if ($cur->isErr()) {
+            return Result::err($ctx, $cur);
         }
 
-        return $instance;
+        return Result::ok($ctx, $instance);
     }
 
     /**
      * @return static|bool|null
      */
-    public static function fromStatic($from, array $refs = [])
+    public static function fromStatic($from, $ctx = null)
     {
         if ($from instanceof static) {
-            return Lib::refsResult($refs, $from);
+            return Result::ok($ctx, $from);
         }
 
-        return Lib::refsError(
-            $refs,
-            new LogicException(
-                [ 'The `from` should be instance of: ' . static::class, $from ]
-            )
+        return Result::err(
+            $ctx,
+            [ 'The `from` should be instance of: ' . static::class, $from ],
+            [ __FILE__, __LINE__ ]
         );
     }
 
     /**
      * @return static|bool|null
      */
-    public static function fromString($from, array $refs = [])
+    public static function fromString($from, $ctx = null)
     {
         if (! Lib::type()->path($fromPath, $from)) {
-            return Lib::refsError(
-                $refs,
-                new LogicException(
-                    [ 'The `from` should be valid path', $from ]
-                )
+            return Result::err(
+                $ctx,
+                [ 'The `from` should be valid path', $from ],
+                [ __FILE__, __LINE__ ]
             );
         }
 
         if (0 !== strpos($fromPath, '/')) {
-            return Lib::refsError(
-                $refs,
-                new LogicException(
-                    [ 'The `from` should start with `/` sign', $from ]
-                )
+            return Result::err(
+                $ctx,
+                [ 'The `from` should start with `/` sign', $from ],
+                [ __FILE__, __LINE__ ]
             );
         }
 
@@ -98,18 +91,17 @@ class Path
         if (preg_match("/[^{$allowed}]/", $fromPath)) {
             $regex = "/[{$allowed}]+/";
 
-            return Lib::refsError(
-                $refs,
-                new LogicException(
-                    [ 'The `from` should match the regex: ' . $regex, $from ]
-                )
+            return Result::err(
+                $ctx,
+                [ 'The `from` should match the regex: ' . $regex, $from ],
+                [ __FILE__, __LINE__ ]
             );
         }
 
         $instance = new static();
         $instance->value = $fromPath;
 
-        return Lib::refsResult($refs, $instance);
+        return Result::ok($ctx, $instance);
     }
 
 

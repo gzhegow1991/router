@@ -31,7 +31,8 @@ ini_set('memory_limit', '32M');
 
 
 // > настраиваем обработку ошибок
-(new \Gzhegow\Lib\Exception\ErrorHandler())
+\Gzhegow\Lib\Lib::errorHandler()
+    ->setDirRoot(__DIR__ . '/..')
     ->useErrorReporting()
     ->useErrorHandler()
     ->useExceptionHandler()
@@ -470,9 +471,13 @@ $fn = function () use ($router, $ffn) {
         $result = $router->dispatch($contract);
     }
     catch ( \Gzhegow\Router\Exception\Exception\DispatchException $e ) {
-        $lines = \Gzhegow\Lib\Exception\ErrorHandler::getThrowableMessageListLines(
-            $e, [ 'with_file' => false ]
-        );
+        $lines = \Gzhegow\Lib\Lib::debug()
+            ->throwableManager()
+            ->getPreviousMessagesLines(
+                $e,
+                [ 'with_file' => false ]
+            )
+        ;
 
         echo '[ CATCH ]' . PHP_EOL;
         echo implode(PHP_EOL, $lines) . PHP_EOL;

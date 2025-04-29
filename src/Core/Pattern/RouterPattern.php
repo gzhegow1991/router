@@ -4,7 +4,7 @@ namespace Gzhegow\Router\Core\Pattern;
 
 use Gzhegow\Lib\Lib;
 use Gzhegow\Router\Core\Router;
-use Gzhegow\Router\Exception\LogicException;
+use Gzhegow\Lib\Modules\Php\Result\Result;
 
 
 class RouterPattern implements \Serializable
@@ -28,7 +28,7 @@ class RouterPattern implements \Serializable
     }
 
 
-    public function __serialize()
+    public function __serialize() : array
     {
         $vars = get_object_vars($this);
 
@@ -60,73 +60,65 @@ class RouterPattern implements \Serializable
     /**
      * @return static|bool|null
      */
-    public static function from($from, array $refs = [])
+    public static function from($from, $ctx = null)
     {
-        $withErrors = array_key_exists(0, $refs);
-
-        $refs[ 0 ] = $refs[ 0 ] ?? null;
+        Result::parse($cur);
 
         $instance = null
-            ?? static::fromStatic($from, $refs)
-            ?? static::fromArray($from, $refs);
+            ?? static::fromStatic($from, $cur)
+            ?? static::fromArray($from, $cur);
 
-        if (! $withErrors) {
-            if (null === $instance) {
-                throw $refs[ 0 ];
-            }
+        if ($cur->isErr()) {
+            return Result::err($ctx, $cur);
         }
 
-        return $instance;
+        return Result::ok($ctx, $instance);
     }
 
     /**
      * @return static|bool|null
      */
-    public static function fromStatic($from, array $refs = [])
+    public static function fromStatic($from, $ctx = null)
     {
         if ($from instanceof static) {
-            return Lib::refsResult($refs, $from);
+            return Result::ok($ctx, $from);
         }
 
-        return Lib::refsError(
-            $refs,
-            new LogicException(
-                [ 'The `from` should be instance of: ' . static::class, $from ]
-            )
+        return Result::err(
+            $ctx,
+            [ 'The `from` should be instance of: ' . static::class, $from ],
+            [ __FILE__, __LINE__ ]
         );
     }
 
     /**
      * @return static|bool|null
      */
-    public static function fromArray($from, array $refs = [])
+    public static function fromArray($from, $ctx = null)
     {
         if (! is_array($from)) {
-            return Lib::refsError(
-                $refs,
-                new LogicException(
-                    [ 'The `from` should be array', $from ]
-                )
+            return Result::err(
+                $ctx,
+                [ 'The `from` should be array', $from ],
+                [ __FILE__, __LINE__ ]
             );
         }
 
         [ $pattern, $regex ] = $from + [ null, null ];
 
         if (! Lib::type()->string_not_empty($patternString, $pattern)) {
-            return Lib::refsError(
-                $refs,
-                new LogicException(
-                    [ 'The `from[0]` should be non-empty string', $from ]
-                )
+            return Result::err(
+                $ctx,
+                [ 'The `from[0]` should be non-empty string', $from ],
+                [ __FILE__, __LINE__ ]
             );
         }
 
         if (! Lib::type()->string_not_empty($regexString, $regex)) {
-            return Lib::refsError(
-                $refs,
-                new LogicException(
-                    [ 'The `from[1]` should be non-empty string', $from ]
-                )
+            return Result::err(
+                $ctx,
+                [ 'The `from[1]` should be non-empty string', $from ],
+                [ __FILE__, __LINE__ ]
             );
         }
 
@@ -134,34 +126,33 @@ class RouterPattern implements \Serializable
             && (Router::PATTERN_ENCLOSURE[ 0 ] === $patternString[ 0 ])
             && (Router::PATTERN_ENCLOSURE[ 1 ] === substr($patternString, -1))
         )) {
-            return Lib::refsError(
-                $refs,
-                new LogicException(
-                    [
-                        ''
-                        . 'The `from[0]` should be wrapped with signs: '
-                        . '`' . Router::PATTERN_ENCLOSURE[ 0 ] . '`'
-                        . ' `' . Router::PATTERN_ENCLOSURE[ 1 ] . '`',
-                        $from,
-                    ]
-                )
+            return Result::err(
+                $ctx,
+                [
+                    ''
+                    . 'The `from[0]` should be wrapped with signs: '
+                    . '`' . Router::PATTERN_ENCLOSURE[ 0 ] . '`'
+                    . ' `' . Router::PATTERN_ENCLOSURE[ 1 ] . '`',
+                    //
+                    $from,
+                ],
+                [ __FILE__, __LINE__ ]
             );
         }
 
         $attributeString = substr($patternString, 1, -1);
 
         if (! preg_match($regexp = '/[a-z][a-z0-9_]*/', $attributeString)) {
-            return Lib::refsError(
-                $refs,
-                new LogicException(
-                    [
-                        ''
-                        . 'The `from[0]` should match regex: '
-                        . $regexp . ' / ' . $attributeString,
-                        //
-                        $from,
-                    ]
-                )
+            return Result::err(
+                $ctx,
+                [
+                    ''
+                    . 'The `from[0]` should match regex: '
+                    . $regexp . ' / ' . $attributeString,
+                    //
+                    $from,
+                ],
+                [ __FILE__, __LINE__ ]
             );
         }
 
@@ -170,25 +161,24 @@ class RouterPattern implements \Serializable
         $forbidden = implode('', $symbols);
         $forbidden = preg_quote($forbidden, '/');
         if (preg_match("/[{$forbidden}]/", $regexString)) {
-            return Lib::refsError(
-                $refs,
-                new LogicException(
-                    [
-                        ''
-                        . 'The `from[1]` should not contain symbols: '
-                        . '[ ' . implode(' ][ ', $symbols) . ' ]',
-                        $from,
-                    ]
-                )
+            return Result::err(
+                $ctx,
+                [
+                    ''
+                    . 'The `from[1]` should not contain symbols: '
+                    . '[ ' . implode(' ][ ', $symbols) . ' ]',
+                    //
+                    $from,
+                ],
+                [ __FILE__, __LINE__ ]
             );
         }
 
         if (! Lib::type()->regex($var, $regexp = "/{$regexString}/")) {
-            return Lib::refsError(
-                $refs,
-                new LogicException(
-                    [ 'The `from[1]` caused invalid regex: ' . $regexp, $from ]
-                )
+            return Result::err(
+                $ctx,
+                [ 'The `from[1]` caused invalid regex: ' . $regexp, $from ],
+                [ __FILE__, __LINE__ ]
             );
         }
 
@@ -199,6 +189,6 @@ class RouterPattern implements \Serializable
         $instance->attribute = $attributeString;
         $instance->regex = $regexString;
 
-        return Lib::refsResult($refs, $instance);
+        return Result::ok($ctx, $instance);
     }
 }

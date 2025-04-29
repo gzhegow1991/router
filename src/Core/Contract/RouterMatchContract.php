@@ -3,7 +3,7 @@
 namespace Gzhegow\Router\Core\Contract;
 
 use Gzhegow\Lib\Lib;
-use Gzhegow\Router\Exception\LogicException;
+use Gzhegow\Lib\Modules\Php\Result\Result;
 
 
 class RouterMatchContract
@@ -39,53 +39,47 @@ class RouterMatchContract
     /**
      * @return static|bool|null
      */
-    public static function from($from, array $refs = [])
+    public static function from($from, $ctx = null)
     {
-        $withErrors = array_key_exists(0, $refs);
-
-        $refs[ 0 ] = $refs[ 0 ] ?? null;
+        Result::parse($cur);
 
         $instance = null
-            ?? static::fromStatic($from, $refs)
-            ?? static::fromArray($from, $refs);
+            ?? static::fromStatic($from, $cur)
+            ?? static::fromArray($from, $cur);
 
-        if (! $withErrors) {
-            if (null === $instance) {
-                throw $refs[ 0 ];
-            }
+        if ($cur->isErr()) {
+            return Result::err($ctx, $cur);
         }
 
-        return $instance;
+        return Result::ok($ctx, $instance);
     }
 
     /**
      * @return static|bool|null
      */
-    public static function fromStatic($from, array $refs = [])
+    public static function fromStatic($from, $ctx = null)
     {
         if ($from instanceof static) {
-            return Lib::refsResult($refs, $from);
+            return Result::ok($ctx, $from);
         }
 
-        return Lib::refsError(
-            $refs,
-            new LogicException(
-                [ 'The `from` should be instance of: ' . static::class, $from ]
-            )
+        return Result::err(
+            $ctx,
+            [ 'The `from` should be instance of: ' . static::class, $from ],
+            [ __FILE__, __LINE__ ]
         );
     }
 
     /**
      * @return static|bool|null
      */
-    public static function fromArray($array, array $refs = [])
+    public static function fromArray($array, $ctx = null)
     {
         if (! is_array($array)) {
-            return Lib::refsError(
-                $refs,
-                new LogicException(
-                    [ 'The `from` should be array', $array ]
-                )
+            return Result::err(
+                $ctx,
+                [ 'The `from` should be array', $array ],
+                [ __FILE__, __LINE__ ]
             );
         }
 
@@ -119,6 +113,6 @@ class RouterMatchContract
         $instance->pathIndex = Lib::arr()->index_string([], ...$pathes);
         $instance->httpMethodIndex = Lib::arr()->index_string([], ...$methods);
 
-        return Lib::refsResult($refs, $instance);
+        return Result::ok($ctx, $instance);
     }
 }
