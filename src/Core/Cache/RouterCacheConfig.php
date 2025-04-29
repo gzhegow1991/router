@@ -71,7 +71,7 @@ class RouterCacheConfig extends AbstractConfig
         }
 
         if (null !== $this->cacheDirpath) {
-            if (! $theType->dirpath($dirpath, $this->cacheDirpath, true)) {
+            if (! $theType->dirpath($dirpath, $this->cacheDirpath)) {
                 throw new LogicException(
                     [
                         'The `cacheDirpath` should be valid directory path',
