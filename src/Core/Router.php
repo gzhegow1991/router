@@ -277,7 +277,7 @@ class Router
     }
 
 
-    public static function setFacade(RouterInterface $facade) : ?RouterInterface
+    public static function setFacade(?RouterInterface $facade) : ?RouterInterface
     {
         $last = static::$facade;
 
