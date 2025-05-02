@@ -110,7 +110,7 @@ $pipelineProcessManager = new \Gzhegow\Router\Package\Gzhegow\Pipeline\ProcessMa
 );
 
 // > создаем роутер
-$router = new \Gzhegow\Router\Core\Router(
+$router = new \Gzhegow\Router\Core\RouterFacade(
     $factory,
     $cache,
     //
@@ -119,6 +119,10 @@ $router = new \Gzhegow\Router\Core\Router(
     //
     $config
 );
+
+// > создаем фасад, если удобно пользоваться статикой
+\Gzhegow\Router\Core\Router::setFacade($router);
+
 
 // > так можно очистить кэш
 // $router->cacheClear();

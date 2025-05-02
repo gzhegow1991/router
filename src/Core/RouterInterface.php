@@ -3,9 +3,9 @@
 namespace Gzhegow\Router\Core;
 
 use Gzhegow\Router\Core\Route\Route;
-use Gzhegow\Router\Core\Pattern\RouterPattern;
 use Gzhegow\Router\Core\Route\RouteGroup;
 use Gzhegow\Router\Core\Route\RouteBlueprint;
+use Gzhegow\Router\Core\Pattern\RouterPattern;
 use Gzhegow\Router\Core\Contract\RouterMatchContract;
 use Gzhegow\Router\Core\Contract\RouterDispatchContract;
 use Gzhegow\Router\Exception\Exception\DispatchException;
@@ -15,17 +15,12 @@ use Gzhegow\Router\Core\Handler\Middleware\GenericHandlerMiddleware;
 
 interface RouterInterface
 {
-    /**
-     * @return static
-     */
-    public function cacheClear();
+    public function cacheClear() : RouterInterface;
 
     /**
      * @param callable $fn
-     *
-     * @return static
      */
-    public function cacheRemember($fn);
+    public function cacheRemember($fn) : RouterInterface;
 
 
     public function newBlueprint(RouteBlueprint $from = null) : RouteBlueprint;
@@ -59,49 +54,43 @@ interface RouterInterface
         $name = null, $tags = null
     ) : RouteBlueprint;
 
-    /**
-     * @return static
-     */
-    public function addRoute(RouteBlueprint $routeBlueprint);
+    public function addRoute(RouteBlueprint $routeBlueprint) : RouterInterface;
 
 
     /**
      * @param string $pattern
      * @param string $regex
      */
-    public function pattern($pattern, $regex);
+    public function pattern($pattern, $regex) : RouterInterface;
 
 
     /**
      * @param string                                    $path
      * @param callable|object|array|class-string|string $middleware
      */
-    public function middlewareOnPath($path, $middleware);
+    public function middlewareOnPath($path, $middleware) : RouterInterface;
 
     /**
      * @param string                                    $tag
      * @param callable|object|array|class-string|string $middleware
      */
-    public function middlewareOnTag($tag, $middleware);
+    public function middlewareOnTag($tag, $middleware) : RouterInterface;
 
 
     /**
      * @param string                                    $path
      * @param callable|object|array|class-string|string $fallback
      */
-    public function fallbackOnPath($path, $fallback);
+    public function fallbackOnPath($path, $fallback) : RouterInterface;
 
     /**
      * @param string                                    $tag
      * @param callable|object|array|class-string|string $fallback
      */
-    public function fallbackOnTag($tag, $fallback);
+    public function fallbackOnTag($tag, $fallback) : RouterInterface;
 
 
-    /**
-     * @return static
-     */
-    public function commit();
+    public function commit() : RouterInterface;
 
 
     /**
@@ -141,6 +130,7 @@ interface RouterInterface
 
 
     /**
+     * @return mixed
      * @throws DispatchException
      */
     public function dispatch(RouterDispatchContract $contract, $input = null, $context = null);
@@ -153,11 +143,17 @@ interface RouterInterface
      */
     public function urls($routes, array $attributes = []) : array;
 
+    /**
+     * @param Route|string $route
+     */
+    public function url($route, array $attributes = []) : string;
+
 
     /**
      * @return int[]
      */
     public function registerRouteGroup(RouteGroup $routeGroup) : array;
+
 
     public function registerRoute(Route $route) : int;
 

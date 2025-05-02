@@ -33,7 +33,7 @@ class RouterConfig extends AbstractConfig
     /**
      * > бросать исключение при попытке зарегистрировать роут без/с trailing-slash
      *
-     * @see Router::LIST_TRAILING_SLASH
+     * @see RouterFacade::LIST_TRAILING_SLASH
      *
      * @var int
      */
