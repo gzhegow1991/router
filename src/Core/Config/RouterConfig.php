@@ -1,7 +1,9 @@
 <?php
 
-namespace Gzhegow\Router\Core;
+namespace Gzhegow\Router\Core\Config;
 
+use Gzhegow\Router\Router;
+use Gzhegow\Router\RouterFacade;
 use Gzhegow\Lib\Config\AbstractConfig;
 use Gzhegow\Router\Exception\LogicException;
 use Gzhegow\Router\Core\Cache\RouterCacheConfig;

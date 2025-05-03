@@ -1,6 +1,9 @@
 <?php
 
-namespace Gzhegow\Router\Core;
+namespace Gzhegow\Router;
+
+use Gzhegow\Router\RouterInterface;
+
 
 trait RouterAwareTrait
 {

@@ -4,7 +4,7 @@ namespace Gzhegow\Router\Package\Gzhegow\Pipeline\ProcessManager;
 
 use Gzhegow\Router\Package\Gzhegow\Pipeline\RouterPipelineFactoryInterface;
 use Gzhegow\Router\Package\Gzhegow\Pipeline\Processor\RouterProcessorInterface;
-use Gzhegow\Pipeline\ProcessManager\PipelineProcessManager as ProcessManagerBase;
+use Gzhegow\Pipeline\Core\ProcessManager\PipelineProcessManager as ProcessManagerBase;
 
 
 class RouterProcessManager extends ProcessManagerBase implements

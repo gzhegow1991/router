@@ -56,17 +56,17 @@ $ffn = new class {
 // >>> ЗАПУСКАЕМ!
 
 // > сначала всегда фабрика
-$factory = new \Gzhegow\Router\Core\RouterFactory();
+$factory = new \Gzhegow\Router\RouterFactory();
 
 // > создаем конфигурацию
-$config = new \Gzhegow\Router\Core\RouterConfig();
-$config->configure(function (\Gzhegow\Router\Core\RouterConfig $config) use ($ffn) {
+$config = new \Gzhegow\Router\Core\Config\RouterConfig();
+$config->configure(function (\Gzhegow\Router\Core\Config\RouterConfig $config) use ($ffn) {
     // >>> роутер
     $config->registerAllowObjectsAndClosures = false;
-    $config->compileTrailingSlashMode = \Gzhegow\Router\Core\Router::TRAILING_SLASH_AS_IS;
+    $config->compileTrailingSlashMode = \Gzhegow\Router\Router::TRAILING_SLASH_AS_IS;
     $config->dispatchIgnoreMethod = false;
     $config->dispatchForceMethod = null;
-    $config->dispatchTrailingSlashMode = \Gzhegow\Router\Core\Router::TRAILING_SLASH_AS_IS;
+    $config->dispatchTrailingSlashMode = \Gzhegow\Router\Router::TRAILING_SLASH_AS_IS;
 
     // >>> кэш роутера
     $config->cache->cacheMode = \Gzhegow\Router\Core\Cache\RouterCache::CACHE_MODE_STORAGE;
@@ -110,7 +110,7 @@ $pipelineProcessManager = new \Gzhegow\Router\Package\Gzhegow\Pipeline\ProcessMa
 );
 
 // > создаем роутер
-$router = new \Gzhegow\Router\Core\RouterFacade(
+$router = new \Gzhegow\Router\RouterFacade(
     $factory,
     $cache,
     //
@@ -121,14 +121,14 @@ $router = new \Gzhegow\Router\Core\RouterFacade(
 );
 
 // > создаем фасад, если удобно пользоваться статикой
-\Gzhegow\Router\Core\Router::setFacade($router);
+\Gzhegow\Router\Router::setFacade($router);
 
 
 // > так можно очистить кэш
 // $router->cacheClear();
 
 // > вызываем функцию, которая загрузит кеш, и если его нет - выполнит регистрацию маршрутов и сохранение их в кэш (не обязательно)
-$router->cacheRemember(static function (\Gzhegow\Router\Core\RouterInterface $router) {
+$router->cacheRemember(static function (\Gzhegow\Router\RouterInterface $router) {
     // > добавляем паттерн, который можно использовать в маршрутах
     $router->pattern('{id}', '[0-9]+');
 

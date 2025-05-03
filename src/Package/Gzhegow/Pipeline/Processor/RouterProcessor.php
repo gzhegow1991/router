@@ -2,7 +2,7 @@
 
 namespace Gzhegow\Router\Package\Gzhegow\Pipeline\Processor;
 
-use Gzhegow\Pipeline\Processor\PipelineProcessor as ProcessorBase;
+use Gzhegow\Pipeline\Core\Processor\PipelineProcessor as ProcessorBase;
 use Gzhegow\Router\Package\Gzhegow\Pipeline\RouterPipelineFactoryInterface;
 
 

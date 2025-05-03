@@ -1,6 +1,6 @@
 <?php
 
-namespace Gzhegow\Router\Core;
+namespace Gzhegow\Router;
 
 use Gzhegow\Lib\Lib;
 use Gzhegow\Router\Core\Route\Route;
@@ -8,6 +8,7 @@ use Gzhegow\Router\Core\Node\RouterNode;
 use Gzhegow\Router\Core\Route\Struct\Tag;
 use Gzhegow\Router\Core\Route\RouteGroup;
 use Gzhegow\Router\Core\Route\Struct\Path;
+use Gzhegow\Router\Core\Config\RouterConfig;
 use Gzhegow\Router\Exception\LogicException;
 use Gzhegow\Router\Core\Route\RouteBlueprint;
 use Gzhegow\Router\Core\Pattern\RouterPattern;

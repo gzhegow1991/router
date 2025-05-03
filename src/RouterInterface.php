@@ -1,6 +1,6 @@
 <?php
 
-namespace Gzhegow\Router\Core;
+namespace Gzhegow\Router;
 
 use Gzhegow\Router\Core\Route\Route;
 use Gzhegow\Router\Core\Route\RouteGroup;

@@ -2,7 +2,7 @@
 
 namespace Gzhegow\Router\Core\Route;
 
-use Gzhegow\Router\Core\RouterFactoryInterface;
+use Gzhegow\Router\RouterFactoryInterface;
 
 
 class RouteGroup

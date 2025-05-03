@@ -3,7 +3,7 @@
 namespace Gzhegow\Router\Core\Pattern;
 
 use Gzhegow\Lib\Lib;
-use Gzhegow\Router\Core\Router;
+use Gzhegow\Router\Router;
 use Gzhegow\Lib\Modules\Php\Result\Result;
 
 
