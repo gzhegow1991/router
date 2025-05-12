@@ -27,14 +27,12 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 
 // > настраиваем PHP
-ini_set('memory_limit', '32M');
-
-
-// > настраиваем обработку ошибок
-\Gzhegow\Lib\Lib::errorHandler()
+\Gzhegow\Lib\Lib::entrypoint()
     ->setDirRoot(__DIR__ . '/..')
     //
     ->useErrorReporting()
+    ->useMemoryLimit()
+    ->useTimeLimit()
     ->useErrorHandler()
     ->useExceptionHandler()
 ;
@@ -60,20 +58,17 @@ $ffn = new class {
     }
 
 
-    function assert_stdout(
-        \Closure $fn, array $fnArgs = [],
-        string $expectedStdout = null
-    ) : void
+    function test(\Closure $fn, array $args = []) : \Gzhegow\Lib\Modules\Test\TestRunner\TestRunner
     {
         $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
 
-        \Gzhegow\Lib\Lib::test()->assertStdout(
-            $trace,
-            $fn, $fnArgs,
-            $expectedStdout
-        );
+        return \Gzhegow\Lib\Lib::test()->test()
+            ->fn($fn, $args)
+            ->trace($trace)
+        ;
     }
 };
+
 
 
 // >>> ЗАПУСКАЕМ!
@@ -280,6 +275,9 @@ $router->cacheRemember(static function (\Gzhegow\Router\RouterInterface $router)
 });
 
 
+
+// >>> ТЕСТЫ
+
 // > TEST
 // > так можно искать маршруты с помощью имен или тегов
 // > первый результат
@@ -321,7 +319,8 @@ $fn = function () use ($router, $ffn) {
     $route = $router->matchFirstByTags($tags);
     $ffn->print($route);
 };
-$ffn->assert_stdout($fn, [], '
+$test = $ffn->test($fn);
+$test->expectStdout('
 "TEST 1"
 
 [ 1 => "{ object # Gzhegow\Router\Core\Route\Route }", 2 => "{ object # Gzhegow\Router\Core\Route\Route }" ]
@@ -334,6 +333,7 @@ $ffn->assert_stdout($fn, [], '
 { object # Gzhegow\Router\Core\Route\Route }
 { object # Gzhegow\Router\Core\Route\Route }
 ');
+$test->run();
 
 
 // > TEST
@@ -365,12 +365,14 @@ $fn = function () use ($router, $ffn) {
         $ffn->print($id, $route);
     }
 };
-$ffn->assert_stdout($fn, [], '
+$test = $ffn->test($fn);
+$test->expectStdout('
 "TEST 2"
 
 1 | { object # Gzhegow\Router\Core\Route\Route }
 2 | { object # Gzhegow\Router\Core\Route\Route }
 ');
+$test->run();
 
 
 // > TEST
@@ -400,11 +402,13 @@ $fn = function () use ($router, $ffn) {
     $result = $router->urls($routes, $attributes);
     $ffn->print($result);
 };
-$ffn->assert_stdout($fn, [], '
+$test = $ffn->test($fn);
+$test->expectStdout('
 "TEST 3"
 
 [ "a" => "/api/v1/user/1/main", "b" => "/api/v1/user/2/main", "c" => "/api/v1/user/3/main" ]
 ');
+$test->run();
 
 
 // > TEST
@@ -420,7 +424,8 @@ $fn = function () use ($router, $ffn) {
 
     $ffn->print('[ RESULT ]', $result);
 };
-$ffn->assert_stdout($fn, [], '
+$test = $ffn->test($fn);
+$test->expectStdout('
 "TEST 4"
 
 @before :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
@@ -433,6 +438,7 @@ Gzhegow\Router\Demo\Handler\Controller\DemoController::mainGet
 
 "[ RESULT ]" | 1
 ');
+$test->run();
 
 
 // > TEST
@@ -448,7 +454,8 @@ $fn = function () use ($router, $ffn) {
 
     $ffn->print('[ RESULT ]', $result);
 };
-$ffn->assert_stdout($fn, [], '
+$test = $ffn->test($fn);
+$test->expectStdout('
 "TEST 5"
 
 @before :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
@@ -461,6 +468,7 @@ Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback::__invoke
 
 "[ RESULT ]" | "Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback::__invoke result."
 ');
+$test->run();
 
 
 // > TEST
@@ -491,7 +499,8 @@ $fn = function () use ($router, $ffn) {
 
     $ffn->print('[ RESULT ]', $result);
 };
-$ffn->assert_stdout($fn, [], '
+$test = $ffn->test($fn);
+$test->expectStdout('
 "TEST 6"
 
 [ CATCH ]
@@ -506,6 +515,7 @@ $ffn->assert_stdout($fn, [], '
 
 "[ RESULT ]" | NULL
 ');
+$test->run();
 
 
 // > TEST
@@ -521,7 +531,8 @@ $fn = function () use ($router, $ffn) {
 
     $ffn->print('[ RESULT ]', $result);
 };
-$ffn->assert_stdout($fn, [], '
+$test = $ffn->test($fn);
+$test->expectStdout('
 "TEST 7"
 
 @before :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
@@ -536,6 +547,7 @@ Gzhegow\Router\Demo\Handler\Fallback\DemoLogicExceptionFallback::__invoke
 
 "[ RESULT ]" | "Gzhegow\Router\Demo\Handler\Fallback\DemoLogicExceptionFallback::__invoke result."
 ');
+$test->run();
 
 
 // > TEST
@@ -551,7 +563,8 @@ $fn = function () use ($router, $ffn) {
 
     $ffn->print('[ RESULT ]', $result);
 };
-$ffn->assert_stdout($fn, [], '
+$test = $ffn->test($fn);
+$test->expectStdout('
 "TEST 8"
 
 @before :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
@@ -565,5 +578,6 @@ Gzhegow\Router\Demo\Handler\Fallback\DemoRuntimeExceptionFallback::__invoke
 
 "[ RESULT ]" | "Gzhegow\Router\Demo\Handler\Fallback\DemoRuntimeExceptionFallback::__invoke result."
 ');
+$test->run();
 ```
 
