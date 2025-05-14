@@ -300,15 +300,15 @@ $test = $ffn->test($fn);
 $test->expectStdout('
 "TEST 1"
 
-[ 1 => "{ object # Gzhegow\Router\Core\Route\Route }", 2 => "{ object # Gzhegow\Router\Core\Route\Route }" ]
+[ 1 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }", 2 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }" ]
 
-0 | [ 1 => "{ object # Gzhegow\Router\Core\Route\Route }", 2 => "{ object # Gzhegow\Router\Core\Route\Route }", 3 => "{ object # Gzhegow\Router\Core\Route\Route }" ]
+0 | [ 1 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }", 2 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }", 3 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }" ]
 
-0 | [ 1 => "{ object # Gzhegow\Router\Core\Route\Route }", 2 => "{ object # Gzhegow\Router\Core\Route\Route }", 3 => "{ object # Gzhegow\Router\Core\Route\Route }", 4 => "{ object # Gzhegow\Router\Core\Route\Route }", 5 => "{ object # Gzhegow\Router\Core\Route\Route }" ]
+0 | [ 1 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }", 2 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }", 3 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }", 4 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }", 5 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }" ]
 
-{ object # Gzhegow\Router\Core\Route\Route }
-{ object # Gzhegow\Router\Core\Route\Route }
-{ object # Gzhegow\Router\Core\Route\Route }
+{ object(serializable) # Gzhegow\Router\Core\Route\Route }
+{ object(serializable) # Gzhegow\Router\Core\Route\Route }
+{ object(serializable) # Gzhegow\Router\Core\Route\Route }
 ');
 $test->run();
 
@@ -346,8 +346,8 @@ $test = $ffn->test($fn);
 $test->expectStdout('
 "TEST 2"
 
-1 | { object # Gzhegow\Router\Core\Route\Route }
-2 | { object # Gzhegow\Router\Core\Route\Route }
+1 | { object(serializable) # Gzhegow\Router\Core\Route\Route }
+2 | { object(serializable) # Gzhegow\Router\Core\Route\Route }
 ');
 $test->run();
 
