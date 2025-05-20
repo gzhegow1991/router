@@ -463,10 +463,7 @@ $fn = function () use ($router, $ffn) {
     catch ( \Gzhegow\Router\Exception\Exception\DispatchException $e ) {
         $lines = \Gzhegow\Lib\Lib::debug()
             ->throwableManager()
-            ->getPreviousMessagesLines(
-                $e,
-                [ 'with_file' => false ]
-            )
+            ->getPreviousMessagesLines($e, _DEBUG_THROWABLE_WITHOUT_FILE)
         ;
 
         echo '[ CATCH ]' . PHP_EOL;
