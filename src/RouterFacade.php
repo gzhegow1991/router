@@ -196,7 +196,7 @@ class RouterFacade implements RouterInterface
     }
 
 
-    public function newBlueprint(RouteBlueprint $from = null) : RouteBlueprint
+    public function newBlueprint(?RouteBlueprint $from = null) : RouteBlueprint
     {
         $routeBlueprint = $this->routeGroupRoot->newBlueprint($from);
 
@@ -211,7 +211,7 @@ class RouterFacade implements RouterInterface
      * @param string|string[]|null                           $tags
      */
     public function blueprint(
-        RouteBlueprint $from = null,
+        ?RouteBlueprint $from = null,
         $path = null, $httpMethods = null, $action = null, $name = null, $tags = null
     ) : RouteBlueprint
     {
@@ -225,7 +225,7 @@ class RouterFacade implements RouterInterface
 
 
 
-    public function group(RouteBlueprint $from = null) : RouteGroup
+    public function group(?RouteBlueprint $from = null) : RouteGroup
     {
         $routeGroup = $this->routeGroupRoot->group($from);
 
@@ -433,7 +433,7 @@ class RouterFacade implements RouterInterface
      *
      * @return Route[]|Route[][]
      */
-    public function matchAllByNames($names, bool $unique = null) : array
+    public function matchAllByNames($names, ?bool $unique = null) : array
     {
         $result = [];
 
@@ -507,7 +507,7 @@ class RouterFacade implements RouterInterface
      *
      * @return Route[]|Route[][]
      */
-    public function matchAllByTags($tags, bool $unique = null) : array
+    public function matchAllByTags($tags, ?bool $unique = null) : array
     {
         $result = [];
 
@@ -1246,7 +1246,7 @@ class RouterFacade implements RouterInterface
         return $route;
     }
 
-    protected function compilePathRegex(string $path, array &$attributesIndex = null) : string
+    protected function compilePathRegex(string $path, ?array &$attributesIndex = null) : string
     {
         $attributesIndex = null;
 

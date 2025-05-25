@@ -59,7 +59,7 @@ class RouteGroup
     }
 
 
-    public function group(RouteBlueprint $from = null) : RouteGroup
+    public function group(?RouteBlueprint $from = null) : RouteGroup
     {
         $routeBlueprint = $this->routerFactory->newRouteBlueprint($from);
 
@@ -116,7 +116,7 @@ class RouteGroup
     }
 
 
-    public function newBlueprint(RouteBlueprint $from = null) : RouteBlueprint
+    public function newBlueprint(?RouteBlueprint $from = null) : RouteBlueprint
     {
         $routeBlueprint = $this->routerFactory->newRouteBlueprint($from);
 
@@ -131,7 +131,7 @@ class RouteGroup
      * @param string|string[]|null                           $tags
      */
     public function blueprint(
-        RouteBlueprint $from = null,
+        ?RouteBlueprint $from = null,
         $path = null, $httpMethods = null, $action = null,
         $name = null, $tags = null
     ) : RouteBlueprint

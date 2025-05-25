@@ -26,9 +26,9 @@ interface RouterFactoryInterface
     public function newRouterNode() : RouterNode;
 
 
-    public function newRouteBlueprint(RouteBlueprint $from = null) : RouteBlueprint;
+    public function newRouteBlueprint(?RouteBlueprint $from = null) : RouteBlueprint;
 
-    public function newRouteGroup(RouteBlueprint $routeBlueprint = null) : RouteGroup;
+    public function newRouteGroup(?RouteBlueprint $routeBlueprint = null) : RouteGroup;
 
     public function newRoute() : Route;
 }

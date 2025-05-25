@@ -41,7 +41,7 @@ class RouterFactory implements RouterFactoryInterface
     }
 
 
-    public function newRouteBlueprint(RouteBlueprint $from = null) : RouteBlueprint
+    public function newRouteBlueprint(?RouteBlueprint $from = null) : RouteBlueprint
     {
         if ($from) {
             $instance = clone $from;
@@ -55,7 +55,7 @@ class RouterFactory implements RouterFactoryInterface
         return $instance;
     }
 
-    public function newRouteGroup(RouteBlueprint $routeBlueprint = null) : RouteGroup
+    public function newRouteGroup(?RouteBlueprint $routeBlueprint = null) : RouteGroup
     {
         $routeBlueprint = $this->newRouteBlueprint($routeBlueprint);
 

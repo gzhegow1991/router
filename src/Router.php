@@ -42,7 +42,7 @@ class Router
     }
 
 
-    public static function newBlueprint(RouteBlueprint $from = null) : RouteBlueprint
+    public static function newBlueprint(?RouteBlueprint $from = null) : RouteBlueprint
     {
         return static::$facade->newBlueprint($from);
     }
@@ -56,7 +56,7 @@ class Router
      * @param string|string[]|null                           $tags
      */
     public static function blueprint(
-        RouteBlueprint $from = null,
+        ?RouteBlueprint $from = null,
         $path = null, $httpMethods = null, $action = null, $name = null, $tags = null
     ) : RouteBlueprint
     {
@@ -67,7 +67,7 @@ class Router
     }
 
 
-    public static function group(RouteBlueprint $from = null) : RouteGroup
+    public static function group(?RouteBlueprint $from = null) : RouteGroup
     {
         return static::$facade->group($from);
     }
@@ -176,7 +176,7 @@ class Router
      *
      * @return Route[]|Route[][]
      */
-    public static function matchAllByNames($names, bool $unique = null) : array
+    public static function matchAllByNames($names, ?bool $unique = null) : array
     {
         return static::$facade->matchAllByNames($names, $unique);
     }
@@ -195,7 +195,7 @@ class Router
      *
      * @return Route[]|Route[][]
      */
-    public static function matchAllByTags($tags, bool $unique = null) : array
+    public static function matchAllByTags($tags, ?bool $unique = null) : array
     {
         return static::$facade->matchAllByTags($tags, $unique);
     }

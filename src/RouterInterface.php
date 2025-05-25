@@ -23,7 +23,7 @@ interface RouterInterface
     public function cacheRemember($fn) : RouterInterface;
 
 
-    public function newBlueprint(RouteBlueprint $from = null) : RouteBlueprint;
+    public function newBlueprint(?RouteBlueprint $from = null) : RouteBlueprint;
 
     /**
      * @param string|null                                    $path
@@ -33,12 +33,12 @@ interface RouterInterface
      * @param string|string[]|null                           $tags
      */
     public function blueprint(
-        RouteBlueprint $from = null,
+        ?RouteBlueprint $from = null,
         $path = null, $httpMethods = null, $action = null, $name = null, $tags = null
     ) : RouteBlueprint;
 
 
-    public function group(RouteBlueprint $from = null) : RouteGroup;
+    public function group(?RouteBlueprint $from = null) : RouteGroup;
 
 
     /**
@@ -108,7 +108,7 @@ interface RouterInterface
      *
      * @return Route[]|Route[][]
      */
-    public function matchAllByNames($names, bool $unique = null) : array;
+    public function matchAllByNames($names, ?bool $unique = null) : array;
 
     public function matchFirstByNames($names) : ?Route;
 
@@ -118,7 +118,7 @@ interface RouterInterface
      *
      * @return Route[]|Route[][]
      */
-    public function matchAllByTags($tags, bool $unique = null) : array;
+    public function matchAllByTags($tags, ?bool $unique = null) : array;
 
     public function matchFirstByTags($tags) : ?Route;
 

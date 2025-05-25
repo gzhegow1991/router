@@ -4,6 +4,7 @@ namespace Gzhegow\Router\Core\Route\Struct;
 
 use Gzhegow\Lib\Lib;
 use Gzhegow\Router\Router;
+use Gzhegow\Lib\Modules\Php\Result\Ret;
 use Gzhegow\Lib\Modules\Php\Result\Result;
 
 
@@ -27,47 +28,53 @@ class Path
 
 
     /**
+     * @param Ret $ret
+     *
      * @return static|bool|null
      */
-    public static function from($from, $ctx = null)
+    public static function from($from, $ret = null)
     {
-        Result::parse($cur);
+        $retCur = Result::asValue();
 
         $instance = null
-            ?? static::fromStatic($from, $cur)
-            ?? static::fromString($from, $cur);
+            ?? static::fromStatic($from, $retCur)
+            ?? static::fromString($from, $retCur);
 
-        if ($cur->isErr()) {
-            return Result::err($ctx, $cur);
+        if ($retCur->isErr()) {
+            return Result::err($ret, $retCur);
         }
 
-        return Result::ok($ctx, $instance);
+        return Result::ok($ret, $instance);
     }
 
     /**
+     * @param Ret $ret
+     *
      * @return static|bool|null
      */
-    public static function fromStatic($from, $ctx = null)
+    public static function fromStatic($from, $ret = null)
     {
         if ($from instanceof static) {
-            return Result::ok($ctx, $from);
+            return Result::ok($ret, $from);
         }
 
         return Result::err(
-            $ctx,
+            $ret,
             [ 'The `from` should be instance of: ' . static::class, $from ],
             [ __FILE__, __LINE__ ]
         );
     }
 
     /**
+     * @param Ret $ret
+     *
      * @return static|bool|null
      */
-    public static function fromString($from, $ctx = null)
+    public static function fromString($from, $ret = null)
     {
         if (! Lib::type()->path($fromPath, $from)) {
             return Result::err(
-                $ctx,
+                $ret,
                 [ 'The `from` should be valid path', $from ],
                 [ __FILE__, __LINE__ ]
             );
@@ -75,7 +82,7 @@ class Path
 
         if (0 !== strpos($fromPath, '/')) {
             return Result::err(
-                $ctx,
+                $ret,
                 [ 'The `from` should start with `/` sign', $from ],
                 [ __FILE__, __LINE__ ]
             );
@@ -92,7 +99,7 @@ class Path
             $regex = "/[{$allowed}]+/";
 
             return Result::err(
-                $ctx,
+                $ret,
                 [ 'The `from` should match the regex: ' . $regex, $from ],
                 [ __FILE__, __LINE__ ]
             );
@@ -101,7 +108,7 @@ class Path
         $instance = new static();
         $instance->value = $fromPath;
 
-        return Result::ok($ctx, $instance);
+        return Result::ok($ret, $instance);
     }
 
 
