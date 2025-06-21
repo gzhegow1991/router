@@ -288,7 +288,9 @@ class RouterFacade implements RouterInterface
         if ($this->config->compileTrailingSlashMode) {
             $pathValue = $pathObject->getValue();
 
-            $isEndsWithSlash = ('/' === $pathValue[ strlen($pathValue) - 1 ]);
+            $isEndsWithSlash = true
+                && ('/' !== $pathValue)
+                && ('/' === $pathValue[ strlen($pathValue) - 1 ]);
 
             if ($isEndsWithSlash && ($this->config->compileTrailingSlashMode === Router::TRAILING_SLASH_NEVER)) {
                 throw new RuntimeException(
@@ -338,7 +340,9 @@ class RouterFacade implements RouterInterface
         if (! $this->config->compileTrailingSlashMode) {
             $pathValue = $pathObject->getValue();
 
-            $isEndsWithSlash = ('/' === $pathValue[ strlen($pathValue) - 1 ]);
+            $isEndsWithSlash = true
+                && ('/' !== $pathValue)
+                && ('/' === $pathValue[ strlen($pathValue) - 1 ]);
 
             if ($isEndsWithSlash && ($this->config->compileTrailingSlashMode === Router::TRAILING_SLASH_NEVER)) {
                 throw new RuntimeException(
@@ -619,8 +623,8 @@ class RouterFacade implements RouterInterface
             );
         }
 
-        $hasHttpMethodIndex = ! empty($contract->httpMethodIndex);
-        $hasPathIndex = ! empty($contract->pathIndex);
+        $hasHttpMethodIndex = ([] !== $contract->httpMethodIndex);
+        $hasPathIndex = ([] !== $contract->pathIndex);
 
         $result = [];
 
@@ -661,7 +665,7 @@ class RouterFacade implements RouterInterface
     )
     {
         $contractHttpMethod = $contract->httpMethod->getValue();
-        $contractRequestUri = $contract->requestUri;
+        $contractRequestUri = $contract->requestUri->getValue();
 
         $dispatchHttpMethod = $contractHttpMethod;
         if ($this->config->dispatchForceMethod) {
@@ -677,9 +681,77 @@ class RouterFacade implements RouterInterface
             }
         }
 
+        $dispatchRouteIndex = [];
         $dispatchActionAttributes = [];
 
         $routeNodeCurrent = $this->routerNodeRoot;
+
+        $routePathCurrent = [ '' ];
+        $routeSubpathList = [ '/' ];
+
+        $slice = $dispatchRequestUri;
+        $slice = trim($slice, '/');
+        $slice = explode('/', $slice);
+        while ( [] !== $slice ) {
+            $requestUriPart = array_shift($slice);
+
+            $isLast = ([] === $slice);
+
+            if ($isLast) {
+                if (isset($routeNodeCurrent->routeIndexByPart[ $requestUriPart ])) {
+                    $dispatchRouteIndex = $routeNodeCurrent->routeIndexByPart[ $requestUriPart ];
+
+                    $routePathCurrent[] = $requestUriPart;
+                    $routeSubpathList[] = implode('/', $routePathCurrent);
+
+                    break;
+                }
+
+                foreach ( $routeNodeCurrent->routeIndexByRegex as $regex => $routeIndex ) {
+                    if (preg_match('/^' . $regex . '$/', $requestUriPart, $matches)) {
+                        $dispatchRouteIndex = $routeIndex;
+
+                        foreach ( $matches as $key => $value ) {
+                            if (is_string($key)) {
+                                $dispatchActionAttributes[ $key ] = $value;
+                            }
+                        }
+
+                        $routePathCurrent[] = $requestUriPart;
+                        $routeSubpathList[] = implode('/', $routePathCurrent);
+
+                        break 2;
+                    }
+                }
+
+            } else {
+                if (isset($routeNodeCurrent->childrenByPart[ $requestUriPart ])) {
+                    $routeNodeCurrent = $routeNodeCurrent->childrenByPart[ $requestUriPart ];
+
+                    $routePathCurrent[] = $routeNodeCurrent->part;
+                    $routeSubpathList[] = implode('/', $routePathCurrent);
+
+                    continue;
+                }
+
+                foreach ( $routeNodeCurrent->childrenByRegex as $regex => $routeNode ) {
+                    if (preg_match('/^' . $regex . '$/', $requestUriPart, $matches)) {
+                        $routeNodeCurrent = $routeNode;
+
+                        foreach ( $matches as $key => $value ) {
+                            if (is_string($key)) {
+                                $dispatchActionAttributes[ $key ] = $value;
+                            }
+                        }
+
+                        $routePathCurrent[] = $routeNodeCurrent->part;
+                        $routeSubpathList[] = implode('/', $routePathCurrent);
+
+                        continue 2;
+                    }
+                }
+            }
+        }
 
         $middlewareIndexes = [
             'path' => [],
@@ -689,87 +761,21 @@ class RouterFacade implements RouterInterface
             'path' => [],
             'tags' => [],
         ];
+        foreach ( $routeSubpathList as $routeSubpath ) {
+            if (isset($this->middlewareCollection->middlewareIndexByPath[ $routeSubpath ])) {
+                $middlewareIndexes[ 'path' ][ $routeSubpath ] = $this->middlewareCollection->middlewareIndexByPath[ $routeSubpath ];
+            }
 
-        $indexMatch = null;
-        $pathCurrent = '';
-
-        $slice = $dispatchRequestUri;
-        $slice = trim($slice, '/');
-        $slice = explode('/', $slice);
-        while ( $slice ) {
-            $part = array_shift($slice);
-
-            $isRoute = empty($slice);
-
-            if ($isRoute) {
-                if (isset($routeNodeCurrent->routeIndexByPart[ $part ])) {
-                    $indexMatch = $routeNodeCurrent->routeIndexByPart[ $part ];
-
-                    break;
-                }
-
-                foreach ( $routeNodeCurrent->routeIndexByRegex as $regex => $routeIndex ) {
-                    if (preg_match('/^' . $regex . '$/', $part, $matches)) {
-                        $indexMatch = $routeIndex;
-
-                        foreach ( $matches as $key => $value ) {
-                            if (is_string($key)) {
-                                $dispatchActionAttributes[ $key ] = $value;
-                            }
-                        }
-
-                        break 2;
-                    }
-                }
-
-            } else {
-                if (isset($routeNodeCurrent->childrenByPart[ $part ])) {
-                    $routeNodeCurrent = $routeNodeCurrent->childrenByPart[ $part ];
-
-                    $pathCurrent .= '/' . $routeNodeCurrent->part;
-
-                    if (isset($this->middlewareCollection->middlewareIndexByPath[ $pathCurrent ])) {
-                        $middlewareIndexes[ 'path' ][ $pathCurrent ] = $this->middlewareCollection->middlewareIndexByPath[ $pathCurrent ];
-                    }
-
-                    if (isset($this->fallbackCollection->fallbackIndexByPath[ $pathCurrent ])) {
-                        $fallbackIndexes[ 'path' ][ $pathCurrent ] = $this->fallbackCollection->fallbackIndexByPath[ $pathCurrent ];
-                    }
-
-                    continue;
-                }
-
-                foreach ( $routeNodeCurrent->childrenByRegex as $regex => $routeNode ) {
-                    if (preg_match('/^' . $regex . '$/', $part, $matches)) {
-                        $routeNodeCurrent = $routeNode;
-
-                        $pathCurrent .= '/' . $routeNodeCurrent->part;
-
-                        if (isset($this->middlewareCollection->middlewareIndexByPath[ $pathCurrent ])) {
-                            $middlewareIndexes[ 'path' ][ $pathCurrent ] = $this->middlewareCollection->middlewareIndexByPath[ $pathCurrent ];
-                        }
-
-                        if (isset($this->fallbackCollection->fallbackIndexByPath[ $pathCurrent ])) {
-                            $fallbackIndexes[ 'path' ][ $pathCurrent ] = $this->fallbackCollection->fallbackIndexByPath[ $pathCurrent ];
-                        }
-
-                        foreach ( $matches as $key => $value ) {
-                            if (is_string($key)) {
-                                $dispatchActionAttributes[ $key ] = $value;
-                            }
-                        }
-
-                        continue 2;
-                    }
-                }
+            if (isset($this->fallbackCollection->fallbackIndexByPath[ $routeSubpath ])) {
+                $fallbackIndexes[ 'path' ][ $routeSubpath ] = $this->fallbackCollection->fallbackIndexByPath[ $routeSubpath ];
             }
         }
 
-        $routeFoundId = null;
-        if (null !== $indexMatch) {
+        $dispatchRouteId = null;
+        if ([] !== $dispatchRouteIndex) {
             $intersect = [];
 
-            $intersect[] = $indexMatch;
+            $intersect[] = $dispatchRouteIndex;
 
             if (! $this->config->dispatchIgnoreMethod) {
                 $intersect[] = $routeNodeCurrent->routeIndexByMethod[ $dispatchHttpMethod ] ?? [];
@@ -778,35 +784,33 @@ class RouterFacade implements RouterInterface
             $indexMatch = array_intersect_key(...$intersect);
 
             if ($indexMatch) {
-                $routeFoundId = key($indexMatch);
+                $dispatchRouteId = key($indexMatch);
             }
         }
 
-        $routeFoundClone = null;
-        if (null !== $routeFoundId) {
-            $routeFoundClone = clone $this->routeCollection->routeList[ $routeFoundId ];
+        $dispatchRouteClone = null;
+        if (null !== $dispatchRouteId) {
+            $dispatchRouteClone = clone $this->routeCollection->routeList[ $dispatchRouteId ];
         }
 
-        if (null !== $routeFoundClone) {
-            $routePath = $routeFoundClone->path;
+        if (null !== $dispatchRouteClone) {
+            $routePath = $dispatchRouteClone->path;
 
             if (isset($this->middlewareCollection->middlewareIndexByPath[ $routePath ])) {
                 $middlewareIndexes[ 'path' ][ $routePath ] = $this->middlewareCollection->middlewareIndexByPath[ $routePath ];
-            }
-
-            foreach ( $routeFoundClone->tagIndex as $tag => $bool ) {
-                if (isset($this->middlewareCollection->middlewareIndexByTag[ $tag ])) {
-                    $middlewareIndexes[ 'tags' ] += $this->middlewareCollection->middlewareIndexByTag[ $tag ];
-                }
             }
 
             if (isset($this->fallbackCollection->fallbackIndexByPath[ $routePath ])) {
                 $fallbackIndexes[ 'path' ][ $routePath ] = $this->fallbackCollection->fallbackIndexByPath[ $routePath ];
             }
 
-            foreach ( $routeFoundClone->tagIndex as $tag => $bool ) {
+            foreach ( $dispatchRouteClone->tagIndex as $tag => $bool ) {
+                if (isset($this->middlewareCollection->middlewareIndexByTag[ $tag ])) {
+                    $middlewareIndexes[ 'tags' ][ $tag ] = $this->middlewareCollection->middlewareIndexByTag[ $tag ];
+                }
+
                 if (isset($this->fallbackCollection->fallbackIndexByTag[ $tag ])) {
-                    $fallbackIndexes[ 'tags' ] += $this->fallbackCollection->fallbackIndexByTag[ $tag ];
+                    $fallbackIndexes[ 'tags' ][ $tag ] = $this->fallbackCollection->fallbackIndexByTag[ $tag ];
                 }
             }
         }
@@ -819,17 +823,20 @@ class RouterFacade implements RouterInterface
         uksort($fallbackIndexes[ 'path' ], $fnSort);
 
         $middlewareIndex = [];
-        $fallbackIndex = [];
-
         foreach ( $middlewareIndexes[ 'path' ] as $index ) {
             $middlewareIndex += $index;
         }
+        foreach ( $middlewareIndexes[ 'tags' ] as $index ) {
+            $middlewareIndex += $index;
+        }
+
+        $fallbackIndex = [];
         foreach ( $fallbackIndexes[ 'path' ] as $index ) {
             $fallbackIndex += $index;
         }
-
-        $middlewareIndex += $middlewareIndexes[ 'tags' ];
-        $fallbackIndex += $fallbackIndexes[ 'tags' ];
+        foreach ( $fallbackIndexes[ 'tags' ] as $index ) {
+            $fallbackIndex += $index;
+        }
 
         /**
          * @var GenericHandlerMiddleware[] $middlewareList
@@ -849,24 +856,25 @@ class RouterFacade implements RouterInterface
         $pipeline = $this->pipelineFactory->newPipeline();
 
         $chain = $pipeline;
+
         foreach ( $middlewareList as $middleware ) {
             $chain = $chain->startMiddleware($middleware);
         }
 
-        if ($routeFoundClone) {
-            $routeFoundClone->dispatchActionAttributes = $dispatchActionAttributes;
+        if ($dispatchRouteClone) {
+            $dispatchRouteClone->dispatchActionAttributes = $dispatchActionAttributes;
 
-            $routeFoundClone->dispatchMiddlewareIndex = [];
+            $dispatchRouteClone->dispatchMiddlewareIndex = [];
             foreach ( $middlewareList as $middleware ) {
-                $routeFoundClone->dispatchMiddlewareIndex[ $middleware->getKey() ] = true;
+                $dispatchRouteClone->dispatchMiddlewareIndex[ $middleware->getKey() ] = true;
             }
 
-            $routeFoundClone->dispatchFallbackIndex = [];
+            $dispatchRouteClone->dispatchFallbackIndex = [];
             foreach ( $fallbackList as $fallback ) {
-                $routeFoundClone->dispatchFallbackIndex[ $fallback->getKey() ] = true;
+                $dispatchRouteClone->dispatchFallbackIndex[ $fallback->getKey() ] = true;
             }
 
-            $chain->action($routeFoundClone->action);
+            $chain->action($dispatchRouteClone->action);
 
         } else {
             $throwable = new NotFoundException(
@@ -878,7 +886,7 @@ class RouterFacade implements RouterInterface
             $chain->throwable($throwable);
         }
 
-        for ( $i = 0; $i < count($middlewareList); $i++ ) {
+        foreach ( $middlewareList as $devnull ) {
             $chain = $chain->endMiddleware();
         }
 
@@ -1054,16 +1062,16 @@ class RouterFacade implements RouterInterface
             $routeNodePrevious = $routeNodePrevious ?? $this->routerNodeRoot;
 
             $part = array_shift($slice);
+            $partRegex = null;
 
             $isPattern = (false !== strpos($part, Router::PATTERN_ENCLOSURE[ 0 ]));
-            $isRoute = empty($slice);
+            $isLast = ([] === $slice);
 
-            $partRegex = null;
             if ($isPattern) {
                 $partRegex = $this->compilePathRegex($part);
             }
 
-            if ($isRoute) {
+            if ($isLast) {
                 if ($isPattern) {
                     $routeNodePrevious->routeIndexByRegex[ $partRegex ][ $route->id ] = true;
 
@@ -1200,7 +1208,9 @@ class RouterFacade implements RouterInterface
         $pathValue = $path->getValue();
 
         if (! $this->config->compileTrailingSlashMode) {
-            $isEndsWithSlash = ('/' === $pathValue[ strlen($pathValue) - 1 ]);
+            $isEndsWithSlash = true
+                && ('/' !== $pathValue)
+                && ('/' === $pathValue[ strlen($pathValue) - 1 ]);
 
             if ($isEndsWithSlash && ($this->config->compileTrailingSlashMode === Router::TRAILING_SLASH_NEVER)) {
                 throw new RuntimeException(

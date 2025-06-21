@@ -4,6 +4,21 @@ namespace Gzhegow\Router\Demo\Handler\Controller;
 
 class DemoController
 {
+    public function indexGet()
+    {
+        echo __METHOD__ . PHP_EOL;
+
+        return 1;
+    }
+
+    public function indexPost()
+    {
+        echo __METHOD__ . PHP_EOL;
+
+        return 1;
+    }
+
+
     public function mainGet()
     {
         echo __METHOD__ . PHP_EOL;
@@ -19,14 +34,14 @@ class DemoController
     }
 
 
-    public function logic()
+    public function errorLogic()
     {
         echo __METHOD__ . PHP_EOL;
 
         throw new \LogicException();
     }
 
-    public function runtime()
+    public function errorRuntime()
     {
         echo __METHOD__ . PHP_EOL;
 

@@ -6,7 +6,7 @@ use Gzhegow\Router\Core\Route\Route;
 use Gzhegow\Router\Exception\RuntimeException;
 
 
-class RouterRouteCollection
+class RouterRouteCollection implements \Serializable
 {
     /**
      * @var int
@@ -35,6 +35,35 @@ class RouterRouteCollection
      * @var array<string, string>
      */
     public $routeMapHttpMethodPathToBoolean = [];
+
+
+    public function __serialize() : array
+    {
+        $vars = get_object_vars($this);
+
+        return array_filter($vars);
+    }
+
+    public function __unserialize(array $data) : void
+    {
+        foreach ( $data as $key => $val ) {
+            $this->{$key} = $val;
+        }
+    }
+
+    public function serialize()
+    {
+        $array = $this->__serialize();
+
+        return serialize($array);
+    }
+
+    public function unserialize($data)
+    {
+        $array = unserialize($data);
+
+        $this->__unserialize($array);
+    }
 
 
     public function getRoute(int $id) : Route

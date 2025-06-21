@@ -7,7 +7,7 @@ use Gzhegow\Router\Core\Route\Struct\Path;
 use Gzhegow\Router\Core\Handler\Fallback\GenericHandlerFallback;
 
 
-class RouterFallbackCollection
+class RouterFallbackCollection implements \Serializable
 {
     /**
      * @var int
@@ -32,6 +32,35 @@ class RouterFallbackCollection
      * @var array<string, int>
      */
     public $fallbackMapKeyToId = [];
+
+
+    public function __serialize() : array
+    {
+        $vars = get_object_vars($this);
+
+        return array_filter($vars);
+    }
+
+    public function __unserialize(array $data) : void
+    {
+        foreach ( $data as $key => $val ) {
+            $this->{$key} = $val;
+        }
+    }
+
+    public function serialize()
+    {
+        $array = $this->__serialize();
+
+        return serialize($array);
+    }
+
+    public function unserialize($data)
+    {
+        $array = unserialize($data);
+
+        $this->__unserialize($array);
+    }
 
 
     public function getFallback(int $id) : GenericHandlerFallback
