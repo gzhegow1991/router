@@ -68,7 +68,7 @@ class RouterConfig extends AbstractConfig
     }
 
 
-    protected function validation(array &$context = []) : bool
+    protected function validation(array &$refContext = []) : bool
     {
         $this->registerAllowObjectsAndClosures = (bool) $this->registerAllowObjectsAndClosures;
         $this->dispatchIgnoreMethod = (bool) $this->dispatchIgnoreMethod;

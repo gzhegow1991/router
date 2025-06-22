@@ -55,7 +55,7 @@ class RouterCacheConfig extends AbstractConfig
     protected $cacheFilename = 'router.cache';
 
 
-    protected function validation(array &$context = []) : bool
+    protected function validation(array &$refContext = []) : bool
     {
         $theType = Lib::type();
 
