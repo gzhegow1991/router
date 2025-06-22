@@ -62,10 +62,7 @@ class RouterCacheConfig extends AbstractConfig
         if (null !== $this->cacheAdapter) {
             if (! is_a($this->cacheAdapter, $class = '\Psr\Cache\CacheItemPoolInterface')) {
                 throw new LogicException(
-                    [
-                        'The `cacheAdapter` should be instance of: ' . $class,
-                        $this,
-                    ]
+                    [ 'The `cacheAdapter` should be instance of: ' . $class, $this ]
                 );
             }
         }
@@ -73,10 +70,7 @@ class RouterCacheConfig extends AbstractConfig
         if (null !== $this->cacheDirpath) {
             if (! $theType->dirpath($dirpath, $this->cacheDirpath)) {
                 throw new LogicException(
-                    [
-                        'The `cacheDirpath` should be valid directory path',
-                        $this,
-                    ]
+                    [ 'The `cacheDirpath` should be valid directory path', $this ]
                 );
             }
         }
@@ -84,10 +78,7 @@ class RouterCacheConfig extends AbstractConfig
         if (null !== $this->cacheFilename) {
             if (! $theType->filename($filename, $this->cacheFilename)) {
                 throw new LogicException(
-                    [
-                        'The `cacheFilename` should be valid filename',
-                        $this,
-                    ]
+                    [ 'The `cacheFilename` should be valid filename', $this ]
                 );
             }
         }
