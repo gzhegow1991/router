@@ -701,9 +701,6 @@ class RouterFacade implements RouterInterface
                 if (isset($routeNodeCurrent->routeIndexByPart[ $requestUriPart ])) {
                     $dispatchRouteIndex = $routeNodeCurrent->routeIndexByPart[ $requestUriPart ];
 
-                    $routePathCurrent[] = $requestUriPart;
-                    $routeSubpathList[] = implode('/', $routePathCurrent);
-
                     break;
                 }
 
@@ -717,12 +714,12 @@ class RouterFacade implements RouterInterface
                             }
                         }
 
-                        $routePathCurrent[] = $requestUriPart;
-                        $routeSubpathList[] = implode('/', $routePathCurrent);
-
                         break 2;
                     }
                 }
+
+                $routePathCurrent[] = $requestUriPart;
+                $routeSubpathList[] = implode('/', $routePathCurrent);
 
             } else {
                 if (isset($routeNodeCurrent->childrenByPart[ $requestUriPart ])) {
