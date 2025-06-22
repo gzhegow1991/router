@@ -96,36 +96,38 @@ $factory = new \Gzhegow\Router\RouterFactory();
 
 // > создаем конфигурацию
 $config = new \Gzhegow\Router\Core\Config\RouterConfig();
-$config->configure(function (\Gzhegow\Router\Core\Config\RouterConfig $config) use ($ffn) {
-    // >>> роутер
-    $config->registerAllowObjectsAndClosures = false;
-    $config->compileTrailingSlashMode = \Gzhegow\Router\Router::TRAILING_SLASH_NEVER;
-    $config->dispatchIgnoreMethod = false;
-    $config->dispatchForceMethod = null;
-    $config->dispatchTrailingSlashMode = \Gzhegow\Router\Router::TRAILING_SLASH_AS_IS;
+$config->configure(
+    function (\Gzhegow\Router\Core\Config\RouterConfig $config) use ($ffn) {
+        // >>> роутер
+        $config->registerAllowObjectsAndClosures = false;
+        $config->compileTrailingSlashMode = \Gzhegow\Router\Router::TRAILING_SLASH_AS_IS;
+        $config->dispatchIgnoreMethod = false;
+        $config->dispatchForceMethod = null;
+        $config->dispatchTrailingSlashMode = \Gzhegow\Router\Router::TRAILING_SLASH_AS_IS;
 
-    // >>> кэш роутера
-    $config->cache->cacheMode = \Gzhegow\Router\Core\Cache\RouterCache::CACHE_MODE_STORAGE;
-    //
-    $cacheDir = $ffn->root() . '/var/cache';
-    $cacheNamespace = 'gzhegow.router';
-    $cacheDirpath = "{$cacheDir}/{$cacheNamespace}";
-    $cacheFilename = "router.cache";
-    $config->cache->cacheDirpath = $cacheDirpath;
-    $config->cache->cacheFilename = $cacheFilename;
-    //
-    // $symfonyCacheAdapter = new \Symfony\Component\Cache\Adapter\FilesystemAdapter(
-    //     $cacheNamespace, $defaultLifetime = 0, $cacheDir
-    // );
-    // $redisClient = \Symfony\Component\Cache\Adapter\RedisAdapter::createConnection('redis://localhost');
-    // $symfonyCacheAdapter = new \Symfony\Component\Cache\Adapter\RedisAdapter(
-    //     $redisClient,
-    //     $cacheNamespace = '',
-    //     $defaultLifetime = 0
-    // );
-    // $config->cache->cacheMode = \Gzhegow\Router\Core\Cache\RouterCache::CACHE_MODE_STORAGE;
-    // $config->cache->cacheAdapter = $symfonyCacheAdapter;
-});
+        // >>> кэш роутера
+        $config->cache->cacheMode = \Gzhegow\Router\Core\Cache\RouterCache::CACHE_MODE_STORAGE;
+        //
+        $cacheDir = $ffn->root() . '/var/cache';
+        $cacheNamespace = 'gzhegow.router';
+        $cacheDirpath = "{$cacheDir}/{$cacheNamespace}";
+        $cacheFilename = "router.cache";
+        $config->cache->cacheDirpath = $cacheDirpath;
+        $config->cache->cacheFilename = $cacheFilename;
+        //
+        // $symfonyCacheAdapter = new \Symfony\Component\Cache\Adapter\FilesystemAdapter(
+        //     $cacheNamespace, $defaultLifetime = 0, $cacheDir
+        // );
+        // $redisClient = \Symfony\Component\Cache\Adapter\RedisAdapter::createConnection('redis://localhost');
+        // $symfonyCacheAdapter = new \Symfony\Component\Cache\Adapter\RedisAdapter(
+        //     $redisClient,
+        //     $cacheNamespace = '',
+        //     $defaultLifetime = 0
+        // );
+        // $config->cache->cacheMode = \Gzhegow\Router\Core\Cache\RouterCache::CACHE_MODE_STORAGE;
+        // $config->cache->cacheAdapter = $symfonyCacheAdapter;
+    }
+);
 
 // > создаем кеш роутера
 // > его задача сохранять маршруты в файл после того, как они будут скомпилированы и сохранены в виде дерева
@@ -164,148 +166,150 @@ $router = new \Gzhegow\Router\RouterFacade(
 // $router->cacheClear();
 
 // > вызываем функцию, которая загрузит кеш, и если его нет - выполнит регистрацию маршрутов и сохранение их в кэш (не обязательно)
-$router->cacheRemember(static function (\Gzhegow\Router\RouterInterface $router) {
-    // > добавляем паттерн, который можно использовать в маршрутах
-    $router->pattern('{id}', '[0-9]+');
+$router->cacheRemember(
+    static function (\Gzhegow\Router\RouterInterface $router) {
+        // > добавляем паттерн, который можно использовать в маршрутах
+        $router->pattern('{id}', '[0-9]+');
 
 
-    // // > так можно добавлять маршруты в главную группу
-    // $router->route('/', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'indexGet' ], 'user.main');
-    //
-    // // > можно добавлять роуты на основе "чертежа" (это неявно используется во всех остальных способах)
-    // $blueprint = $router->blueprint()
-    //     ->path('/')
-    //     ->httpMethod('GET')
-    //     ->action([ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'indexGet' ])
-    //     ->name('user.main')
-    // ;
-    // $router->addRoute($blueprint);
-    //
-    $router->route('/', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'indexGet' ], 'index');
-    $router->route('/', 'POST', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'indexPost' ], 'index');
-
-
-    // // > добавляет middleware-посредник по пути (они отработают даже если маршрут не найден, но путь начинался с указанного)
-    // // > будьте внимательны, посредники отрабатывают в той последовательности, в которой заданы, если задать их до группы, то и отработают они раньше
-    // $router->middlewareOnPath('/', '\Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware');
-    // $router->middlewareOnPath('/', '\Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware');
-    //
-    // // > можно привязывать посредники так же по тегу, теги в свою очередь привязывать к маршрутам или группам
-    // $router->middlewareOnTag('tag1', '\Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware');
-    // $router->middlewareOnTag('tag1', '\Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware');
-    //
-    // // > добавляет fallback-обработчик по пути (если во время действия будет брошено исключение или роута не будет - запустится это действие)
-    // // > несколько fallback-обработчиков запустятся один за другим, пока какой-либо из них не вернет not-NULL результат, и если ни один - будет брошено \Gzhegow\Pipeline\PipelineException
-    // // > будьте внимательны, fallback-обработчики отрабатывают в той последовательности, в которой заданы, если задать их до группы, то и отработают они раньше
-    // $router->fallbackOnPath('/', '\Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback');
-    //
-    // // > можно привязывать fallback-обработчики так же по тегу, теги в свою очередь привязывать к маршрутам или группам
-    // $router->fallbackOnTag('tag1', '\Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback');
-    //
-    $router->middlewareOnPath('/api/v1/user', '\Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware');
-    $router->middlewareOnPath('/api/v1/user', '\Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware');
-    $router->middlewareOnPath('/api/v1/user', '\Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware');
-    //
-    $router->fallbackOnPath('/api/v1/user', '\Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback');
-
-    // // > для того, чтобы зарегистрировать маршруты удобно использовать группировку
-    // $group = $router->group();
-
-    // // > каждый множественный метод имеет аналог в единственном числе и аналог, который перезаписывает предыдущие установки
-    // $group->httpMethods([]);
-    // $group->httpMethod('');
-    // $group->setHttpMethods([]);
-    //
-    // $group->setMiddlewares([]);
-    // $group->middlewares([]);
-    // $group->middleware('');
-    //
-    // $group->setFallbacks([]);
-    // $group->fallbacks([]);
-    // $group->fallback('');
-    //
-    // $group->setTags([]);
-    // $group->tags([]);
-    // $group->tag('');
-
-    // > добавим группу маршрутов
-    $router->group()
-        // > ставим теги для каждого роута в группе
-        // > с помощью тегов можно будет найти нужную группу роутов или настроить её поведение, как показано выше
-        ->tags([
-            'api',
-            'api.v1',
-            'user',
-        ])
+        // // > так можно добавлять маршруты в главную группу
+        // $router->route('/', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'indexGet' ], 'user.main');
         //
-        // > добавляем middleware-посредники для каждого роута в группе
-        // > будьте внимательны, посредники добавляются К РОУТАМ, а не к ИХ ПУТЯМ, то есть "если роут найден - посредники будут запущены"
-        ->middlewares([
-            '\Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware',
-            '\Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware',
-            '\Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware',
-        ])
+        // // > можно добавлять роуты на основе "чертежа" (это неявно используется во всех остальных способах)
+        // $blueprint = $router->blueprint()
+        //     ->path('/')
+        //     ->httpMethod('GET')
+        //     ->action([ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'indexGet' ])
+        //     ->name('user.main')
+        // ;
+        // $router->addRoute($blueprint);
         //
-        // > добавляем fallback-обработчики для каждого роута в группе
-        // > будьте внимательны, обработчики добавляются К РОУТАМ, а не к ИХ ПУТЯМ, то есть "если роут найден и бросил ошибку - обработчики будут запущены"
-        ->fallbacks([
-            '\Gzhegow\Router\Demo\Handler\Fallback\DemoRuntimeExceptionFallback',
-            '\Gzhegow\Router\Demo\Handler\Fallback\DemoLogicExceptionFallback',
-            '\Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback',
-        ])
+        $router->route('/', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'indexGet' ], 'index');
+        $router->route('/', 'POST', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'indexPost' ], 'index');
+
+
+        // // > добавляет middleware-посредник по пути (они отработают даже если маршрут не найден, но путь начинался с указанного)
+        // // > будьте внимательны, посредники отрабатывают в той последовательности, в которой заданы, если задать их до группы, то и отработают они раньше
+        // $router->middlewareOnPath('/', '\Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware');
+        // $router->middlewareOnPath('/', '\Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware');
         //
-        // регистрируем группу
-        ->register(
-            static function (\Gzhegow\Router\Core\Route\RouteGroup $group) {
-                // // > пример регистрации маршрута
-                // $route = $group
-                //     ->route(
-                //         $path = '/api/v1/user/{id}/main',
-                //         $httpMethods = [ 'GET' ],
-                //         $action = '\Gzhegow\Router\Demo\Handler\Action\DemoCorsAction',
-                //         $name = '',
-                //         $tags = []
-                //     )
-                //     ->name('')
-                //     ->tags([])
-                // ;
+        // // > можно привязывать посредники так же по тегу, теги в свою очередь привязывать к маршрутам или группам
+        // $router->middlewareOnTag('tag1', '\Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware');
+        // $router->middlewareOnTag('tag1', '\Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware');
+        //
+        // // > добавляет fallback-обработчик по пути (если во время действия будет брошено исключение или роута не будет - запустится это действие)
+        // // > несколько fallback-обработчиков запустятся один за другим, пока какой-либо из них не вернет not-NULL результат, и если ни один - будет брошено \Gzhegow\Pipeline\PipelineException
+        // // > будьте внимательны, fallback-обработчики отрабатывают в той последовательности, в которой заданы, если задать их до группы, то и отработают они раньше
+        // $router->fallbackOnPath('/', '\Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback');
+        //
+        // // > можно привязывать fallback-обработчики так же по тегу, теги в свою очередь привязывать к маршрутам или группам
+        // $router->fallbackOnTag('tag1', '\Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback');
+        //
+        $router->middlewareOnPath('/api/v1/user', '\Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware');
+        $router->middlewareOnPath('/api/v1/user', '\Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware');
+        $router->middlewareOnPath('/api/v1/user', '\Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware');
+        //
+        $router->fallbackOnPath('/api/v1/user', '\Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback');
 
-                // // > можно указывать теги и middleware-посредники/fallback-обработчики и для конкретного роута
-                // // > при этом, если такие же уже были зарегистрированы раньше, то повторно они не добавятся
-                // $route
-                //     ->middlewares([])
-                //     ->fallbacks([])
-                // ;
+        // // > для того, чтобы зарегистрировать маршруты удобно использовать группировку
+        // $group = $router->group();
 
-                // > подключаем CORS для API
-                // > в поставляемом действии режим "разрешить всё", если нужны тонкие настройки - стоит наследовать класс или написать свой
-                $group->route('/api/v1/user/{id}/main', 'OPTIONS', '\Gzhegow\Router\Demo\Handler\Action\DemoCorsAction', 'user.main');
-                // > подключаем поставляемый middleware-посредник для CORS-заголовков
-                // > в поставляемом посреднике режим "разрешить всё", если нужны тонкие настройки - стоит наследовать класс или написать свой
-                $group->middleware('\Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware');
+        // // > каждый множественный метод имеет аналог в единственном числе и аналог, который перезаписывает предыдущие установки
+        // $group->httpMethods([]);
+        // $group->httpMethod('');
+        // $group->setHttpMethods([]);
+        //
+        // $group->setMiddlewares([]);
+        // $group->middlewares([]);
+        // $group->middleware('');
+        //
+        // $group->setFallbacks([]);
+        // $group->fallbacks([]);
+        // $group->fallback('');
+        //
+        // $group->setTags([]);
+        // $group->tags([]);
+        // $group->tag('');
 
-                // > добавляем маршруты
-                $group->route('/api/v1/user/{id}/main', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'mainGet' ], 'user.main');
-                $group->route('/api/v1/user/{id}/main', 'POST', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'mainPost' ], 'user.main');
+        // > добавим группу маршрутов
+        $router->group()
+            // > ставим теги для каждого роута в группе
+            // > с помощью тегов можно будет найти нужную группу роутов или настроить её поведение, как показано выше
+            ->tags([
+                'api',
+                'api.v1',
+                'user',
+            ])
+            //
+            // > добавляем middleware-посредники для каждого роута в группе
+            // > будьте внимательны, посредники добавляются К РОУТАМ, а не к ИХ ПУТЯМ, то есть "если роут найден - посредники будут запущены"
+            ->middlewares([
+                '\Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware',
+                '\Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware',
+                '\Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware',
+            ])
+            //
+            // > добавляем fallback-обработчики для каждого роута в группе
+            // > будьте внимательны, обработчики добавляются К РОУТАМ, а не к ИХ ПУТЯМ, то есть "если роут найден и бросил ошибку - обработчики будут запущены"
+            ->fallbacks([
+                '\Gzhegow\Router\Demo\Handler\Fallback\DemoRuntimeExceptionFallback',
+                '\Gzhegow\Router\Demo\Handler\Fallback\DemoLogicExceptionFallback',
+                '\Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback',
+            ])
+            //
+            // регистрируем группу
+            ->register(
+                static function (\Gzhegow\Router\Core\Route\RouteGroup $group) {
+                    // // > пример регистрации маршрута
+                    // $route = $group
+                    //     ->route(
+                    //         $path = '/api/v1/user/{id}/main',
+                    //         $httpMethods = [ 'GET' ],
+                    //         $action = '\Gzhegow\Router\Demo\Handler\Action\DemoCorsAction',
+                    //         $name = '',
+                    //         $tags = []
+                    //     )
+                    //     ->name('')
+                    //     ->tags([])
+                    // ;
 
-                // > можно задавать группу в группе
-                // > метод ->register() передаст все роуты в родительскую группу
-                // > НЕ РЕКОМЕНДУЕТСЯ - путь к маршруту надо оставлять цельным, чтобы по нему можно было искать поиском в IDE
-                $group->group()
-                    ->name('user')
-                    ->path('/api/v1/user/{id}')
-                    ->register(static function (\Gzhegow\Router\Core\Route\RouteGroup $group) {
-                        $group->route('/logic', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'errorLogic' ], 'logic');
-                        $group->route('/runtime', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'errorRuntime' ], 'runtime');
-                    })
-                ;
-            }
-        )
-    ;
+                    // // > можно указывать теги и middleware-посредники/fallback-обработчики и для конкретного роута
+                    // // > при этом, если такие же уже были зарегистрированы раньше, то повторно они не добавятся
+                    // $route
+                    //     ->middlewares([])
+                    //     ->fallbacks([])
+                    // ;
 
-    // > коммитим указанные выше роуты - это скомпилирует роуты (при компиляции роуты индексируются для быстрого поиска)
-    $router->commit();
-});
+                    // > подключаем CORS для API
+                    // > в поставляемом действии режим "разрешить всё", если нужны тонкие настройки - стоит наследовать класс или написать свой
+                    $group->route('/api/v1/user/{id}/main', 'OPTIONS', '\Gzhegow\Router\Demo\Handler\Action\DemoCorsAction', 'user.main');
+                    // > подключаем поставляемый middleware-посредник для CORS-заголовков
+                    // > в поставляемом посреднике режим "разрешить всё", если нужны тонкие настройки - стоит наследовать класс или написать свой
+                    $group->middleware('\Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware');
+
+                    // > добавляем маршруты
+                    $group->route('/api/v1/user/{id}/main', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'mainGet' ], 'user.main');
+                    $group->route('/api/v1/user/{id}/main', 'POST', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'mainPost' ], 'user.main');
+
+                    // > можно задавать группу в группе
+                    // > метод ->register() передаст все роуты в родительскую группу
+                    // > НЕ РЕКОМЕНДУЕТСЯ - путь к маршруту надо оставлять цельным, чтобы по нему можно было искать поиском в IDE
+                    $group->group()
+                        ->name('user')
+                        ->path('/api/v1/user/{id}')
+                        ->register(static function (\Gzhegow\Router\Core\Route\RouteGroup $group) {
+                            $group->route('/logic', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'errorLogic' ], 'logic');
+                            $group->route('/runtime', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'errorRuntime' ], 'runtime');
+                        })
+                    ;
+                }
+            )
+        ;
+
+        // > коммитим указанные выше роуты - это скомпилирует роуты (при компиляции роуты индексируются для быстрого поиска)
+        $router->commit();
+    }
+);
 
 
 
