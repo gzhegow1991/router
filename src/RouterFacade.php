@@ -85,6 +85,11 @@ class RouterFacade implements RouterInterface
      */
     protected $isRouterChanged = false;
 
+    /**
+     * @var Route
+     */
+    protected $dispatchRoute;
+
 
     public function __construct(
         RouterFactoryInterface $routerFactory,
@@ -873,6 +878,8 @@ class RouterFacade implements RouterInterface
 
             $chain->action($dispatchRouteClone->action);
 
+            $this->dispatchRoute = $dispatchRouteClone;
+
         } else {
             $throwable = new NotFoundException(
                 'Route not found: '
@@ -901,6 +908,11 @@ class RouterFacade implements RouterInterface
         }
 
         return $result;
+    }
+
+    public function getDispatchRoute() : Route
+    {
+        return $this->dispatchRoute;
     }
 
 

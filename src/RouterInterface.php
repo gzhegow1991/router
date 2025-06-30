@@ -135,6 +135,8 @@ interface RouterInterface
      */
     public function dispatch(RouterDispatchContract $contract, $input = null, $context = null);
 
+    public function getDispatchRoute() : Route;
+
 
     /**
      * @param Route|Route[]|string|string[] $routes
