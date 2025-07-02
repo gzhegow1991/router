@@ -39,6 +39,11 @@ class Router
     ];
 
 
+    private function __construct()
+    {
+    }
+
+
     public static function getRouterFactory() : RouterFactoryInterface
     {
         return static::$facade->getRouterFactory();
