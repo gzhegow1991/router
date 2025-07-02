@@ -368,7 +368,7 @@ class RouterDispatcher implements RouterDispatcherInterface
                 ''
                 . 'Route not found: '
                 . '[ ' . $contractRequestUri . ' ]'
-                . '[ ' . $dispatchRequestMethod . ' ]'
+                . '[ ' . $contractRequestMethod . ' ]'
             );
 
             $pipelineChild->setThrowable($throwable);
