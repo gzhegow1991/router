@@ -12,6 +12,7 @@ use Gzhegow\Router\Core\Config\RouterConfig;
 use Gzhegow\Router\Core\Route\RouteBlueprint;
 use Gzhegow\Router\Core\Pattern\RouterPattern;
 use Gzhegow\Router\Exception\RuntimeException;
+use Gzhegow\Lib\Modules\Func\Pipe\PipeContext;
 use Gzhegow\Router\Core\Cache\RouterCacheInterface;
 use Gzhegow\Router\Core\Matcher\RouterMatcherContract;
 use Gzhegow\Router\Core\Matcher\RouterMatcherInterface;
@@ -218,16 +219,22 @@ class RouterFacade implements RouterInterface
     /**
      * @param callable $fn
      */
-    public function cacheRemember($fn) : RouterInterface
+    public function cacheRemember($fn, ?bool $commit = null) : RouterInterface
     {
         if ($this->cacheLoad()) {
             return $this;
         }
 
+        $commit = $commit ?? true;
+
         $fn($this);
 
         if ($this->isRouterChanged) {
             $this->cacheSave();
+        }
+
+        if ($commit) {
+            $this->commit();
         }
 
         return $this;
@@ -637,13 +644,16 @@ class RouterFacade implements RouterInterface
 
 
     /**
+     * @param mixed|RouterDispatcherContract $contract
+     * @param array{ 0: array }|PipeContext  $context
+     *
      * @return mixed
      * @throws DispatchException
      */
     public function dispatch(
-        RouterDispatcherContract $contract,
+        $contract,
         $input = null,
-        &$context = null,
+        $context = null,
         array $args = []
     )
     {

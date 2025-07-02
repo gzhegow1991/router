@@ -88,13 +88,16 @@ class RouterDispatcher implements RouterDispatcherInterface
 
 
     /**
+     * @param mixed|RouterDispatcherContract $contract
+     * @param array{ 0: array }|PipeContext  $context
+     *
      * @return mixed
      * @throws DispatchException
      */
     public function dispatch(
-        RouterDispatcherContract $contract,
+        $contract,
         $input = null,
-        &$context = null,
+        $context = null,
         array $args = []
     )
     {
@@ -105,17 +108,19 @@ class RouterDispatcher implements RouterDispatcherInterface
 
         $theFunc = Lib::func();
 
+        $dispatchContract = RouterDispatcherContract::from($contract);
+
         $pipeContext = null;
         if (null !== $context) {
             if ($context instanceof PipeContext) {
                 $pipeContext = $context;
 
             } elseif (is_array($context)) {
-                $pipeContext = new PipeContext($context);
+                $pipeContext = new PipeContext($context[ 0 ]);
 
             } else {
                 throw new LogicException(
-                    [ 'The `context` should be an array or an instance of: ' . PipeContext::class, $context ]
+                    [ 'The `context` should be an array like [ &$context ] or an instance of: ' . PipeContext::class, $context ]
                 );
             }
         }
@@ -126,8 +131,8 @@ class RouterDispatcher implements RouterDispatcherInterface
         $middlewareCollection = $this->middlewareCollection;
         $fallbackCollection = $this->fallbackCollection;
 
-        $contractRequestMethod = $contract->requestMethod->getValue();
-        $contractRequestUri = $contract->requestUri->getValue();
+        $contractRequestMethod = $dispatchContract->requestMethod->getValue();
+        $contractRequestUri = $dispatchContract->requestUri->getValue();
 
         $dispatchRequestMethod = $contractRequestMethod;
         if ($routerConfig->dispatchForceMethod) {
@@ -143,7 +148,7 @@ class RouterDispatcher implements RouterDispatcherInterface
             }
         }
 
-        $this->dispatchContract = $contract;
+        $this->dispatchContract = $dispatchContract;
         $this->dispatchRequestMethod = $dispatchRequestMethod;
         $this->dispatchRequestUri = $dispatchRequestUri;
 
@@ -332,7 +337,7 @@ class RouterDispatcher implements RouterDispatcherInterface
             $this->dispatchRoute = $dispatchRouteClone;
             $this->dispatchActionAttributes = $dispatchActionAttributes;
 
-            $dispatchRouteClone->dispatchContract = $contract;
+            $dispatchRouteClone->dispatchContract = $dispatchContract;
             $dispatchRouteClone->dispatchRequestMethod = $dispatchRequestMethod;
             $dispatchRouteClone->dispatchRequestUri = $dispatchRequestUri;
 

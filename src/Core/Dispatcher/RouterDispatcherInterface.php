@@ -4,6 +4,7 @@ namespace Gzhegow\Router\Core\Dispatcher;
 
 use Gzhegow\Router\RouterInterface;
 use Gzhegow\Router\Core\Route\Route;
+use Gzhegow\Lib\Modules\Func\Pipe\PipeContext;
 use Gzhegow\Router\Exception\Exception\DispatchException;
 
 
@@ -13,13 +14,16 @@ interface RouterDispatcherInterface
 
 
     /**
+     * @param mixed|RouterDispatcherContract $contract
+     * @param array{ 0: array }|PipeContext  $context
+     *
      * @return mixed
      * @throws DispatchException
      */
     public function dispatch(
-        RouterDispatcherContract $contract,
+        $contract,
         $input = null,
-        &$context = null,
+        $context = null,
         array $args = []
     );
 

@@ -8,6 +8,7 @@ use Gzhegow\Router\Core\Route\RouteGroup;
 use Gzhegow\Router\Core\Config\RouterConfig;
 use Gzhegow\Router\Core\Route\RouteBlueprint;
 use Gzhegow\Router\Core\Pattern\RouterPattern;
+use Gzhegow\Lib\Modules\Func\Pipe\PipeContext;
 use Gzhegow\Router\Core\Cache\RouterCacheInterface;
 use Gzhegow\Router\Core\Matcher\RouterMatcherContract;
 use Gzhegow\Router\Core\Matcher\RouterMatcherInterface;
@@ -122,9 +123,9 @@ class Router
     /**
      * @param callable $fn
      */
-    public static function cacheRemember($fn) : RouterInterface
+    public static function cacheRemember($fn, ?bool $commit = null) : RouterInterface
     {
-        return static::$facade->cacheRemember($fn);
+        return static::$facade->cacheRemember($fn, $commit);
     }
 
 
@@ -266,13 +267,16 @@ class Router
 
 
     /**
+     * @param mixed|RouterDispatcherContract $contract
+     * @param array{ 0: array }|PipeContext  $context
+     *
      * @return mixed
      * @throws DispatchException
      */
     public static function dispatch(
-        RouterDispatcherContract $contract,
+        $contract,
         $input = null,
-        &$context = null,
+        $context = null,
         array $args = []
     )
     {
