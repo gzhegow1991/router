@@ -115,12 +115,16 @@ class RouterDispatcher implements RouterDispatcherInterface
             if ($context instanceof PipeContext) {
                 $pipeContext = $context;
 
-            } elseif (is_array($context)) {
+            } elseif (true
+                && is_array($context)
+                && isset($context[ 0 ])
+                && is_array($context[ 0 ])
+            ) {
                 $pipeContext = new PipeContext($context[ 0 ]);
 
             } else {
                 throw new LogicException(
-                    [ 'The `context` should be an array like [ &$context ] or an instance of: ' . PipeContext::class, $context ]
+                    [ 'The `context` should be an array like `[ &$context ]` or an instance of: ' . PipeContext::class, $context ]
                 );
             }
         }
