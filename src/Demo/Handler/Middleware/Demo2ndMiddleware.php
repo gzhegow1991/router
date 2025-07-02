@@ -2,18 +2,20 @@
 
 namespace Gzhegow\Router\Demo\Handler\Middleware;
 
-use Gzhegow\Pipeline\Core\Process\PipelineProcessInterface;
-
 
 class Demo2ndMiddleware
 {
-    public function __invoke(PipelineProcessInterface $pipeline, $input = null, $context = null)
+    public function __invoke(
+        $fnNext, $input,
+        array $context = [],
+        array $args = []
+    )
     {
         $method = __METHOD__;
 
         echo "@before :: {$method}" . PHP_EOL;
 
-        $result = $pipeline->next($input, $context);
+        $result = $fnNext($input, $args);
 
         echo "@after :: {$method}" . PHP_EOL;
 

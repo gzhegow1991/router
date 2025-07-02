@@ -60,4 +60,21 @@ class RouterNode implements \Serializable
 
         $this->__unserialize($array);
     }
+
+
+    /**
+     * @return RouterNode[]
+     */
+    public function getChildrenByPart() : array
+    {
+        return $this->childrenByPart;
+    }
+
+    /**
+     * @return RouterNode[]
+     */
+    public function getChildrenByRegex() : array
+    {
+        return $this->childrenByRegex;
+    }
 }

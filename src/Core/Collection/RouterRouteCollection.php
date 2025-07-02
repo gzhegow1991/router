@@ -6,35 +6,79 @@ use Gzhegow\Router\Core\Route\Route;
 use Gzhegow\Router\Exception\RuntimeException;
 
 
+/**
+ * @property Route[]                         $routeList
+ *
+ * @property array<string, array<int, bool>> $routeIndexByName
+ * @property array<string, array<int, bool>> $routeIndexByTag
+ *
+ * @property array<string, bool>             $routeMapHttpMethodPathToBoolean
+ * @property array<string, string>           $routeMapPathToName
+ * @property array<string, bool>             $routeMapSplIdToBoolean
+ */
 class RouterRouteCollection implements \Serializable
 {
     /**
      * @var int
      */
-    protected $id = 0;
+    protected $routeLastId = 0;
 
     /**
      * @var Route[]
      */
-    public $routeList = [];
+    protected $routeList = [];
 
     /**
      * @var array<string, array<int, bool>>
      */
-    public $routeIndexByName = [];
+    protected $routeIndexByName = [];
     /**
      * @var array<string, array<int, bool>>
      */
-    public $routeIndexByTag = [];
+    protected $routeIndexByTag = [];
 
     /**
-     * @var array<string, string>
+     * @var array<string, bool>
      */
-    public $routeMapPathToName = [];
+    protected $routeMapHttpMethodPathToBoolean = [];
     /**
      * @var array<string, string>
      */
-    public $routeMapHttpMethodPathToBoolean = [];
+    protected $routeMapPathToName = [];
+    /**
+     * @var array<string, bool>
+     */
+    protected $routeMapSplIdToBool = [];
+
+
+    public function __get($name)
+    {
+        switch ( $name ):
+            case 'routeList':
+                return $this->routeList;
+
+            case 'routeIndexByName':
+                return $this->routeIndexByName;
+
+            case 'routeIndexByTag':
+                return $this->routeIndexByTag;
+
+            case 'routeMapHttpMethodPathToBoolean':
+                return $this->routeMapHttpMethodPathToBoolean;
+
+            case 'routeMapPathToName':
+                return $this->routeMapPathToName;
+
+            case 'routeMapSplIdToBool':
+                return $this->routeMapSplIdToBool;
+
+            default:
+                throw new RuntimeException(
+                    [ 'The property is missing: ' . $name ]
+                );
+
+        endswitch;
+    }
 
 
     public function __serialize() : array
@@ -66,15 +110,22 @@ class RouterRouteCollection implements \Serializable
     }
 
 
+    /**
+     * @return Route[]
+     */
+    public function getRouteList() : array
+    {
+        return $this->routeList;
+    }
+
     public function getRoute(int $id) : Route
     {
         return $this->routeList[ $id ];
     }
 
-
     public function registerRoute(Route $route) : int
     {
-        $id = ++$this->id;
+        $id = ++$this->routeLastId;
 
         $route->id = $id;
 
@@ -88,42 +139,52 @@ class RouterRouteCollection implements \Serializable
 
     protected function indexRoute(Route $route) : void
     {
-        $path = $route->path;
-        $name = $route->name;
+        $routeSplId = spl_object_id($route);
+        $routePath = $route->path;
+        $routeName = $route->name;
 
-        if (null !== $name) {
-            if (isset($this->routeMapPathToName[ $name ])) {
-                $existingPath = $this->routeMapPathToName[ $name ];
+        if (isset($this->routeMapSplIdToBool[ $routeSplId ])) {
+            throw new RuntimeException(
+                'Route with this `name` already exists: ' . $routeName
+            );
+        }
 
-                if ($existingPath !== $path) {
+        $this->routeMapSplIdToBool[ $routeSplId ] = true;
+
+        if (null !== $routeName) {
+            if (isset($this->routeMapPathToName[ $routeName ])) {
+                $existingPath = $this->routeMapPathToName[ $routeName ];
+
+                if ($existingPath !== $routePath) {
                     throw new RuntimeException(
-                        'Route with this `name` already exists: ' . $name
+                        [ 'Route with this `name` already exists: ' . $routeName ]
                     );
                 }
 
             } else {
-                $this->routeMapPathToName[ $name ] = $path;
+                $this->routeMapPathToName[ $routeName ] = $routePath;
             }
 
-            $this->routeIndexByName[ $name ][ $route->id ] = true;
+            $this->routeIndexByName[ $routeName ][ $route->id ] = true;
         }
 
-        foreach ( $route->httpMethodIndex as $httpMethod => $bool ) {
-            $key = "{$path}\0{$httpMethod}";
+        foreach ( $route->httpMethodIndex as $routeHttpMethod => $bool ) {
+            $key = "{$routePath}\0{$routeHttpMethod}";
 
             if (isset($this->routeMapHttpMethodPathToBoolean[ $key ])) {
                 throw new RuntimeException(
-                    'Route with this `path` already bound for this `httpMethod`: '
-                    . '`' . $path . '`'
-                    . ' / ' . '`' . $httpMethod . '`'
+                    ''
+                    . 'Route with this `path` already bound for this `httpMethod`: '
+                    . '[ ' . $routePath . ' ]'
+                    . '[ ' . $routeHttpMethod . ' ]'
                 );
             }
 
             $this->routeMapHttpMethodPathToBoolean[ $key ] = true;
         }
 
-        foreach ( $route->tagIndex as $tag => $bool ) {
-            $this->routeIndexByTag[ $tag ][ $route->id ] = true;
+        foreach ( $route->tagIndex as $routeTag => $bool ) {
+            $this->routeIndexByTag[ $routeTag ][ $route->id ] = true;
         }
     }
 }

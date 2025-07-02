@@ -1,6 +1,6 @@
 <?php
 
-namespace Gzhegow\Router\Core\Contract;
+namespace Gzhegow\Router\Core\Dispatcher;
 
 use Gzhegow\Lib\Modules\Php\Result\Ret;
 use Gzhegow\Lib\Modules\Php\Result\Result;
@@ -8,12 +8,12 @@ use Gzhegow\Router\Core\Route\Struct\Path;
 use Gzhegow\Router\Core\Route\Struct\HttpMethod;
 
 
-class RouterDispatchContract
+class RouterDispatcherContract
 {
     /**
      * @var HttpMethod
      */
-    public $httpMethod;
+    public $requestMethod;
     /**
      * @var Path
      */
@@ -78,15 +78,29 @@ class RouterDispatchContract
             );
         }
 
-        [ $httpMethod, $requestUri ] = $from;
+        $requestMethod = $from[ 'requestMethod' ] ?? $from[ 0 ];
+        $requestUri = $from[ 'requestUri' ] ?? $from[ 1 ];
 
-        $httpMethodObject = HttpMethod::from($httpMethod);
-        $requestUriPathObject = Path::from($requestUri);
+        $requestUri = explode('?', $requestUri, 2)[ 0 ];
+
+        $requestMethodObject = HttpMethod::from($requestMethod);
+        $requestUriObject = Path::from($requestUri);
 
         $instance = new static();
-        $instance->httpMethod = $httpMethodObject;
-        $instance->requestUri = $requestUriPathObject;
+        $instance->requestMethod = $requestMethodObject;
+        $instance->requestUri = $requestUriObject;
 
         return Result::ok($ret, $instance);
+    }
+
+
+    public function getRequestMethod() : HttpMethod
+    {
+        return $this->requestMethod;
+    }
+
+    public function getRequestUri() : Path
+    {
+        return $this->requestUri;
     }
 }

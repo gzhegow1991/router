@@ -4,34 +4,67 @@ namespace Gzhegow\Router\Core\Collection;
 
 use Gzhegow\Router\Core\Route\Struct\Tag;
 use Gzhegow\Router\Core\Route\Struct\Path;
+use Gzhegow\Router\Exception\RuntimeException;
 use Gzhegow\Router\Core\Handler\Fallback\GenericHandlerFallback;
 
 
+/**
+ * @property GenericHandlerFallback[]        $fallbackList
+ *
+ * @property array<string, array<int, bool>> $fallbackIndexByPath
+ * @property array<string, array<int, bool>> $fallbackIndexByTag
+ *
+ * @property array<string, int>              $fallbackMapKeyToId
+ */
 class RouterFallbackCollection implements \Serializable
 {
     /**
      * @var int
      */
-    protected $id = 0;
+    protected $fallbackLastId = 0;
 
     /**
      * @var GenericHandlerFallback[]
      */
-    public $fallbackList = [];
+    protected $fallbackList = [];
 
     /**
      * @var array<string, array<int, bool>>
      */
-    public $fallbackIndexByPath = [];
+    protected $fallbackIndexByPath = [];
     /**
      * @var array<string, array<int, bool>>
      */
-    public $fallbackIndexByTag = [];
+    protected $fallbackIndexByTag = [];
 
     /**
      * @var array<string, int>
      */
-    public $fallbackMapKeyToId = [];
+    protected $fallbackMapKeyToId = [];
+
+
+    public function __get($name)
+    {
+        switch ( $name ):
+            case 'fallbackList':
+                return $this->fallbackList;
+
+            case 'fallbackIndexByPath':
+                return $this->fallbackIndexByPath;
+
+            case 'fallbackIndexByTag':
+                return $this->fallbackIndexByTag;
+
+            case 'fallbackMapKeyToId':
+                return $this->fallbackMapKeyToId;
+
+            default:
+                throw new RuntimeException(
+                    [ 'The property is missing: ' . $name ]
+                );
+
+        endswitch;
+    }
 
 
     public function __serialize() : array
@@ -63,9 +96,34 @@ class RouterFallbackCollection implements \Serializable
     }
 
 
+    /**
+     * @return GenericHandlerFallback[]
+     */
+    public function getFallbackList() : array
+    {
+        return $this->fallbackList;
+    }
+
     public function getFallback(int $id) : GenericHandlerFallback
     {
         return $this->fallbackList[ $id ];
+    }
+
+    public function registerFallback(GenericHandlerFallback $fallback) : int
+    {
+        $key = $fallback->getKey();
+
+        $id = $this->fallbackMapKeyToId[ $key ] ?? null;
+
+        if (null === $id) {
+            $id = ++$this->fallbackLastId;
+
+            $this->fallbackList[ $id ] = $fallback;
+
+            $this->fallbackMapKeyToId[ $key ] = $id;
+        }
+
+        return $id;
     }
 
 
@@ -83,24 +141,6 @@ class RouterFallbackCollection implements \Serializable
         $id = $this->registerFallback($fallback);
 
         $this->fallbackIndexByTag[ $tag->getValue() ][ $id ] = true;
-
-        return $id;
-    }
-
-
-    public function registerFallback(GenericHandlerFallback $fallback) : int
-    {
-        $key = $fallback->getKey();
-
-        $id = $this->fallbackMapKeyToId[ $key ] ?? null;
-
-        if (null === $id) {
-            $id = ++$this->id;
-
-            $this->fallbackList[ $id ] = $fallback;
-
-            $this->fallbackMapKeyToId[ $key ] = $id;
-        }
 
         return $id;
     }

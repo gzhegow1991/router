@@ -4,9 +4,13 @@ namespace Gzhegow\Router\Core\Handler\Middleware;
 
 class CorsMiddleware
 {
-    public function __invoke($process, $input = null, $context = null)
+    public function __invoke(
+        $fnNext, $input,
+        array $context = [],
+        array $args = []
+    )
     {
-        $result = $process->next($input, $context);
+        $result = $fnNext($input, $args);
 
         if (isset($_SERVER[ 'REQUEST_METHOD' ])) {
             if ('OPTIONS' === strtoupper($_SERVER[ 'REQUEST_METHOD' ])) {

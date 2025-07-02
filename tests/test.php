@@ -110,27 +110,31 @@ $config->configure(
 // > его задача сохранять маршруты в файл после того, как они будут скомпилированы и сохранены в виде дерева
 $cache = new \Gzhegow\Router\Core\Cache\RouterCache($config->cache);
 
-// > создаем фабрику для конвеера
-$pipelineFactory = new \Gzhegow\Router\Package\Gzhegow\Pipeline\RouterPipelineFactory();
+// > создаем диспетчер
+// > его задача запускать действие, привязанное к маршруту, превращая его в конвеер, и формировать цепочку middleware
+$dispatcher = new \Gzhegow\Router\Core\Dispatcher\RouterDispatcher();
 
-// > создаем процессор для конвеера
-$pipelineProcessor = new \Gzhegow\Router\Package\Gzhegow\Pipeline\Processor\RouterProcessor(
-    $pipelineFactory
-);
+// > создаем инвокер
+// > его задача запускать PHP функции, которые составляют шаги конвеера
+$invoker = new \Gzhegow\Router\Core\Invoker\RouterInvoker();
 
-// > создаем процесс-менеджер для конвеера
-$pipelineProcessManager = new \Gzhegow\Router\Package\Gzhegow\Pipeline\ProcessManager\RouterProcessManager(
-    $pipelineFactory,
-    $pipelineProcessor
-);
+// > создаем поисковик
+// > его задача искать в коллекциях маршрут по ID, имени, тегам или другим параметрам
+$matcher = new \Gzhegow\Router\Core\Matcher\RouterMatcher();
+
+// > создаем генератор ссылок
+// > его задача создавать URL адреса на базе имеющихся в коллекции маршрутов
+$urlGenerator = new Gzhegow\Router\Core\UrlGenerator\RouterUrlGenerator();
 
 // > создаем роутер
 $router = new \Gzhegow\Router\RouterFacade(
     $factory,
-    $cache,
     //
-    $pipelineFactory,
-    $pipelineProcessManager,
+    $cache,
+    $dispatcher,
+    $invoker,
+    $matcher,
+    $urlGenerator,
     //
     $config
 );
@@ -140,7 +144,7 @@ $router = new \Gzhegow\Router\RouterFacade(
 
 
 // // > так можно очистить кэш
-// $router->cacheClear();
+$router->cacheClear();
 
 // > вызываем функцию, которая загрузит кеш, и если его нет - выполнит регистрацию маршрутов и сохранение их в кэш (не обязательно)
 $router->cacheRemember(
@@ -381,7 +385,7 @@ $fn = function () use ($ffn, $router) {
     echo PHP_EOL;
 
 
-    $contract = \Gzhegow\Router\Core\Contract\RouterMatchContract::from([
+    $contract = \Gzhegow\Router\Core\Matcher\RouterMatcherContract::from([
         // 'id'          => 1,
         // 'ids'         => [ 1 ],
         // 'path'        => '/api/v1/user/{id}',
@@ -464,7 +468,7 @@ $fn = function () use ($ffn, $router) {
     echo PHP_EOL;
 
 
-    $contract = \Gzhegow\Router\Core\Contract\RouterDispatchContract::fromArray(
+    $contract = \Gzhegow\Router\Core\Dispatcher\RouterDispatcherContract::fromArray(
         [ 'GET', '/api/v1/user/1/main' ]
     );
 
@@ -497,7 +501,7 @@ $fn = function () use ($ffn, $router) {
     echo PHP_EOL;
 
 
-    $contract = \Gzhegow\Router\Core\Contract\RouterDispatchContract::fromArray(
+    $contract = \Gzhegow\Router\Core\Dispatcher\RouterDispatcherContract::fromArray(
         [ 'GET', '/api/v1/user/not-found' ]
     );
 
@@ -530,7 +534,7 @@ $fn = function () use ($ffn, $router) {
     echo PHP_EOL;
 
 
-    $contract = \Gzhegow\Router\Core\Contract\RouterDispatchContract::fromArray(
+    $contract = \Gzhegow\Router\Core\Dispatcher\RouterDispatcherContract::fromArray(
         [ 'GET', '/api/v1/not-found/not-found' ]
     );
 
@@ -539,8 +543,7 @@ $fn = function () use ($ffn, $router) {
         $result = $router->dispatch($contract);
     }
     catch ( \Gzhegow\Router\Exception\Exception\DispatchException $e ) {
-        $lines = \Gzhegow\Lib\Lib::debug()
-            ->throwableManager()
+        $lines = \Gzhegow\Lib\Lib::debugThrowabler()
             ->getPreviousMessagesLines($e, _DEBUG_THROWABLE_WITHOUT_FILE)
         ;
 
@@ -559,10 +562,10 @@ $test->expectStdout('
 [ 0 ] Unhandled exception occured during dispatch
 { object # Gzhegow\Router\Exception\Exception\DispatchException }
 --
--- [ 0.0 ] Unhandled exception occured during processing pipeline
--- { object # Gzhegow\Pipeline\Exception\Runtime\PipelineException }
+-- [ 0.0 ] Unhandled exception during processing pipeline
+-- { object # Gzhegow\Lib\Exception\Runtime\PipeException }
 ----
----- [ 0.0.0 ] Route not found: `/api/v1/not-found/not-found` / `GET`
+---- [ 0.0.0 ] Route not found: [ /api/v1/not-found/not-found ][ GET ]
 ---- { object # Gzhegow\Router\Exception\Runtime\NotFoundException }
 
 "[ RESULT ]" | NULL
@@ -577,7 +580,7 @@ $fn = function () use ($ffn, $router) {
     echo PHP_EOL;
 
 
-    $contract = \Gzhegow\Router\Core\Contract\RouterDispatchContract::fromArray(
+    $contract = \Gzhegow\Router\Core\Dispatcher\RouterDispatcherContract::fromArray(
         [ 'GET', '/api/v1/user/1/logic' ]
     );
 
@@ -612,7 +615,7 @@ $fn = function () use ($ffn, $router) {
     echo PHP_EOL;
 
 
-    $contract = \Gzhegow\Router\Core\Contract\RouterDispatchContract::fromArray(
+    $contract = \Gzhegow\Router\Core\Dispatcher\RouterDispatcherContract::fromArray(
         [ 'GET', '/api/v1/user/1/runtime' ]
     );
 

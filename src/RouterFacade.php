@@ -9,23 +9,23 @@ use Gzhegow\Router\Core\Route\Struct\Tag;
 use Gzhegow\Router\Core\Route\RouteGroup;
 use Gzhegow\Router\Core\Route\Struct\Path;
 use Gzhegow\Router\Core\Config\RouterConfig;
-use Gzhegow\Router\Exception\LogicException;
 use Gzhegow\Router\Core\Route\RouteBlueprint;
 use Gzhegow\Router\Core\Pattern\RouterPattern;
 use Gzhegow\Router\Exception\RuntimeException;
 use Gzhegow\Router\Core\Cache\RouterCacheInterface;
-use Gzhegow\Router\Core\Contract\RouterMatchContract;
-use Gzhegow\Router\Exception\Runtime\NotFoundException;
-use Gzhegow\Router\Core\Contract\RouterDispatchContract;
+use Gzhegow\Router\Core\Matcher\RouterMatcherContract;
+use Gzhegow\Router\Core\Matcher\RouterMatcherInterface;
+use Gzhegow\Router\Core\Invoker\RouterInvokerInterface;
 use Gzhegow\Router\Core\Collection\RouterRouteCollection;
 use Gzhegow\Router\Exception\Exception\DispatchException;
 use Gzhegow\Router\Core\Collection\RouterPatternCollection;
+use Gzhegow\Router\Core\Dispatcher\RouterDispatcherContract;
 use Gzhegow\Router\Core\Collection\RouterFallbackCollection;
+use Gzhegow\Router\Core\Dispatcher\RouterDispatcherInterface;
 use Gzhegow\Router\Core\Collection\RouterMiddlewareCollection;
 use Gzhegow\Router\Core\Handler\Fallback\GenericHandlerFallback;
+use Gzhegow\Router\Core\UrlGenerator\RouterUrlGeneratorInterface;
 use Gzhegow\Router\Core\Handler\Middleware\GenericHandlerMiddleware;
-use Gzhegow\Router\Package\Gzhegow\Pipeline\RouterPipelineFactoryInterface;
-use Gzhegow\Router\Package\Gzhegow\Pipeline\ProcessManager\RouterProcessManagerInterface;
 
 
 class RouterFacade implements RouterInterface
@@ -36,15 +36,6 @@ class RouterFacade implements RouterInterface
     protected $routerFactory;
 
     /**
-     * @var RouterPipelineFactoryInterface
-     */
-    protected $pipelineFactory;
-    /**
-     * @var RouterProcessManagerInterface
-     */
-    protected $pipelineProcessManager;
-
-    /**
      * @var RouterConfig
      */
     protected $config;
@@ -53,73 +44,167 @@ class RouterFacade implements RouterInterface
      * @var RouterCacheInterface
      */
     protected $routerCache;
+    /**
+     * @var RouterDispatcherInterface
+     */
+    protected $routerDispatcher;
+    /**
+     * @var RouterInvokerInterface
+     */
+    protected $routerInvoker;
+    /**
+     * @var RouterMatcherInterface
+     */
+    protected $routerMatcher;
+    /**
+     * @var RouterUrlGeneratorInterface
+     */
+    protected $routerUrlGenerator;
 
     /**
-     * @var RouterFallbackCollection
+     * @var RouterRouteCollection
      */
-    protected $fallbackCollection;
-    /**
-     * @var RouterMiddlewareCollection
-     */
-    protected $middlewareCollection;
+    protected $routeCollection;
     /**
      * @var RouterPatternCollection
      */
     protected $patternCollection;
     /**
-     * @var RouterRouteCollection
+     * @var RouterMiddlewareCollection
      */
-    protected $routeCollection;
-
+    protected $middlewareCollection;
     /**
-     * @var RouterNode
+     * @var RouterFallbackCollection
      */
-    protected $routerNodeRoot;
+    protected $fallbackCollection;
+
     /**
      * @var RouteGroup
      */
-    protected $routeGroupRoot;
+    protected $rootRouterGroup;
+    /**
+     * @var RouterNode
+     */
+    protected $rootRouterNode;
 
     /**
      * @var bool
      */
     protected $isRouterChanged = false;
 
-    /**
-     * @var Route
-     */
-    protected $dispatchRoute;
-
 
     public function __construct(
         RouterFactoryInterface $routerFactory,
-        RouterCacheInterface $routerCache,
         //
-        RouterPipelineFactoryInterface $pipelineFactory,
-        RouterProcessManagerInterface $pipelineProcessManager,
+        RouterCacheInterface $routerCache,
+        RouterDispatcherInterface $routerDispatcher,
+        RouterInvokerInterface $routerInvoker,
+        RouterMatcherInterface $routerMatcher,
+        RouterUrlGeneratorInterface $routerUrlGenerator,
         //
         RouterConfig $config
     )
     {
         $this->routerFactory = $routerFactory;
+
         $this->routerCache = $routerCache;
+        $this->routerDispatcher = $routerDispatcher;
+        $this->routerInvoker = $routerInvoker;
+        $this->routerMatcher = $routerMatcher;
+        $this->routerUrlGenerator = $routerUrlGenerator;
 
-        $this->pipelineFactory = $pipelineFactory;
-        $this->pipelineProcessManager = $pipelineProcessManager;
-
-        $this->fallbackCollection = $this->routerFactory->newFallbackCollection();
-        $this->middlewareCollection = $this->routerFactory->newMiddlewareCollection();
-        $this->patternCollection = $this->routerFactory->newPatternCollection();
         $this->routeCollection = $this->routerFactory->newRouteCollection();
+        $this->patternCollection = $this->routerFactory->newPatternCollection();
+        $this->middlewareCollection = $this->routerFactory->newMiddlewareCollection();
+        $this->fallbackCollection = $this->routerFactory->newFallbackCollection();
 
         $this->config = $config;
         $this->config->validate();
 
+        $this->rootRouterGroup = $this->routerFactory->newRouteGroup();
+
         $routerNodeRoot = $this->routerFactory->newRouterNode();
         $routerNodeRoot->part = '/';
-        $this->routerNodeRoot = $routerNodeRoot;
+        $this->rootRouterNode = $routerNodeRoot;
 
-        $this->routeGroupRoot = $this->routerFactory->newRouteGroup();
+        $this->initialize();
+    }
+
+    protected function initialize() : void
+    {
+        $this->routerDispatcher->initialize($this);
+        $this->routerMatcher->initialize($this);
+        $this->routerUrlGenerator->initialize($this);
+    }
+
+
+    public function getRouterFactory() : RouterFactoryInterface
+    {
+        return $this->routerFactory;
+    }
+
+
+    public function getRouterCache() : RouterCacheInterface
+    {
+        return $this->routerCache;
+    }
+
+    public function getRouterDispatcher() : RouterDispatcherInterface
+    {
+        return $this->routerDispatcher;
+    }
+
+    public function getRouterInvoker() : RouterInvokerInterface
+    {
+        return $this->routerInvoker;
+    }
+
+    public function getRouterMatcher() : RouterMatcherInterface
+    {
+        return $this->routerMatcher;
+    }
+
+    public function getRouterUrlGenerator() : RouterUrlGeneratorInterface
+    {
+        return $this->routerUrlGenerator;
+    }
+
+
+    public function getRouteCollection() : RouterRouteCollection
+    {
+        return $this->routeCollection;
+    }
+
+    public function getPatternCollection() : RouterPatternCollection
+    {
+        return $this->patternCollection;
+    }
+
+    public function getMiddlewareCollection() : RouterMiddlewareCollection
+    {
+        return $this->middlewareCollection;
+    }
+
+    public function getFallbackCollection() : RouterFallbackCollection
+    {
+        return $this->fallbackCollection;
+    }
+
+
+    public function getRootRouterGroup() : RouteGroup
+    {
+        return $this->rootRouterGroup;
+    }
+
+    public function getRootRouterNode() : RouterNode
+    {
+        return $this->rootRouterNode;
+    }
+
+
+    public function getConfig() : RouterConfig
+    {
+        return $this->config;
     }
 
 
@@ -147,7 +232,6 @@ class RouterFacade implements RouterInterface
 
         return $this;
     }
-
 
     protected function cacheLoad() : bool
     {
@@ -190,7 +274,7 @@ class RouterFacade implements RouterInterface
             'fallbackCollection'   => $this->fallbackCollection,
             'patternCollection'    => $this->patternCollection,
             //
-            'routerNodeRoot'       => $this->routerNodeRoot,
+            'routerNodeRoot'       => $this->rootRouterNode,
         ];
 
         $this->routerCache->saveCache($cacheData);
@@ -203,7 +287,7 @@ class RouterFacade implements RouterInterface
 
     public function newBlueprint(?RouteBlueprint $from = null) : RouteBlueprint
     {
-        $routeBlueprint = $this->routeGroupRoot->newBlueprint($from);
+        $routeBlueprint = $this->rootRouterGroup->newBlueprint($from);
 
         return $routeBlueprint;
     }
@@ -220,7 +304,7 @@ class RouterFacade implements RouterInterface
         $path = null, $httpMethods = null, $action = null, $name = null, $tags = null
     ) : RouteBlueprint
     {
-        $routeBlueprint = $this->routeGroupRoot->blueprint(
+        $routeBlueprint = $this->rootRouterGroup->blueprint(
             $from,
             $path, $httpMethods, $action, $name, $tags
         );
@@ -232,9 +316,27 @@ class RouterFacade implements RouterInterface
 
     public function group(?RouteBlueprint $from = null) : RouteGroup
     {
-        $routeGroup = $this->routeGroupRoot->group($from);
+        $routeGroup = $this->rootRouterGroup->group($from);
 
         return $routeGroup;
+    }
+
+    /**
+     * @return int[]
+     */
+    public function registerRouteGroup(RouteGroup $routeGroup) : array
+    {
+        $report = [];
+
+        foreach ( $routeGroup->getRoutes() as $routeBlueprint ) {
+            $route = $this->compileRoute($routeBlueprint);
+
+            $id = $this->registerRoute($route);
+
+            $report[ $id ] = $route;
+        }
+
+        return $report;
     }
 
 
@@ -251,7 +353,7 @@ class RouterFacade implements RouterInterface
         $name = null, $tags = null
     ) : RouteBlueprint
     {
-        $routeGroup = $this->routeGroupRoot->route(
+        $routeGroup = $this->rootRouterGroup->route(
             $path, $httpMethods, $action,
             $name, $tags
         );
@@ -261,9 +363,91 @@ class RouterFacade implements RouterInterface
 
     public function addRoute(RouteBlueprint $routeBlueprint) : RouterInterface
     {
-        $this->routeGroupRoot->addRoute($routeBlueprint);
+        $this->rootRouterGroup->addRoute($routeBlueprint);
 
         return $this;
+    }
+
+    public function registerRoute(Route $route) : int
+    {
+        $this->isRouterChanged = true;
+
+        if (! $this->config->registerAllowObjectsAndClosures) {
+            $isRuntimeAction = null
+                ?? $route->action->hasClosureObject()
+                ?? $route->action->hasMethodObject()
+                ?? $route->action->hasInvokableObject();
+
+            if ($isRuntimeAction) {
+                throw new RuntimeException(
+                    [
+                        'The `action` should not be runtime object or \Closure',
+                        $route->action,
+                        $route,
+                    ]
+                );
+            }
+        }
+
+        $id = $this->routeCollection->registerRoute($route);
+
+        $path = $route->path;
+
+        $slice = $path;
+        $slice = trim($slice, '/');
+        $slice = explode('/', $slice);
+        while ( $slice ) {
+            $routeNodePrevious = $routeNodePrevious ?? $this->rootRouterNode;
+
+            $part = array_shift($slice);
+            $partRegex = null;
+
+            $isPattern = (false !== strpos($part, Router::PATTERN_ENCLOSURE[ 0 ]));
+            $isLast = ([] === $slice);
+
+            if ($isPattern) {
+                $partRegex = $this->compilePathRegex($part);
+            }
+
+            if ($isLast) {
+                if ($isPattern) {
+                    $routeNodePrevious->routeIndexByRegex[ $partRegex ][ $route->id ] = true;
+
+                } else {
+                    $routeNodePrevious->routeIndexByPart[ $part ][ $route->id ] = true;
+                }
+
+                foreach ( $route->httpMethodIndex as $httpMethod => $bool ) {
+                    $routeNodePrevious->routeIndexByMethod[ $httpMethod ][ $route->id ] = true;
+                }
+
+            } else {
+                if ($isPattern) {
+                    $routeNode = $routeNodePrevious->childrenByRegex[ $partRegex ] ?? null;
+
+                    if (null === $routeNode) {
+                        $routeNode = $this->routerFactory->newRouterNode();
+                        $routeNode->part = $part;
+
+                        $routeNodePrevious->childrenByRegex[ $partRegex ] = $routeNode;
+                    }
+
+                } else {
+                    $routeNode = $routeNodePrevious->childrenByPart[ $part ] ?? null;
+
+                    if (null === $routeNode) {
+                        $routeNode = $this->routerFactory->newRouterNode();
+                        $routeNode->part = $part;
+
+                        $routeNodePrevious->childrenByPart[ $part ] = $routeNode;
+                    }
+                }
+
+                $routeNodePrevious = $routeNode;
+            }
+        }
+
+        return $id;
     }
 
 
@@ -278,6 +462,15 @@ class RouterFacade implements RouterInterface
         $this->registerPattern($pattern);
 
         return $this;
+    }
+
+    public function registerPattern(RouterPattern $pattern) : string
+    {
+        $this->isRouterChanged = true;
+
+        $id = $this->patternCollection->registerPattern($pattern);
+
+        return $id;
     }
 
 
@@ -332,6 +525,30 @@ class RouterFacade implements RouterInterface
         return $this;
     }
 
+    public function registerMiddleware(GenericHandlerMiddleware $middleware) : int
+    {
+        $this->isRouterChanged = true;
+
+        if (! $this->config->registerAllowObjectsAndClosures) {
+            if (false
+                || $middleware->isClosure()
+                || $middleware->hasMethodObject()
+                || $middleware->hasInvokableObject()
+            ) {
+                throw new RuntimeException(
+                    [
+                        'This `middleware` should not be runtime object or \Closure',
+                        $middleware,
+                    ]
+                );
+            }
+        }
+
+        $id = $this->middlewareCollection->registerMiddleware($middleware);
+
+        return $id;
+    }
+
 
     /**
      * @param string                                    $path
@@ -384,782 +601,6 @@ class RouterFacade implements RouterInterface
         return $this;
     }
 
-
-    public function commit() : RouterInterface
-    {
-        $this->registerRouteGroup($this->routeGroupRoot);
-
-        $this->routeGroupRoot = $this->routerFactory->newRouteGroup();
-
-        return $this;
-    }
-
-
-    /**
-     * @param int[] $ids
-     *
-     * @return Route[]
-     */
-    public function matchAllByIds($ids) : array
-    {
-        $result = [];
-
-        $_ids = (array) $ids;
-
-        $routeList = $this->routeCollection->routeList;
-
-        foreach ( $_ids as $id ) {
-            if (isset($routeList[ $id ])) {
-                $result[ $id ] = $routeList[ $id ];
-            }
-        }
-
-        return $result;
-    }
-
-    public function matchFirstByIds($ids) : ?Route
-    {
-        $result = null;
-
-        $_ids = (array) $ids;
-
-        $routeList = $this->routeCollection->routeList;
-
-        foreach ( $_ids as $id ) {
-            if (isset($routeList[ $id ])) {
-                $result = $routeList[ $id ];
-
-                break;
-            }
-        }
-
-        return $result;
-    }
-
-
-    /**
-     * @param string[] $names
-     *
-     * @return Route[]|Route[][]
-     */
-    public function matchAllByNames($names, ?bool $unique = null) : array
-    {
-        $result = [];
-
-        $_names = (array) $names;
-        $_unique = $unique ?? false;
-
-        $routeIndexByName = $this->routeCollection->routeIndexByName;
-
-        $matchIndex = [];
-        $namesIndex = [];
-        foreach ( $_names as $idx => $name ) {
-            $result[ $idx ] = [];
-
-            if (isset($routeIndexByName[ $name ])) {
-                $matchIndex += $routeIndexByName[ $name ];
-            }
-
-            if (! $_unique) {
-                $namesIndex[ $name ][ $idx ] = true;
-            }
-        }
-
-        $routesMatch = [];
-        foreach ( $matchIndex as $id => $bool ) {
-            $routesMatch[ $id ] = $this->routeCollection->routeList[ $id ];
-        }
-
-        if ($_unique) {
-            $result = $routesMatch;
-
-        } else {
-            foreach ( $routesMatch as $route ) {
-                /** @var Route $route */
-
-                foreach ( $namesIndex[ $route->name ] ?? [] as $idx => $bool ) {
-                    $result[ $idx ][ $route->id ] = $route;
-                }
-            }
-        }
-
-        return $result;
-    }
-
-    public function matchFirstByNames($names) : ?Route
-    {
-        $result = null;
-
-        $_names = (array) $names;
-
-        $routeIndexByName = $this->routeCollection->routeIndexByName;
-
-        $matchIndex = [];
-        foreach ( $_names as $name ) {
-            if (isset($routeIndexByName[ $name ])) {
-                $matchIndex += $routeIndexByName[ $name ];
-            }
-
-            if (count($matchIndex)) {
-                $result = $this->routeCollection->routeList[ key($matchIndex) ];
-
-                break;
-            }
-        }
-
-        return $result;
-    }
-
-
-    /**
-     * @param string[] $tags
-     *
-     * @return Route[]|Route[][]
-     */
-    public function matchAllByTags($tags, ?bool $unique = null) : array
-    {
-        $result = [];
-
-        $_tags = (array) $tags;
-        $_unique = $unique ?? false;
-
-        $routeIndexByTag = $this->routeCollection->routeIndexByTag;
-
-        $matchIndex = [];
-        $tagsIndex = [];
-        foreach ( $_tags as $idx => $tag ) {
-            $result[ $idx ] = [];
-
-            if (isset($routeIndexByTag[ $tag ])) {
-                $matchIndex += $routeIndexByTag[ $tag ];
-            }
-
-            if (! $_unique) {
-                $tagsIndex[ $tag ][ $idx ] = true;
-            }
-        }
-
-        $routesMatch = [];
-        foreach ( $matchIndex as $id => $bool ) {
-            $routesMatch[ $id ] = $this->routeCollection->routeList[ $id ];
-        }
-
-        if ($_unique) {
-            $result = $routesMatch;
-
-        } else {
-            foreach ( $routesMatch as $route ) {
-                /** @var Route $route */
-
-                foreach ( $route->tagIndex as $tag => $b ) {
-                    foreach ( $tagsIndex[ $tag ] ?? [] as $idx => $bb ) {
-                        $result[ $idx ][ $route->id ] = $route;
-                    }
-                }
-            }
-        }
-
-        return $result;
-    }
-
-    public function matchFirstByTags($tags) : ?Route
-    {
-        $result = null;
-
-        $_tags = (array) $tags;
-
-        $routeIndexByTag = $this->routeCollection->routeIndexByTag;
-
-        $matchIndex = [];
-        foreach ( $_tags as $tag ) {
-            if (isset($routeIndexByTag[ $tag ])) {
-                $matchIndex += $routeIndexByTag[ $tag ];
-            }
-
-            if (count($matchIndex)) {
-                $result = $this->routeCollection->routeList[ key($matchIndex) ];
-
-                break;
-            }
-        }
-
-        return $result;
-    }
-
-
-    /**
-     * @return Route[]
-     */
-    public function matchByContract(RouterMatchContract $contract) : array
-    {
-        $intersect = [];
-
-        if ($contract->idIndex) {
-            $intersect[] = $contract->idIndex;
-        }
-
-        if ($contract->nameIndex) {
-            $index = [];
-            foreach ( $contract->nameIndex as $name => $bool ) {
-                $index += $this->routeCollection->routeIndexByName[ $name ] ?? [];
-            }
-
-            $intersect[] = $index;
-        }
-
-        if ($contract->tagIndex) {
-            $index = [];
-            foreach ( $contract->tagIndex as $tag => $bool ) {
-                $index += $this->routeCollection->routeIndexByTag[ $tag ] ?? [];
-            }
-
-            $intersect[] = $index;
-        }
-
-        if ([] !== $intersect) {
-            $index = (count($intersect) > 1)
-                ? array_intersect_key(...$intersect)
-                : $intersect;
-
-        } else {
-            $index = array_fill_keys(
-                array_keys($this->routeCollection->routeList),
-                true
-            );
-        }
-
-        $hasHttpMethodIndex = ([] !== $contract->httpMethodIndex);
-        $hasPathIndex = ([] !== $contract->pathIndex);
-
-        $result = [];
-
-        foreach ( $index as $id => $b ) {
-            $route = $this->routeCollection->routeList[ $id ];
-
-            if ($hasHttpMethodIndex) {
-                if (! array_intersect_key($route->httpMethodIndex, $contract->httpMethodIndex)) {
-                    continue;
-                }
-            }
-
-            if ($hasPathIndex) {
-                $found = false;
-                foreach ( $contract->pathIndex as $path => $bb ) {
-                    $found = (0 === strpos($route->path, $path));
-
-                    if ($found) break;
-                }
-
-                if (! $found) continue;
-            }
-
-            $result[ $id ] = $route;
-        }
-
-        return $result;
-    }
-
-
-    /**
-     * @return mixed
-     * @throws DispatchException
-     */
-    public function dispatch(
-        RouterDispatchContract $contract,
-        $input = null, $context = null
-    )
-    {
-        $contractHttpMethod = $contract->httpMethod->getValue();
-        $contractRequestUri = $contract->requestUri->getValue();
-
-        $dispatchHttpMethod = $contractHttpMethod;
-        if ($this->config->dispatchForceMethod) {
-            $dispatchHttpMethod = $this->config->dispatchForceMethod;
-        }
-
-        $dispatchRequestUri = $contractRequestUri;
-        if ($this->config->dispatchTrailingSlashMode) {
-            $dispatchRequestUri = rtrim($dispatchRequestUri, '/');
-
-            if ($this->config->dispatchTrailingSlashMode === Router::TRAILING_SLASH_ALWAYS) {
-                $dispatchRequestUri = $dispatchRequestUri . '/';
-            }
-        }
-
-        $dispatchRouteIndex = [];
-        $dispatchActionAttributes = [];
-
-        $routeNodeCurrent = $this->routerNodeRoot;
-
-        $routePathCurrent = [ '' ];
-        $routeSubpathList = [ '/' ];
-
-        $slice = $dispatchRequestUri;
-        $slice = trim($slice, '/');
-        $slice = explode('/', $slice);
-        while ( [] !== $slice ) {
-            $requestUriPart = array_shift($slice);
-
-            $isLast = ([] === $slice);
-
-            if ($isLast) {
-                if (isset($routeNodeCurrent->routeIndexByPart[ $requestUriPart ])) {
-                    $dispatchRouteIndex = $routeNodeCurrent->routeIndexByPart[ $requestUriPart ];
-
-                    break;
-                }
-
-                foreach ( $routeNodeCurrent->routeIndexByRegex as $regex => $routeIndex ) {
-                    if (preg_match('/^' . $regex . '$/', $requestUriPart, $matches)) {
-                        $dispatchRouteIndex = $routeIndex;
-
-                        foreach ( $matches as $key => $value ) {
-                            if (is_string($key)) {
-                                $dispatchActionAttributes[ $key ] = $value;
-                            }
-                        }
-
-                        break 2;
-                    }
-                }
-
-                $routePathCurrent[] = $requestUriPart;
-                $routeSubpathList[] = implode('/', $routePathCurrent);
-
-            } else {
-                if (isset($routeNodeCurrent->childrenByPart[ $requestUriPart ])) {
-                    $routeNodeCurrent = $routeNodeCurrent->childrenByPart[ $requestUriPart ];
-
-                    $routePathCurrent[] = $routeNodeCurrent->part;
-                    $routeSubpathList[] = implode('/', $routePathCurrent);
-
-                    continue;
-                }
-
-                foreach ( $routeNodeCurrent->childrenByRegex as $regex => $routeNode ) {
-                    if (preg_match('/^' . $regex . '$/', $requestUriPart, $matches)) {
-                        $routeNodeCurrent = $routeNode;
-
-                        foreach ( $matches as $key => $value ) {
-                            if (is_string($key)) {
-                                $dispatchActionAttributes[ $key ] = $value;
-                            }
-                        }
-
-                        $routePathCurrent[] = $routeNodeCurrent->part;
-                        $routeSubpathList[] = implode('/', $routePathCurrent);
-
-                        continue 2;
-                    }
-                }
-            }
-        }
-
-        $middlewareIndexes = [
-            'path' => [],
-            'tags' => [],
-        ];
-        $fallbackIndexes = [
-            'path' => [],
-            'tags' => [],
-        ];
-        foreach ( $routeSubpathList as $routeSubpath ) {
-            if (isset($this->middlewareCollection->middlewareIndexByPath[ $routeSubpath ])) {
-                $middlewareIndexes[ 'path' ][ $routeSubpath ] = $this->middlewareCollection->middlewareIndexByPath[ $routeSubpath ];
-            }
-
-            if (isset($this->fallbackCollection->fallbackIndexByPath[ $routeSubpath ])) {
-                $fallbackIndexes[ 'path' ][ $routeSubpath ] = $this->fallbackCollection->fallbackIndexByPath[ $routeSubpath ];
-            }
-        }
-
-        $dispatchRouteId = null;
-        if ([] !== $dispatchRouteIndex) {
-            $intersect = [];
-
-            $intersect[] = $dispatchRouteIndex;
-
-            if (! $this->config->dispatchIgnoreMethod) {
-                $intersect[] = $routeNodeCurrent->routeIndexByMethod[ $dispatchHttpMethod ] ?? [];
-            }
-
-            $indexMatch = array_intersect_key(...$intersect);
-
-            if ($indexMatch) {
-                $dispatchRouteId = key($indexMatch);
-            }
-        }
-
-        $dispatchRouteClone = null;
-        if (null !== $dispatchRouteId) {
-            $dispatchRouteClone = clone $this->routeCollection->routeList[ $dispatchRouteId ];
-        }
-
-        if (null !== $dispatchRouteClone) {
-            $routePath = $dispatchRouteClone->path;
-
-            if (isset($this->middlewareCollection->middlewareIndexByPath[ $routePath ])) {
-                $middlewareIndexes[ 'path' ][ $routePath ] = $this->middlewareCollection->middlewareIndexByPath[ $routePath ];
-            }
-
-            if (isset($this->fallbackCollection->fallbackIndexByPath[ $routePath ])) {
-                $fallbackIndexes[ 'path' ][ $routePath ] = $this->fallbackCollection->fallbackIndexByPath[ $routePath ];
-            }
-
-            foreach ( $dispatchRouteClone->tagIndex as $tag => $bool ) {
-                if (isset($this->middlewareCollection->middlewareIndexByTag[ $tag ])) {
-                    $middlewareIndexes[ 'tags' ][ $tag ] = $this->middlewareCollection->middlewareIndexByTag[ $tag ];
-                }
-
-                if (isset($this->fallbackCollection->fallbackIndexByTag[ $tag ])) {
-                    $fallbackIndexes[ 'tags' ][ $tag ] = $this->fallbackCollection->fallbackIndexByTag[ $tag ];
-                }
-            }
-        }
-
-        $fnSort = static function ($a, $b) {
-            return strlen($b) <=> strlen($a);
-        };
-
-        uksort($middlewareIndexes[ 'path' ], $fnSort);
-        uksort($fallbackIndexes[ 'path' ], $fnSort);
-
-        $middlewareIndex = [];
-        foreach ( $middlewareIndexes[ 'path' ] as $index ) {
-            $middlewareIndex += $index;
-        }
-        foreach ( $middlewareIndexes[ 'tags' ] as $index ) {
-            $middlewareIndex += $index;
-        }
-
-        $fallbackIndex = [];
-        foreach ( $fallbackIndexes[ 'path' ] as $index ) {
-            $fallbackIndex += $index;
-        }
-        foreach ( $fallbackIndexes[ 'tags' ] as $index ) {
-            $fallbackIndex += $index;
-        }
-
-        /**
-         * @var GenericHandlerMiddleware[] $middlewareList
-         * @var GenericHandlerFallback[]   $fallbackList
-         */
-
-        $middlewareList = [];
-        foreach ( $middlewareIndex as $i => $bool ) {
-            $middlewareList[ $i ] = $this->middlewareCollection->middlewareList[ $i ];
-        }
-
-        $fallbackList = [];
-        foreach ( $fallbackIndex as $i => $bool ) {
-            $fallbackList[ $i ] = $this->fallbackCollection->fallbackList[ $i ];
-        }
-
-        $pipeline = $this->pipelineFactory->newPipeline();
-
-        $chain = $pipeline;
-
-        foreach ( $middlewareList as $middleware ) {
-            $chain = $chain->startMiddleware($middleware);
-        }
-
-        if ($dispatchRouteClone) {
-            $dispatchRouteClone->dispatchActionAttributes = $dispatchActionAttributes;
-
-            $dispatchRouteClone->dispatchMiddlewareIndex = [];
-            foreach ( $middlewareList as $middleware ) {
-                $dispatchRouteClone->dispatchMiddlewareIndex[ $middleware->getKey() ] = true;
-            }
-
-            $dispatchRouteClone->dispatchFallbackIndex = [];
-            foreach ( $fallbackList as $fallback ) {
-                $dispatchRouteClone->dispatchFallbackIndex[ $fallback->getKey() ] = true;
-            }
-
-            $chain->action($dispatchRouteClone->action);
-
-            $this->dispatchRoute = $dispatchRouteClone;
-
-        } else {
-            $throwable = new NotFoundException(
-                'Route not found: '
-                . "`{$contractRequestUri}`"
-                . " / `{$dispatchHttpMethod}`"
-            );
-
-            $chain->throwable($throwable);
-        }
-
-        foreach ( $middlewareList as $devnull ) {
-            $chain = $chain->endMiddleware();
-        }
-
-        foreach ( $fallbackList as $fallback ) {
-            $chain->fallback($fallback);
-        }
-
-        try {
-            $result = $this->pipelineProcessManager->run($pipeline, $input, $context);
-        }
-        catch ( \Gzhegow\Pipeline\Exception\Runtime\PipelineException $throwable ) {
-            throw new DispatchException(
-                'Unhandled exception occured during dispatch', $throwable
-            );
-        }
-
-        return $result;
-    }
-
-    public function getDispatchRoute() : Route
-    {
-        return $this->dispatchRoute;
-    }
-
-
-    /**
-     * @param Route|Route[]|string|string[] $routes
-     *
-     * @return string[]
-     */
-    public function urls($routes, array $attributes = []) : array
-    {
-        $routes = $routes ?? [];
-        $routes = is_object($routes) ? [ $routes ] : (array) $routes;
-
-        $result = [];
-
-        $_routes = [];
-        $_routeNames = [];
-        foreach ( $routes as $idx => $route ) {
-            $result[ $idx ] = null;
-
-            if (is_object($route)) {
-                $_routes[ $idx ] = $route;
-
-            } elseif (null !== ($_name = Lib::parse()->string_not_empty($route))) {
-                $_routeNames[ $idx ] = $_name;
-
-            } else {
-                throw new LogicException(
-                    [
-                        'Each of `routes` should be string as route `name` or object of class: ' . Route::class,
-                        $routes,
-                    ]
-                );
-            }
-        }
-
-        if ($_routeNames) {
-            $batch = $this->matchAllByNames($_routeNames);
-
-            foreach ( $batch as $idx => $items ) {
-                if ($items) {
-                    $_routes[ $idx ] = reset($items);
-                }
-            }
-        }
-
-        foreach ( $_routes as $idx => $route ) {
-            $attributesCurrent = $this->generateUrlAttributes($route, $attributes, $idx);
-
-            $result[ $idx ] = $this->generateUrl($route, $attributesCurrent);
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param Route|string $route
-     */
-    public function url($route, array $attributes = []) : string
-    {
-        [ $url ] = $this->urls([ $route ], $attributes);
-
-        return $url;
-    }
-
-    protected function generateUrl(Route $route, array $attributes = []) : string
-    {
-        $attributesCurrent = $this->generateUrlAttributes($route, $attributes);
-
-        $search = [];
-        foreach ( $attributesCurrent as $key => $attr ) {
-            $search[ '{' . $key . '}' ] = $attr;
-        }
-
-        $url = str_replace(
-            array_keys($search),
-            array_values($search),
-            $route->path
-        );
-
-        return $url;
-    }
-
-    protected function generateUrlAttributes(Route $route, array $attributes = [], $idx = null) : array
-    {
-        $result = [];
-
-        foreach ( $route->compiledActionAttributes as $key => $attr ) {
-            $attr = $attributes[ $key ][ $idx ] ?? $attributes[ $key ] ?? $attr;
-
-            if (null === $attr) {
-                throw new RuntimeException(
-                    [
-                        'Missing attributes: '
-                        . "attributes[{$key}][{$idx}], attributes[{$key}]",
-                        $attributes,
-                    ]
-                );
-            }
-
-            $result[ $key ] = $attr;
-        }
-
-        return $result;
-    }
-
-
-    /**
-     * @return int[]
-     */
-    public function registerRouteGroup(RouteGroup $routeGroup) : array
-    {
-        $report = [];
-
-        foreach ( $routeGroup->getRoutes() as $routeBlueprint ) {
-            $route = $this->compileRoute($routeBlueprint);
-
-            $id = $this->registerRoute($route);
-
-            $report[ $id ] = $route;
-        }
-
-        return $report;
-    }
-
-
-    public function registerRoute(Route $route) : int
-    {
-        $this->isRouterChanged = true;
-
-        if (! $this->config->registerAllowObjectsAndClosures) {
-            $runtimeAction = null
-                ?? $route->action->hasClosureObject()
-                ?? $route->action->hasMethodObject()
-                ?? $route->action->hasInvokableObject();
-
-            if (null !== $runtimeAction) {
-                throw new RuntimeException(
-                    [
-                        'The `action` should not be runtime object or \Closure',
-                        $runtimeAction,
-                        $route,
-                    ]
-                );
-            }
-        }
-
-        $id = $this->routeCollection->registerRoute($route);
-
-        $path = $route->path;
-
-        $slice = $path;
-        $slice = trim($slice, '/');
-        $slice = explode('/', $slice);
-        while ( $slice ) {
-            $routeNodePrevious = $routeNodePrevious ?? $this->routerNodeRoot;
-
-            $part = array_shift($slice);
-            $partRegex = null;
-
-            $isPattern = (false !== strpos($part, Router::PATTERN_ENCLOSURE[ 0 ]));
-            $isLast = ([] === $slice);
-
-            if ($isPattern) {
-                $partRegex = $this->compilePathRegex($part);
-            }
-
-            if ($isLast) {
-                if ($isPattern) {
-                    $routeNodePrevious->routeIndexByRegex[ $partRegex ][ $route->id ] = true;
-
-                } else {
-                    $routeNodePrevious->routeIndexByPart[ $part ][ $route->id ] = true;
-                }
-
-                foreach ( $route->httpMethodIndex as $httpMethod => $bool ) {
-                    $routeNodePrevious->routeIndexByMethod[ $httpMethod ][ $route->id ] = true;
-                }
-
-            } else {
-                if ($isPattern) {
-                    $routeNode = $routeNodePrevious->childrenByRegex[ $partRegex ] ?? null;
-
-                    if (null === $routeNode) {
-                        $routeNode = $this->routerFactory->newRouterNode();
-                        $routeNode->part = $part;
-
-                        $routeNodePrevious->childrenByRegex[ $partRegex ] = $routeNode;
-                    }
-
-                } else {
-                    $routeNode = $routeNodePrevious->childrenByPart[ $part ] ?? null;
-
-                    if (null === $routeNode) {
-                        $routeNode = $this->routerFactory->newRouterNode();
-                        $routeNode->part = $part;
-
-                        $routeNodePrevious->childrenByPart[ $part ] = $routeNode;
-                    }
-                }
-
-                $routeNodePrevious = $routeNode;
-            }
-        }
-
-        return $id;
-    }
-
-    public function registerPattern(RouterPattern $pattern) : string
-    {
-        $this->isRouterChanged = true;
-
-        if (isset($this->patternDict[ $pattern->pattern ])) {
-            throw new RuntimeException(
-                'The `pattern` is already exists: ' . $pattern->pattern
-            );
-        }
-
-        $id = $this->patternCollection->registerPattern($pattern);
-
-        return $id;
-    }
-
-    public function registerMiddleware(GenericHandlerMiddleware $middleware) : int
-    {
-        $this->isRouterChanged = true;
-
-        if (! $this->config->registerAllowObjectsAndClosures) {
-            if (false
-                || $middleware->isClosure()
-                || $middleware->hasMethodObject()
-                || $middleware->hasInvokableObject()
-            ) {
-                throw new RuntimeException(
-                    [
-                        'This `middleware` should not be runtime object or \Closure',
-                        $middleware,
-                    ]
-                );
-            }
-        }
-
-        $id = $this->middlewareCollection->registerMiddleware($middleware);
-
-        return $id;
-    }
-
     public function registerFallback(GenericHandlerFallback $fallback) : int
     {
         $this->isRouterChanged = true;
@@ -1182,6 +623,132 @@ class RouterFacade implements RouterInterface
         $id = $this->fallbackCollection->registerFallback($fallback);
 
         return $id;
+    }
+
+
+    public function commit() : RouterInterface
+    {
+        $this->registerRouteGroup($this->rootRouterGroup);
+
+        $this->rootRouterGroup = $this->routerFactory->newRouteGroup();
+
+        return $this;
+    }
+
+
+    /**
+     * @return mixed
+     * @throws DispatchException
+     */
+    public function dispatch(
+        RouterDispatcherContract $contract,
+        $input = null,
+        &$context = null,
+        array $args = []
+    )
+    {
+        return $this->routerDispatcher->dispatch(
+            $contract,
+            $input, $context, $args
+        );
+    }
+
+    public function getDispatchContract() : RouterDispatcherContract
+    {
+        return $this->routerDispatcher->getDispatchContract();
+    }
+
+    public function getDispatchRequestMethod() : string
+    {
+        return $this->routerDispatcher->getDispatchRequestMethod();
+    }
+
+    public function getDispatchRequestUri() : string
+    {
+        return $this->routerDispatcher->getDispatchRequestUri();
+    }
+
+    public function getDispatchRoute() : Route
+    {
+        return $this->routerDispatcher->getDispatchRoute();
+    }
+
+    public function getDispatchActionAttributes() : array
+    {
+        return $this->routerDispatcher->getDispatchActionAttributes();
+    }
+
+
+    /**
+     * @param int[] $ids
+     *
+     * @return Route[]
+     */
+    public function matchAllByIds($ids) : array
+    {
+        return $this->routerMatcher->matchAllByIds($ids);
+    }
+
+    public function matchFirstByIds($ids) : ?Route
+    {
+        return $this->routerMatcher->matchFirstByIds($ids);
+    }
+
+    /**
+     * @param string[] $names
+     *
+     * @return Route[]|Route[][]
+     */
+    public function matchAllByNames($names, ?bool $unique = null) : array
+    {
+        return $this->routerMatcher->matchAllByNames($names, $unique);
+    }
+
+    public function matchFirstByNames($names) : ?Route
+    {
+        return $this->routerMatcher->matchFirstByNames($names);
+    }
+
+    /**
+     * @param string[] $tags
+     *
+     * @return Route[]|Route[][]
+     */
+    public function matchAllByTags($tags, ?bool $unique = null) : array
+    {
+        return $this->routerMatcher->matchAllByTags($tags, $unique);
+    }
+
+    public function matchFirstByTags($tags) : ?Route
+    {
+        return $this->routerMatcher->matchFirstByTags($tags);
+    }
+
+    /**
+     * @return Route[]
+     */
+    public function matchByContract(RouterMatcherContract $contract) : array
+    {
+        return $this->routerMatcher->matchByContract($contract);
+    }
+
+
+    /**
+     * @param Route|Route[]|string|string[] $routes
+     *
+     * @return string[]
+     */
+    public function urls($routes, array $attributes = []) : array
+    {
+        return $this->routerUrlGenerator->urls($routes, $attributes);
+    }
+
+    /**
+     * @param Route|string $route
+     */
+    public function url($route, array $attributes = []) : string
+    {
+        return $this->routerUrlGenerator->url($route, $attributes);
     }
 
 

@@ -1,13 +1,12 @@
 <?php
 
-namespace Gzhegow\Router\Core\Contract;
+namespace Gzhegow\Router\Core\Matcher;
 
 use Gzhegow\Lib\Lib;
-use Gzhegow\Lib\Modules\Php\Result\Ret;
 use Gzhegow\Lib\Modules\Php\Result\Result;
 
 
-class RouterMatchContract
+class RouterMatcherContract
 {
     /**
      * @var array<int, bool>
@@ -38,8 +37,6 @@ class RouterMatchContract
 
 
     /**
-     * @param Ret $ret
-     *
      * @return static|bool|null
      */
     public static function from($from, $ret = null)
@@ -58,8 +55,6 @@ class RouterMatchContract
     }
 
     /**
-     * @param Ret $ret
-     *
      * @return static|bool|null
      */
     public static function fromStatic($from, $ret = null)
@@ -76,8 +71,6 @@ class RouterMatchContract
     }
 
     /**
-     * @param Ret $ret
-     *
      * @return static|bool|null
      */
     public static function fromArray($array, $ret = null)
@@ -121,5 +114,47 @@ class RouterMatchContract
         $instance->httpMethodIndex = Lib::arr()->index_string([], ...$methods);
 
         return Result::ok($ret, $instance);
+    }
+
+
+    /**
+     * @return array<int, bool>
+     */
+    public function getIdIndex() : array
+    {
+        return $this->idIndex;
+    }
+
+    /**
+     * @return array<string, bool>
+     */
+    public function getNameIndex() : array
+    {
+        return $this->nameIndex;
+    }
+
+    /**
+     * @return array<string, bool>
+     */
+    public function getTagIndex() : array
+    {
+        return $this->tagIndex;
+    }
+
+
+    /**
+     * @return array<string, bool>
+     */
+    public function getPathIndex() : array
+    {
+        return $this->pathIndex;
+    }
+
+    /**
+     * @return array<string, bool>
+     */
+    public function getHttpMethodIndex() : array
+    {
+        return $this->httpMethodIndex;
     }
 }

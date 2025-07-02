@@ -4,34 +4,67 @@ namespace Gzhegow\Router\Core\Collection;
 
 use Gzhegow\Router\Core\Route\Struct\Tag;
 use Gzhegow\Router\Core\Route\Struct\Path;
+use Gzhegow\Router\Exception\RuntimeException;
 use Gzhegow\Router\Core\Handler\Middleware\GenericHandlerMiddleware;
 
 
+/**
+ * @property GenericHandlerMiddleware[]      $middlewareList
+ *
+ * @property array<string, array<int, bool>> $middlewareIndexByPath
+ * @property array<string, array<int, bool>> $middlewareIndexByTag
+ *
+ * @property array<string, int>              $middlewareMapKeyToId
+ */
 class RouterMiddlewareCollection implements \Serializable
 {
     /**
      * @var int
      */
-    protected $id = 0;
+    protected $middlewareLastId = 0;
 
     /**
      * @var GenericHandlerMiddleware[]
      */
-    public $middlewareList = [];
+    protected $middlewareList = [];
 
     /**
      * @var array<string, array<int, bool>>
      */
-    public $middlewareIndexByPath = [];
+    protected $middlewareIndexByPath = [];
     /**
      * @var array<string, array<int, bool>>
      */
-    public $middlewareIndexByTag = [];
+    protected $middlewareIndexByTag = [];
 
     /**
      * @var array<string, int>
      */
-    public $middlewareMapKeyToId;
+    protected $middlewareMapKeyToId;
+
+
+    public function __get($name)
+    {
+        switch ( $name ):
+            case 'middlewareList':
+                return $this->middlewareList;
+
+            case 'middlewareIndexByPath':
+                return $this->middlewareIndexByPath;
+
+            case 'middlewareIndexByTag':
+                return $this->middlewareIndexByTag;
+
+            case 'middlewareMapKeyToId':
+                return $this->middlewareMapKeyToId;
+
+            default:
+                throw new RuntimeException(
+                    [ 'The property is missing: ' . $name ]
+                );
+
+        endswitch;
+    }
 
 
     public function __serialize() : array
@@ -63,9 +96,34 @@ class RouterMiddlewareCollection implements \Serializable
     }
 
 
+    /**
+     * @return GenericHandlerMiddleware[]
+     */
+    public function getMiddlewareList() : array
+    {
+        return $this->middlewareList;
+    }
+
     public function getMiddleware(int $id) : GenericHandlerMiddleware
     {
         return $this->middlewareList[ $id ];
+    }
+
+    public function registerMiddleware(GenericHandlerMiddleware $middleware) : int
+    {
+        $key = $middleware->getKey();
+
+        $id = $this->middlewareMapKeyToId[ $key ] ?? null;
+
+        if (null === $id) {
+            $id = ++$this->middlewareLastId;
+
+            $this->middlewareList[ $id ] = $middleware;
+
+            $this->middlewareMapKeyToId[ $key ] = $id;
+        }
+
+        return $id;
     }
 
 
@@ -83,24 +141,6 @@ class RouterMiddlewareCollection implements \Serializable
         $id = $this->registerMiddleware($middleware);
 
         $this->middlewareIndexByTag[ $tag->getValue() ][ $id ] = true;
-
-        return $id;
-    }
-
-
-    public function registerMiddleware(GenericHandlerMiddleware $middleware) : int
-    {
-        $key = $middleware->getKey();
-
-        $id = $this->middlewareMapKeyToId[ $key ] ?? null;
-
-        if (null === $id) {
-            $id = ++$this->id;
-
-            $this->middlewareList[ $id ] = $middleware;
-
-            $this->middlewareMapKeyToId[ $key ] = $id;
-        }
 
         return $id;
     }

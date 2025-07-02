@@ -27,7 +27,9 @@ class RouterCache implements RouterCacheInterface
     protected $config;
 
 
-    public function __construct(RouterCacheConfig $config)
+    public function __construct(
+        RouterCacheConfig $config
+    )
     {
         $this->config = $config;
         $this->config->validate();

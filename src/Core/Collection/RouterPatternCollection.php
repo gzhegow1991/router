@@ -3,14 +3,33 @@
 namespace Gzhegow\Router\Core\Collection;
 
 use Gzhegow\Router\Core\Pattern\RouterPattern;
+use Gzhegow\Router\Exception\RuntimeException;
 
 
+/**
+ * @property RouterPattern[] $patternDict
+ */
 class RouterPatternCollection implements \Serializable
 {
     /**
      * @var RouterPattern[]
      */
-    public $patternDict = [];
+    protected $patternDict = [];
+
+
+    public function __get($name)
+    {
+        switch ( $name ):
+            case 'patternDict':
+                return $this->patternDict;
+
+            default:
+                throw new RuntimeException(
+                    [ 'The property is missing: ' . $name ]
+                );
+
+        endswitch;
+    }
 
 
     public function __serialize() : array
@@ -42,17 +61,28 @@ class RouterPatternCollection implements \Serializable
     }
 
 
+    /**
+     * @return RouterPattern[]
+     */
+    public function getPatternDict() : array
+    {
+        return $this->patternDict;
+    }
+
     public function getPattern(string $pattern) : RouterPattern
     {
         return $this->patternDict[ $pattern ];
     }
 
-
     public function registerPattern(RouterPattern $pattern) : string
     {
-        if (! isset($this->patternDict[ $pattern->pattern ])) {
-            $this->patternDict[ $pattern->pattern ] = $pattern;
+        if (isset($this->patternDict[ $pattern->pattern ])) {
+            throw new RuntimeException(
+                [ 'The `pattern` is already exists: ' . $pattern->pattern ]
+            );
         }
+
+        $this->patternDict[ $pattern->pattern ] = $pattern;
 
         return $pattern->pattern;
     }

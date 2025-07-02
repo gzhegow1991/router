@@ -2,10 +2,10 @@
 
 namespace Gzhegow\Router\Core\Handler\Fallback;
 
-use Gzhegow\Pipeline\Core\Handler\Fallback\GenericHandlerFallback as GenericHandlerFallbackBase;
+use Gzhegow\Router\Core\Handler\GenericHandler;
 
 
-class GenericHandlerFallback extends GenericHandlerFallbackBase
+class GenericHandlerFallback extends GenericHandler
 {
 
 }

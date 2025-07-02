@@ -3,6 +3,7 @@
 namespace Gzhegow\Router\Core\Route;
 
 use Gzhegow\Router\Core\Handler\Action\GenericHandlerAction;
+use Gzhegow\Router\Core\Dispatcher\RouterDispatcherContract;
 use Gzhegow\Router\Core\Handler\Fallback\GenericHandlerFallback;
 use Gzhegow\Router\Core\Handler\Middleware\GenericHandlerMiddleware;
 
@@ -47,6 +48,19 @@ class Route implements \Serializable
     public $tagIndex = [];
 
     /**
+     * @var RouterDispatcherContract
+     */
+    public $dispatchContract;
+    /**
+     * @var string
+     */
+    public $dispatchRequestMethod;
+    /**
+     * @var string
+     */
+    public $dispatchRequestUri;
+
+    /**
      * @var array<string, mixed>
      */
     public $dispatchActionAttributes = [];
@@ -69,6 +83,14 @@ class Route implements \Serializable
     public function __serialize() : array
     {
         $vars = get_object_vars($this);
+
+        unset($vars[ 'dispatchContract' ]);
+        unset($vars[ 'dispatchRequestMethod' ]);
+        unset($vars[ 'dispatchRequestUri' ]);
+
+        unset($vars[ 'dispatchActionAttributes' ]);
+        unset($vars[ 'dispatchMiddlewareIndex' ]);
+        unset($vars[ 'dispatchFallbackIndex' ]);
 
         return array_filter($vars);
     }
