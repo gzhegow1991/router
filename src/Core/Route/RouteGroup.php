@@ -71,6 +71,19 @@ class RouteGroup
     }
 
 
+    public function hasRoutes(?array &$routes = null) : bool
+    {
+        $routes = [];
+
+        if ([] !== $this->routeList) {
+            $routes = $this->routeList;
+
+            return true;
+        }
+
+        return false;
+    }
+
     /**
      * @return RouteBlueprint[]
      */

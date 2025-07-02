@@ -635,9 +635,11 @@ class RouterFacade implements RouterInterface
 
     public function commit() : RouterInterface
     {
-        $this->registerRouteGroup($this->rootRouterGroup);
+        if ($this->rootRouterGroup->hasRoutes()) {
+            $this->registerRouteGroup($this->rootRouterGroup);
 
-        $this->rootRouterGroup = $this->routerFactory->newRouteGroup();
+            $this->rootRouterGroup = $this->routerFactory->newRouteGroup();
+        }
 
         return $this;
     }
