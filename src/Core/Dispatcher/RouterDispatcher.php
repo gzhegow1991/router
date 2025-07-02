@@ -224,6 +224,10 @@ class RouterDispatcher implements RouterDispatcherInterface
                         continue 2;
                     }
                 }
+
+                $routeNodeCurrent = null;
+
+                break;
             }
         }
 
