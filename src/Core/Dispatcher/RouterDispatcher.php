@@ -61,6 +61,10 @@ class RouterDispatcher implements RouterDispatcherInterface
     /**
      * @var string
      */
+    protected $dispatchRequestPath;
+    /**
+     * @var string
+     */
     protected $dispatchRequestUri;
 
     /**
@@ -135,8 +139,11 @@ class RouterDispatcher implements RouterDispatcherInterface
         $middlewareCollection = $this->middlewareCollection;
         $fallbackCollection = $this->fallbackCollection;
 
-        $contractRequestMethod = $dispatchContract->requestMethod->getValue();
-        $contractRequestUri = $dispatchContract->requestUri->getValue();
+        $contractRequestMethod = $dispatchContract->getRequestMethod();
+
+        $contractRequestHttpPath = $dispatchContract->getRequestHttpPath();
+        $contractRequestUri = $dispatchContract->getRequestUri();
+        $contractRequestPath = $dispatchContract->getRequestPath();
 
         $dispatchRequestMethod = $contractRequestMethod;
         if ($routerConfig->dispatchForceMethod) {
@@ -144,17 +151,34 @@ class RouterDispatcher implements RouterDispatcherInterface
         }
 
         $dispatchRequestUri = $contractRequestUri;
+        $dispatchRequestPath = $contractRequestPath;
         if ($routerConfig->dispatchTrailingSlashMode) {
-            $dispatchRequestUri = rtrim($dispatchRequestUri, '/');
+            $dispatchRequestPath = rtrim($dispatchRequestPath, '/');
 
             if ($routerConfig->dispatchTrailingSlashMode === Router::TRAILING_SLASH_ALWAYS) {
-                $dispatchRequestUri = $dispatchRequestUri . '/';
+                $dispatchRequestPath = $dispatchRequestPath . '/';
+            }
+
+            if ('' === $dispatchRequestPath) {
+                $dispatchRequestPath = '/';
+            }
+        }
+
+        if ($dispatchRequestPath !== $contractRequestPath) {
+            $dispatchRequestUri = $dispatchRequestPath;
+
+            if ($contractRequestHttpPath->hasQueryString($queryString)) {
+                $dispatchRequestUri .= "?{$queryString}";
+            }
+            if ($contractRequestHttpPath->hasFragment($fragment)) {
+                $dispatchRequestUri .= "#{$fragment}";
             }
         }
 
         $this->dispatchContract = $dispatchContract;
         $this->dispatchRequestMethod = $dispatchRequestMethod;
         $this->dispatchRequestUri = $dispatchRequestUri;
+        $this->dispatchRequestPath = $dispatchRequestPath;
 
         $this->dispatchRoute = null;
         $this->dispatchActionAttributes = [];
@@ -167,11 +191,11 @@ class RouterDispatcher implements RouterDispatcherInterface
 
         $routeNodeCurrent = $this->rootRouterNode;
 
-        $routePathCurrent = [ '' ];
+        $routeSubpathCurrent = [ '' ];
         $routeSubpathList = [ '/' ];
 
-        $slice = $dispatchRequestUri;
-        $slice = trim($slice, '/');
+        $slice = $dispatchRequestPath;
+        $slice = ltrim($slice, '/');
         $slice = explode('/', $slice);
         while ( [] !== $slice ) {
             $requestUriPart = array_shift($slice);
@@ -199,15 +223,15 @@ class RouterDispatcher implements RouterDispatcherInterface
                     }
                 }
 
-                $routePathCurrent[] = $requestUriPart;
-                $routeSubpathList[] = implode('/', $routePathCurrent);
+                $routeSubpathCurrent[] = $requestUriPart;
+                $routeSubpathList[] = implode('/', $routeSubpathCurrent);
 
             } else {
                 if (isset($routeNodeCurrent->childrenByPart[ $requestUriPart ])) {
                     $routeNodeCurrent = $routeNodeCurrent->childrenByPart[ $requestUriPart ];
 
-                    $routePathCurrent[] = $routeNodeCurrent->part;
-                    $routeSubpathList[] = implode('/', $routePathCurrent);
+                    $routeSubpathCurrent[] = $routeNodeCurrent->part;
+                    $routeSubpathList[] = implode('/', $routeSubpathCurrent);
 
                     continue;
                 }
@@ -222,8 +246,8 @@ class RouterDispatcher implements RouterDispatcherInterface
                             }
                         }
 
-                        $routePathCurrent[] = $routeNodeCurrent->part;
-                        $routeSubpathList[] = implode('/', $routePathCurrent);
+                        $routeSubpathCurrent[] = $routeNodeCurrent->part;
+                        $routeSubpathList[] = implode('/', $routeSubpathCurrent);
 
                         continue 2;
                     }
@@ -236,20 +260,22 @@ class RouterDispatcher implements RouterDispatcherInterface
         }
 
         $middlewareIndexes = [
+            'id'   => [],
             'path' => [],
-            'tags' => [],
+            'tag'  => [],
         ];
         $fallbackIndexes = [
+            'id'   => [],
             'path' => [],
-            'tags' => [],
+            'tag'  => [],
         ];
         foreach ( $routeSubpathList as $routeSubpath ) {
-            if (isset($middlewareCollection->middlewareIndexByPath[ $routeSubpath ])) {
-                $middlewareIndexes[ 'path' ][ $routeSubpath ] = $middlewareCollection->middlewareIndexByPath[ $routeSubpath ];
+            if (isset($middlewareCollection->middlewareIndexByRoutePath[ $routeSubpath ])) {
+                $middlewareIndexes[ 'path' ][ $routeSubpath ] = $middlewareCollection->middlewareIndexByRoutePath[ $routeSubpath ];
             }
 
-            if (isset($fallbackCollection->fallbackIndexByPath[ $routeSubpath ])) {
-                $fallbackIndexes[ 'path' ][ $routeSubpath ] = $fallbackCollection->fallbackIndexByPath[ $routeSubpath ];
+            if (isset($fallbackCollection->fallbackIndexByRoutePath[ $routeSubpath ])) {
+                $fallbackIndexes[ 'path' ][ $routeSubpath ] = $fallbackCollection->fallbackIndexByRoutePath[ $routeSubpath ];
             }
         }
 
@@ -272,51 +298,70 @@ class RouterDispatcher implements RouterDispatcherInterface
 
         $dispatchRouteClone = null;
         if (null !== $dispatchRouteId) {
-            $dispatchRouteClone = clone $routeCollection->routeList[ $dispatchRouteId ];
+            $dispatchRoute = $routeCollection->routeList[ $dispatchRouteId ];
+            $dispatchRouteClone = clone $dispatchRoute;
         }
 
         if (null !== $dispatchRouteClone) {
+            $routeId = $dispatchRouteClone->id;
             $routePath = $dispatchRouteClone->path;
 
-            if (isset($middlewareCollection->middlewareIndexByPath[ $routePath ])) {
-                $middlewareIndexes[ 'path' ][ $routePath ] = $middlewareCollection->middlewareIndexByPath[ $routePath ];
+
+            if (isset($middlewareCollection->middlewareIndexByRouteId[ $routeId ])) {
+                $middlewareIndexes[ 'id' ][ $routeId ] = $middlewareCollection->middlewareIndexByRouteId[ $routeId ];
             }
 
-            if (isset($fallbackCollection->fallbackIndexByPath[ $routePath ])) {
-                $fallbackIndexes[ 'path' ][ $routePath ] = $fallbackCollection->fallbackIndexByPath[ $routePath ];
+            if (isset($fallbackCollection->fallbackIndexByRouteId[ $routeId ])) {
+                $fallbackIndexes[ 'id' ][ $routeId ] = $fallbackCollection->fallbackIndexByRouteId[ $routeId ];
             }
+
+
+            if (isset($middlewareCollection->middlewareIndexByRoutePath[ $routePath ])) {
+                $middlewareIndexes[ 'path' ][ $routePath ] = $middlewareCollection->middlewareIndexByRoutePath[ $routePath ];
+            }
+
+            if (isset($fallbackCollection->fallbackIndexByRoutePath[ $routePath ])) {
+                $fallbackIndexes[ 'path' ][ $routePath ] = $fallbackCollection->fallbackIndexByRoutePath[ $routePath ];
+            }
+
 
             foreach ( $dispatchRouteClone->tagIndex as $tag => $bool ) {
-                if (isset($middlewareCollection->middlewareIndexByTag[ $tag ])) {
-                    $middlewareIndexes[ 'tags' ][ $tag ] = $middlewareCollection->middlewareIndexByTag[ $tag ];
+                if (isset($middlewareCollection->middlewareIndexByRouteTag[ $tag ])) {
+                    $middlewareIndexes[ 'tag' ][ $tag ] = $middlewareCollection->middlewareIndexByRouteTag[ $tag ];
                 }
 
-                if (isset($fallbackCollection->fallbackIndexByTag[ $tag ])) {
-                    $fallbackIndexes[ 'tags' ][ $tag ] = $fallbackCollection->fallbackIndexByTag[ $tag ];
+                if (isset($fallbackCollection->fallbackIndexByRouteTag[ $tag ])) {
+                    $fallbackIndexes[ 'tag' ][ $tag ] = $fallbackCollection->fallbackIndexByRouteTag[ $tag ];
                 }
             }
         }
 
-        $fnSort = static function ($a, $b) {
+        $fnSortStrlenDesc = static function ($a, $b) {
             return strlen($b) <=> strlen($a);
         };
 
-        uksort($middlewareIndexes[ 'path' ], $fnSort);
-        uksort($fallbackIndexes[ 'path' ], $fnSort);
+        uksort($middlewareIndexes[ 'path' ], $fnSortStrlenDesc);
+        uksort($fallbackIndexes[ 'path' ], $fnSortStrlenDesc);
 
         $middlewareIndex = [];
+        foreach ( $middlewareIndexes[ 'id' ] as $index ) {
+            $middlewareIndex += $index;
+        }
         foreach ( $middlewareIndexes[ 'path' ] as $index ) {
             $middlewareIndex += $index;
         }
-        foreach ( $middlewareIndexes[ 'tags' ] as $index ) {
+        foreach ( $middlewareIndexes[ 'tag' ] as $index ) {
             $middlewareIndex += $index;
         }
 
         $fallbackIndex = [];
+        foreach ( $fallbackIndexes[ 'id' ] as $index ) {
+            $fallbackIndex += $index;
+        }
         foreach ( $fallbackIndexes[ 'path' ] as $index ) {
             $fallbackIndex += $index;
         }
-        foreach ( $fallbackIndexes[ 'tags' ] as $index ) {
+        foreach ( $fallbackIndexes[ 'tag' ] as $index ) {
             $fallbackIndex += $index;
         }
 
@@ -328,12 +373,12 @@ class RouterDispatcher implements RouterDispatcherInterface
             $dispatchFallbackList[ $i ] = $fallbackCollection->fallbackList[ $i ];
         }
 
-        $pipelineFnCallUserFuncArray = $this->fnPipelineCallGenericHandler();
+        $fnPipelineCallGenericHandler = $this->fnPipelineCallGenericHandler();
 
         $pipeline = $theFunc->newPipe();
         $pipeline
             ->setContext($pipeContext)
-            ->setFnCallUserFuncArray($pipelineFnCallUserFuncArray)
+            ->setFnCallUserFuncArray($fnPipelineCallGenericHandler)
         ;
 
         $pipelineChild = $pipeline;
@@ -348,6 +393,7 @@ class RouterDispatcher implements RouterDispatcherInterface
             $dispatchRouteClone->dispatchContract = $dispatchContract;
             $dispatchRouteClone->dispatchRequestMethod = $dispatchRequestMethod;
             $dispatchRouteClone->dispatchRequestUri = $dispatchRequestUri;
+            $dispatchRouteClone->dispatchRequestPath = $dispatchRequestPath;
 
             $dispatchRouteClone->dispatchActionAttributes = $dispatchActionAttributes;
 
@@ -394,7 +440,7 @@ class RouterDispatcher implements RouterDispatcherInterface
         }
         catch ( \Throwable $e ) {
             throw new DispatchException(
-                [ 'Unhandled exception occured during dispatch', $e ], $e
+                [ 'Unhandled exception during dispatch', $e ], $e
             );
         }
 
@@ -415,6 +461,11 @@ class RouterDispatcher implements RouterDispatcherInterface
     public function getDispatchRequestUri() : string
     {
         return $this->dispatchRequestUri;
+    }
+
+    public function getDispatchRequestPath() : string
+    {
+        return $this->dispatchRequestPath;
     }
 
 

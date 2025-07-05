@@ -2,7 +2,7 @@
 
 namespace Gzhegow\Router\Demo\Handler\Middleware;
 
-use Gzhegow\Router\Core\Handler\Middleware\CorsMiddleware;
+use Gzhegow\Router\Core\Http\Middleware\CorsMiddleware;
 
 
 class DemoCorsMiddleware extends CorsMiddleware
@@ -15,7 +15,7 @@ class DemoCorsMiddleware extends CorsMiddleware
     {
         $method = __METHOD__;
 
-        echo "@before :: {$method}" . PHP_EOL;
+        echo "@before :: {$method}" . "\n";
 
         $result = parent::__invoke(
             $fnNext, $input,
@@ -23,7 +23,7 @@ class DemoCorsMiddleware extends CorsMiddleware
             $args
         );
 
-        echo "@after :: {$method}" . PHP_EOL;
+        echo "@after :: {$method}" . "\n";
 
         return $result;
     }

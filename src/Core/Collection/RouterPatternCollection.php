@@ -69,10 +69,25 @@ class RouterPatternCollection implements \Serializable
         return $this->patternDict;
     }
 
+
+    public function hasPattern(string $pattern, ?RouterPattern &$refPattern = null) : bool
+    {
+        $refPattern = null;
+
+        if (isset($this->patternDict[ $pattern ])) {
+            $refPattern = $this->patternDict[ $pattern ];
+
+            return true;
+        }
+
+        return false;
+    }
+
     public function getPattern(string $pattern) : RouterPattern
     {
         return $this->patternDict[ $pattern ];
     }
+
 
     public function registerPattern(RouterPattern $pattern) : string
     {

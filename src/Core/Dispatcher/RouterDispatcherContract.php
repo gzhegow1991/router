@@ -2,9 +2,8 @@
 
 namespace Gzhegow\Router\Core\Dispatcher;
 
-use Gzhegow\Lib\Modules\Php\Result\Ret;
 use Gzhegow\Lib\Modules\Php\Result\Result;
-use Gzhegow\Router\Core\Route\Struct\Path;
+use Gzhegow\Router\Core\Route\Struct\HttpPath;
 use Gzhegow\Router\Core\Route\Struct\HttpMethod;
 
 
@@ -13,11 +12,11 @@ class RouterDispatcherContract
     /**
      * @var HttpMethod
      */
-    public $requestMethod;
+    public $requestHttpMethod;
     /**
-     * @var Path
+     * @var HttpPath
      */
-    public $requestUri;
+    public $requestHttpPath;
 
 
     private function __construct()
@@ -26,8 +25,6 @@ class RouterDispatcherContract
 
 
     /**
-     * @param Ret $ret
-     *
      * @return static|bool|null
      */
     public static function from($from, $ret = null)
@@ -46,8 +43,6 @@ class RouterDispatcherContract
     }
 
     /**
-     * @param Ret $ret
-     *
      * @return static|bool|null
      */
     public static function fromStatic($from, $ret = null)
@@ -64,8 +59,6 @@ class RouterDispatcherContract
     }
 
     /**
-     * @param Ret $ret
-     *
      * @return static|bool|null
      */
     public static function fromArray($from, $ret = null)
@@ -79,28 +72,43 @@ class RouterDispatcherContract
         }
 
         $requestMethod = $from[ 'requestMethod' ] ?? $from[ 0 ];
-        $requestUri = $from[ 'requestUri' ] ?? $from[ 1 ];
-
-        $requestUri = explode('?', $requestUri, 2)[ 0 ];
+        $requestPath = $from[ 'requestPath' ] ?? $from[ 1 ];
 
         $requestMethodObject = HttpMethod::from($requestMethod);
-        $requestUriObject = Path::from($requestUri);
+        $requestPathObject = HttpPath::from($requestPath);
 
         $instance = new static();
-        $instance->requestMethod = $requestMethodObject;
-        $instance->requestUri = $requestUriObject;
+        $instance->requestHttpMethod = $requestMethodObject;
+        $instance->requestHttpPath = $requestPathObject;
 
         return Result::ok($ret, $instance);
     }
 
 
-    public function getRequestMethod() : HttpMethod
+    public function getRequestHttpMethod() : HttpMethod
     {
-        return $this->requestMethod;
+        return $this->requestHttpMethod;
     }
 
-    public function getRequestUri() : Path
+    public function getRequestHttpPath() : HttpPath
     {
-        return $this->requestUri;
+        return $this->requestHttpPath;
+    }
+
+
+    public function getRequestMethod() : string
+    {
+        return $this->requestHttpMethod->getValue();
+    }
+
+
+    public function getRequestUri() : string
+    {
+        return $this->requestHttpPath->getValue();
+    }
+
+    public function getRequestPath() : string
+    {
+        return $this->requestHttpPath->getPath();
     }
 }

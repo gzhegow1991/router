@@ -137,8 +137,14 @@ class RouterCache implements RouterCacheInterface
             return null;
         }
 
+        $cacheKey = preg_replace(
+            '/[' . preg_quote('{}()/\@:', '/') . ']/',
+            '.',
+            __CLASS__
+        );
+
         try {
-            $cacheItem = $this->config->cacheAdapter->getItem(__CLASS__);
+            $cacheItem = $this->config->cacheAdapter->getItem($cacheKey);
         }
         catch ( \Psr\Cache\InvalidArgumentException $e ) {
             throw new RuntimeException($e);

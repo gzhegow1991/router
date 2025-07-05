@@ -1,6 +1,6 @@
 <?php
 
-namespace Gzhegow\Router\Core\Handler\Action;
+namespace Gzhegow\Router\Core\Http\Action;
 
 
 class CorsAction

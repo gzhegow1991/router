@@ -2,10 +2,11 @@
 
 namespace Gzhegow\Router\Core\Route;
 
-use Gzhegow\Router\Core\Route\Struct\Tag;
-use Gzhegow\Router\Core\Route\Struct\Name;
-use Gzhegow\Router\Core\Route\Struct\Path;
-use Gzhegow\Router\Core\Route\Struct\HttpMethod;
+use Gzhegow\Router\Core\Route\Struct\RouteTag;
+use Gzhegow\Router\Core\Route\Struct\RouteName;
+use Gzhegow\Router\Exception\LogicException;
+use Gzhegow\Router\Core\Route\Struct\RoutePath;
+use Gzhegow\Router\Core\Route\Struct\RouteMethod;
 use Gzhegow\Router\Core\Handler\Action\GenericHandlerAction;
 use Gzhegow\Router\Core\Handler\Fallback\GenericHandlerFallback;
 use Gzhegow\Router\Core\Handler\Middleware\GenericHandlerMiddleware;
@@ -14,7 +15,7 @@ use Gzhegow\Router\Core\Handler\Middleware\GenericHandlerMiddleware;
 class RouteBlueprint
 {
     /**
-     * @var Path
+     * @var RoutePath
      */
     public $path;
     /**
@@ -22,14 +23,14 @@ class RouteBlueprint
      */
     public $action;
     /**
-     * @var Name
+     * @var RouteName
      */
     public $name;
 
     /**
      * @var array<string, bool>
      */
-    public $httpMethodIndex = [];
+    public $methodIndex = [];
     /**
      * @var array<string, bool>
      */
@@ -54,7 +55,7 @@ class RouteBlueprint
         $this->action = null;
         $this->name = null;
 
-        $this->httpMethodIndex = [];
+        $this->methodIndex = [];
         $this->tagIndex = [];
 
         $this->middlewareDict = [];
@@ -90,11 +91,11 @@ class RouteBlueprint
     /**
      * @return static
      */
-    public function path($path)
+    public function path($routePath)
     {
-        $pathObject = Path::from($path);
+        $routePathObject = RoutePath::from($routePath);
 
-        $this->path = $pathObject;
+        $this->path = $routePathObject;
 
         return $this;
     }
@@ -104,7 +105,7 @@ class RouteBlueprint
      */
     public function name($name)
     {
-        $nameObject = Name::from($name);
+        $nameObject = RouteName::from($name);
 
         $this->name = $nameObject;
 
@@ -117,7 +118,7 @@ class RouteBlueprint
      */
     public function setHttpMethods(array $httpMethods)
     {
-        $this->httpMethodIndex = [];
+        $this->methodIndex = [];
 
         $this->httpMethods($httpMethods);
 
@@ -139,11 +140,11 @@ class RouteBlueprint
     /**
      * @return static
      */
-    public function httpMethod($httpMethod)
+    public function httpMethod($routeMethod)
     {
-        $httpMethodObject = HttpMethod::from($httpMethod);
+        $routeMethodObject = RouteMethod::from($routeMethod);
 
-        $this->httpMethodIndex[ $httpMethodObject->getValue() ] = true;
+        $this->methodIndex[ $routeMethodObject->getValue() ] = true;
 
         return $this;
     }
@@ -178,7 +179,7 @@ class RouteBlueprint
      */
     public function tag($tag)
     {
-        $_tag = Tag::from($tag);
+        $_tag = RouteTag::from($tag);
 
         $this->tagIndex[ $_tag->getValue() ] = true;
 

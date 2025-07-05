@@ -1,5 +1,6 @@
 <?php
 
+// > подключаем сторонние пакеты из composer.json
 require_once __DIR__ . '/../vendor/autoload.php';
 
 
@@ -38,18 +39,18 @@ $ffn = new class {
 
     function print(...$values) : void
     {
-        echo $this->values(' | ', ...$values) . PHP_EOL;
+        echo $this->values(' | ', ...$values) . "\n";
     }
 
 
     function print_array($value, ?int $maxLevel = null, array $options = []) : void
     {
-        echo $this->value_array($value, $maxLevel, $options) . PHP_EOL;
+        echo $this->value_array($value, $maxLevel, $options) . "\n";
     }
 
     function print_array_multiline($value, ?int $maxLevel = null, array $options = []) : void
     {
-        echo $this->value_array_multiline($value, $maxLevel, $options) . PHP_EOL;
+        echo $this->value_array_multiline($value, $maxLevel, $options) . "\n";
     }
 
 
@@ -78,28 +79,24 @@ $config->configure(
         // >>> роутер
         $config->registerAllowObjectsAndClosures = false;
         $config->compileTrailingSlashMode = \Gzhegow\Router\Router::TRAILING_SLASH_AS_IS;
+        $config->dispatchTrailingSlashMode = \Gzhegow\Router\Router::TRAILING_SLASH_AS_IS;
         $config->dispatchIgnoreMethod = false;
         $config->dispatchForceMethod = null;
-        $config->dispatchTrailingSlashMode = \Gzhegow\Router\Router::TRAILING_SLASH_AS_IS;
 
         // >>> кэш роутера
-        $config->cache->cacheMode = \Gzhegow\Router\Core\Cache\RouterCache::CACHE_MODE_STORAGE;
-        //
-        $cacheDir = $ffn->root() . '/var/cache';
+        $cacheDir = $ffn->root() . '/var/cache.test';
         $cacheNamespace = 'gzhegow.router';
+        //
         $cacheDirpath = "{$cacheDir}/{$cacheNamespace}";
         $cacheFilename = "router.cache";
+        $config->cache->cacheMode = \Gzhegow\Router\Core\Cache\RouterCache::CACHE_MODE_STORAGE;
         $config->cache->cacheDirpath = $cacheDirpath;
         $config->cache->cacheFilename = $cacheFilename;
-        //
+        // //
+        // $symfonyCacheMarshaller = new \Symfony\Component\Cache\Marshaller\DefaultMarshaller(null, true);
         // $symfonyCacheAdapter = new \Symfony\Component\Cache\Adapter\FilesystemAdapter(
-        //     $cacheNamespace, $defaultLifetime = 0, $cacheDir
-        // );
-        // $redisClient = \Symfony\Component\Cache\Adapter\RedisAdapter::createConnection('redis://localhost');
-        // $symfonyCacheAdapter = new \Symfony\Component\Cache\Adapter\RedisAdapter(
-        //     $redisClient,
-        //     $cacheNamespace = '',
-        //     $defaultLifetime = 0
+        //     $cacheNamespace, $defaultLifetime = 0, $cacheDir,
+        //     $symfonyCacheMarshaller
         // );
         // $config->cache->cacheMode = \Gzhegow\Router\Core\Cache\RouterCache::CACHE_MODE_STORAGE;
         // $config->cache->cacheAdapter = $symfonyCacheAdapter;
@@ -151,6 +148,7 @@ $router->cacheRemember(
     static function (\Gzhegow\Router\RouterInterface $router) {
         // > добавляем паттерн, который можно использовать в маршрутах
         $router->pattern('{id}', '[0-9]+');
+        $router->pattern('{lang}', '[a-z]{2}');
 
 
         // // > так можно добавлять маршруты в главную группу
@@ -168,6 +166,19 @@ $router->cacheRemember(
         $router->route('/', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'indexGet' ], 'index');
         $router->route('/', 'POST', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'indexPost' ], 'index');
 
+        // > будьте внимательны, это разные маршруты, чтобы сделать их одним и тем же (ИЛИ):
+        // - 1) уберите слеш в конце
+        // - 2) установите в конфиге параметр dispatchTrailingSlashMode на NEVER или ALWAYS
+        // - 3) если хотите, чтобы роутер запрещал/требовал ставить косую черту в конце, поставьте параметр compileTrailingSlashMode на NEVER или ALWAYS
+        $router->route('/{lang}', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'indexGet' ], 'index', 'i18n');
+        $router->route('/{lang}', 'POST', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'indexPost' ], 'index', 'i18n');
+
+        // > будьте внимательны, это разные маршруты, чтобы сделать их одним и тем же (ИЛИ):
+        // - 1) уберите слеш в конце
+        // - 2) установите в конфиге параметр dispatchTrailingSlashMode на NEVER или ALWAYS
+        // - 3) если хотите, чтобы роутер запрещал/требовал ставить косую черту в конце, поставьте параметр compileTrailingSlashMode на NEVER или ALWAYS
+        $router->route('/hello-world', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'helloWorldGet' ], 'index');
+        $router->route('/hello-world/', 'POST', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'helloWorldPost' ], 'index');
 
         // // > добавляет middleware-посредник по пути (они отработают даже если маршрут не найден, но путь начинался с указанного)
         // // > будьте внимательны, посредники отрабатывают в той последовательности, в которой заданы, если задать их до группы, то и отработают они раньше
@@ -186,19 +197,16 @@ $router->cacheRemember(
         // // > можно привязывать fallback-обработчики так же по тегу, теги в свою очередь привязывать к маршрутам или группам
         // $router->fallbackOnTag('tag1', '\Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback');
         //
-        $router->middlewareOnPath('/api/v1/user', '\Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware');
-        $router->middlewareOnPath('/api/v1/user', '\Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware');
-        $router->middlewareOnPath('/api/v1/user', '\Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware');
-        //
-        $router->fallbackOnPath('/api/v1/user', '\Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback');
+        $router->middlewareOnRoutePath('/api/v1', '\Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware');
+        $router->fallbackOnRoutePath('/api/v1', '\Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback');
 
         // // > для того, чтобы зарегистрировать маршруты удобно использовать группировку
         // $group = $router->group();
 
         // // > каждый множественный метод имеет аналог в единственном числе и аналог, который перезаписывает предыдущие установки
+        // $group->setHttpMethods([]);
         // $group->httpMethods([]);
         // $group->httpMethod('');
-        // $group->setHttpMethods([]);
         //
         // $group->setMiddlewares([]);
         // $group->middlewares([]);
@@ -254,7 +262,7 @@ $router->cacheRemember(
                     //     ->tags([])
                     // ;
 
-                    // // > можно указывать теги и middleware-посредники/fallback-обработчики и для конкретного роута
+                    // // > также как и к группам, можно указывать теги и middleware-посредники/fallback-обработчики и для конкретного роута
                     // // > при этом, если такие же уже были зарегистрированы раньше, то повторно они не добавятся
                     // $route
                     //     ->middlewares([])
@@ -269,12 +277,12 @@ $router->cacheRemember(
                     $group->middleware('\Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware');
 
                     // > добавляем маршруты
-                    $group->route('/api/v1/user/{id}/main', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'mainGet' ], 'user.main');
-                    $group->route('/api/v1/user/{id}/main', 'POST', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'mainPost' ], 'user.main');
+                    $group->route('/api/v1/user/{id}/main', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'apiV1UserMainGet' ], 'user.main');
+                    $group->route('/api/v1/user/{id}/main', 'POST', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'apiV1UserMainPost' ], 'user.main');
 
-                    // > можно задавать группу в группе
-                    // > метод ->register() передаст все роуты в родительскую группу
-                    // > НЕ РЕКОМЕНДУЕТСЯ - путь к маршруту надо оставлять цельным, чтобы по нему можно было искать поиском в IDE
+                    // > МОЖНО задавать группу в группе
+                    // > НЕ РЕКОМЕНДУЕТСЯ РАЗБИВАТЬ ПУТЬ НА ЧАСТИ (КАК СДЕЛАНО НИЖЕ): путь к маршруту оставляют цельным, чтобы по нему можно было искать поиском в IDE
+                    // > метод ->register() передаст все роуты в родительскую группу, соединив большинство параметров
                     $group->group()
                         ->name('user')
                         ->path('/api/v1/user/{id}')
@@ -303,32 +311,40 @@ $router->cacheRemember(
 // $route = $router->matchFirstByTag('user');
 $fn = function () use ($ffn, $router) {
     $ffn->print('TEST 1');
-    echo PHP_EOL;
+    echo "\n";
 
 
     $ids = [ 1, 2 ];
-    $names = [ 0 => 'user.main' ];
-    $tags = [ 0 => 'user' ];
-
 
     $routes = $router->matchAllByIds($ids);
     $ffn->print_array_multiline($routes);
-    echo PHP_EOL;
+    echo "\n";
 
+
+    $names = [ 'idx1' => 'user.main' ];
+    $tags = [ 'idx1' => 'user' ];
+    $nameTagPairs = [ 'idx1' => [ 'user.main', 'user' ] ];
 
     $batch = $router->matchAllByNames($names);
     foreach ( $batch as $i => $routes ) {
-        $ffn->print($i);
+        $ffn->print('Attribute index', $i);
         $ffn->print_array_multiline($routes);
     }
-    echo PHP_EOL;
+    echo "\n";
 
     $batch = $router->matchAllByTags($tags);
     foreach ( $batch as $i => $routes ) {
-        $ffn->print($i);
+        $ffn->print('Attribute index', $i);
         $ffn->print_array_multiline($routes);
     }
-    echo PHP_EOL;
+    echo "\n";
+
+    $batch = $router->matchAllByNameTags($nameTagPairs);
+    foreach ( $batch as $i => $routes ) {
+        $ffn->print('Attribute index', $i);
+        $ffn->print_array_multiline($routes);
+    }
+    echo "\n";
 
 
     $route = $router->matchFirstByIds($ids);
@@ -338,6 +354,9 @@ $fn = function () use ($ffn, $router) {
     $ffn->print($route);
 
     $route = $router->matchFirstByTags($tags);
+    $ffn->print($route);
+
+    $route = $router->matchFirstByNameTags($nameTagPairs);
     $ffn->print($route);
 };
 $test = $ffn->test($fn);
@@ -351,26 +370,36 @@ $test->expectStdout('
 ]
 ###
 
-0
+"Attribute index" | "idx1"
 ###
 [
-  3 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
-  4 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
-  5 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }"
+  7 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  8 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  9 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }"
 ]
 ###
 
-0
+"Attribute index" | "idx1"
 ###
 [
-  3 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
-  4 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
-  5 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
-  6 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
-  7 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }"
+  7 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  8 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  9 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  10 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  11 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }"
 ]
 ###
 
+"Attribute index" | "idx1"
+###
+[
+  7 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  8 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  9 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }"
+]
+###
+
+{ object(serializable) # Gzhegow\Router\Core\Route\Route }
 { object(serializable) # Gzhegow\Router\Core\Route\Route }
 { object(serializable) # Gzhegow\Router\Core\Route\Route }
 { object(serializable) # Gzhegow\Router\Core\Route\Route }
@@ -382,24 +411,19 @@ $test->run();
 // > так можно искать маршруты с помощью нескольких фильтров (если указать массивы - они работают как логическое ИЛИ, тогда как сами фильтры работают через логическое И
 $fn = function () use ($ffn, $router) {
     $ffn->print('TEST 2');
-    echo PHP_EOL;
+    echo "\n";
 
 
     $contract = \Gzhegow\Router\Core\Matcher\RouterMatcherContract::from([
-        // 'id'          => 1,
-        // 'ids'         => [ 1 ],
-        // 'path'        => '/api/v1/user/{id}',
-        // 'pathes'      => [ '/api/v1/user/{id}' ],
-        // 'httpMethod'  => 'GET',
-        // 'httpMethods' => [ 'GET' ],
-        // 'name'        => 'user.main',
-        // 'names'       => [ 'user.main' ],
-        // 'tag'         => 'user',
-        // 'tags'        => [ 'user' ],
+        // 'id'          => [ 1 ],
+        // 'path'        => [ '/api/v1/user/{id}' ],
+        // 'httpMethod'  => [ 'GET' ],
+        // 'name'        => [ 'user.main' ],
+        // 'tag'         => [ 'user' ],
         //
-        'name'        => 'user.main',
-        'tag'         => 'user',
-        'httpMethods' => [ 'GET', 'POST' ],
+        'name'       => 'user.main',
+        'tag'        => 'user',
+        'httpMethod' => [ 'GET', 'POST' ],
     ]);
 
     $routes = $router->matchByContract($contract);
@@ -412,8 +436,8 @@ $test = $ffn->test($fn);
 $test->expectStdout('
 "TEST 2"
 
-4 | { object(serializable) # Gzhegow\Router\Core\Route\Route }
-5 | { object(serializable) # Gzhegow\Router\Core\Route\Route }
+8 | { object(serializable) # Gzhegow\Router\Core\Route\Route }
+9 | { object(serializable) # Gzhegow\Router\Core\Route\Route }
 ');
 $test->run();
 
@@ -422,27 +446,27 @@ $test->run();
 // > так можно сгенерировать ссылки для зарегистрированных маршрутов
 $fn = function () use ($ffn, $router) {
     $ffn->print('TEST 3');
-    echo PHP_EOL;
+    echo "\n";
 
 
-    $instances = [];
-    $instances[ 'a' ] = $router->matchFirstByNames('user.main');
+    $routeInstances = [];
+    $routeInstances[ 'route1' ] = $router->matchFirstByNames([ 'user.main' ]);
 
-    $names = [];
-    $names[ 'b' ] = 'user.main';
-    $names[ 'c' ] = 'user.main';
+    $routeNames = [];
+    $routeNames[ 'route2' ] = 'user.main';
+    $routeNames[ 'route3' ] = 'user.main';
 
-    $routes = $instances + $names;
+    $routes = $routeInstances + $routeNames;
 
     $ids = [];
-    $ids[ 'a' ] = 1;
-    $ids[ 'b' ] = 2;
-    $ids[ 'c' ] = 3;
+    $ids[ 'route1' ] = 1;
+    $ids[ 'route2' ] = 2;
+    $ids[ 'route3' ] = 3;
 
     $attributes = [];
     $attributes[ 'id' ] = $ids;
 
-    // > можно передать либо список объектов (instance of Route::class) и/или список строк (route `name`)
+    // > можно передать либо список объектов (instance of Route::class) и/или список строк - имена роутов
     $result = $router->urls($routes, $attributes);
     $ffn->print_array_multiline($result);
 };
@@ -452,9 +476,9 @@ $test->expectStdout('
 
 ###
 [
-  "a" => "/api/v1/user/1/main",
-  "b" => "/api/v1/user/2/main",
-  "c" => "/api/v1/user/3/main"
+  "route1" => "/api/v1/user/1/main",
+  "route2" => "/api/v1/user/2/main",
+  "route3" => "/api/v1/user/3/main"
 ]
 ###
 ');
@@ -465,7 +489,7 @@ $test->run();
 // > так можно запустить выполнение маршрута в вашем файле index.php, на который указывает apache2/nginx
 $fn = function () use ($ffn, $router) {
     $ffn->print('TEST 4');
-    echo PHP_EOL;
+    echo "\n";
 
 
     $contract = \Gzhegow\Router\Core\Dispatcher\RouterDispatcherContract::fromArray(
@@ -473,8 +497,7 @@ $fn = function () use ($ffn, $router) {
     );
 
     $result = $router->dispatch($contract);
-    echo PHP_EOL;
-
+    echo "\n";
     $ffn->print('[ RESULT ]', $result);
 };
 $test = $ffn->test($fn);
@@ -484,7 +507,7 @@ $test->expectStdout('
 @before :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
 @before :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
 @before :: Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware::__invoke
-Gzhegow\Router\Demo\Handler\Controller\DemoController::mainGet
+Gzhegow\Router\Demo\Handler\Controller\DemoController::apiV1UserMainGet
 @after :: Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware::__invoke
 @after :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
 @after :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
@@ -498,16 +521,11 @@ $test->run();
 // > такого маршрута нет, запустится ранее указанный fallback-обработчик
 $fn = function () use ($ffn, $router) {
     $ffn->print('TEST 5');
-    echo PHP_EOL;
+    echo "\n";
 
 
-    $contract = \Gzhegow\Router\Core\Dispatcher\RouterDispatcherContract::fromArray(
-        [ 'GET', '/api/v1/user/not-found' ]
-    );
-
-    $result = $router->dispatch($contract);
-    echo PHP_EOL;
-
+    $result = $router->dispatch([ 'GET', '/api/v1/user/not-found' ]);
+    echo "\n";
     $ffn->print('[ RESULT ]', $result);
 };
 $test = $ffn->test($fn);
@@ -515,10 +533,6 @@ $test->expectStdout('
 "TEST 5"
 
 @before :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
-@before :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
-@before :: Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware::__invoke
-@after :: Gzhegow\Router\Demo\Handler\Middleware\Demo2ndMiddleware::__invoke
-@after :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
 @after :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
 Gzhegow\Router\Demo\Handler\Fallback\DemoThrowableFallback::__invoke
 
@@ -528,29 +542,25 @@ $test->run();
 
 
 // > TEST
-// > такого маршрута нет, и одновременно с этим обработчик ошибок не был задан (либо был задан, но вернул NULL, что трактуется как "обработка не удалась")
+// > такого маршрута нет, и одновременно с этим обработчик ошибок не был задан (либо был задан, но перебросил ошибку, что трактуется как "обработка не удалась")
 $fn = function () use ($ffn, $router) {
     $ffn->print('TEST 6');
-    echo PHP_EOL;
+    echo "\n";
 
-
-    $contract = \Gzhegow\Router\Core\Dispatcher\RouterDispatcherContract::fromArray(
-        [ 'GET', '/api/v1/not-found/not-found' ]
-    );
 
     $result = null;
     try {
-        $result = $router->dispatch($contract);
+        $result = $router->dispatch([ 'GET', '/not-found' ]);
     }
     catch ( \Gzhegow\Router\Exception\Exception\DispatchException $e ) {
         $lines = \Gzhegow\Lib\Lib::debugThrowabler()
-            ->getPreviousMessagesLines($e, _DEBUG_THROWABLE_WITHOUT_FILE)
+            ->getPreviousMessagesAllLines($e, _DEBUG_THROWABLE_WITHOUT_FILE)
         ;
 
-        echo '[ CATCH ]' . PHP_EOL;
-        echo implode(PHP_EOL, $lines) . PHP_EOL;
+        echo '[ CATCH ]' . "\n";
+        echo implode("\n", $lines) . "\n";
     }
-    echo PHP_EOL;
+    echo "\n";
 
     $ffn->print('[ RESULT ]', $result);
 };
@@ -559,13 +569,13 @@ $test->expectStdout('
 "TEST 6"
 
 [ CATCH ]
-[ 0 ] Unhandled exception occured during dispatch
+[ 0 ] Unhandled exception during dispatch
 { object # Gzhegow\Router\Exception\Exception\DispatchException }
 --
 -- [ 0.0 ] Unhandled exception during processing pipeline
 -- { object # Gzhegow\Lib\Exception\Runtime\PipeException }
 ----
----- [ 0.0.0 ] Route not found: [ /api/v1/not-found/not-found ][ GET ]
+---- [ 0.0.0 ] Route not found: [ /not-found ][ GET ]
 ---- { object # Gzhegow\Router\Exception\Runtime\NotFoundException }
 
 "[ RESULT ]" | NULL
@@ -577,16 +587,11 @@ $test->run();
 // > этот маршрут бросает \LogicException, запустятся DemoLogicExceptionFallback и DemoThrowableFallback
 $fn = function () use ($ffn, $router) {
     $ffn->print('TEST 7');
-    echo PHP_EOL;
+    echo "\n";
 
 
-    $contract = \Gzhegow\Router\Core\Dispatcher\RouterDispatcherContract::fromArray(
-        [ 'GET', '/api/v1/user/1/logic' ]
-    );
-
-    $result = $router->dispatch($contract);
-    echo PHP_EOL;
-
+    $result = $router->dispatch([ 'GET', '/api/v1/user/1/logic' ]);
+    echo "\n";
     $ffn->print('[ RESULT ]', $result);
 };
 $test = $ffn->test($fn);
@@ -612,16 +617,11 @@ $test->run();
 // > этот маршрут бросает \RuntimeException, запустится DemoRuntimeExceptionFallback (т.к. он объявлен первым)
 $fn = function () use ($ffn, $router) {
     $ffn->print('TEST 8');
-    echo PHP_EOL;
+    echo "\n";
 
 
-    $contract = \Gzhegow\Router\Core\Dispatcher\RouterDispatcherContract::fromArray(
-        [ 'GET', '/api/v1/user/1/runtime' ]
-    );
-
-    $result = $router->dispatch($contract);
-    echo PHP_EOL;
-
+    $result = $router->dispatch([ 'GET', '/api/v1/user/1/runtime' ]);
+    echo "\n";
     $ffn->print('[ RESULT ]', $result);
 };
 $test = $ffn->test($fn);

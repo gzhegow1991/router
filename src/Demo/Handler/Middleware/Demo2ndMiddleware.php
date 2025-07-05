@@ -13,11 +13,11 @@ class Demo2ndMiddleware
     {
         $method = __METHOD__;
 
-        echo "@before :: {$method}" . PHP_EOL;
+        echo "@before :: {$method}" . "\n";
 
         $result = $fnNext($input, $args);
 
-        echo "@after :: {$method}" . PHP_EOL;
+        echo "@after :: {$method}" . "\n";
 
         return $result;
     }

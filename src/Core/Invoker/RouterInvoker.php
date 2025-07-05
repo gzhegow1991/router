@@ -8,5 +8,4 @@ use Gzhegow\Lib\Modules\Func\Invoker\DefaultInvoker;
 class RouterInvoker extends DefaultInvoker implements
     RouterInvokerInterface
 {
-
 }

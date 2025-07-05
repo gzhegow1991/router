@@ -2,8 +2,8 @@
 
 namespace Gzhegow\Router\Core\Collection;
 
-use Gzhegow\Router\Core\Route\Struct\Tag;
-use Gzhegow\Router\Core\Route\Struct\Path;
+use Gzhegow\Router\Core\Route\Struct\RouteTag;
+use Gzhegow\Router\Core\Route\Struct\RoutePath;
 use Gzhegow\Router\Exception\RuntimeException;
 use Gzhegow\Router\Core\Handler\Middleware\GenericHandlerMiddleware;
 
@@ -11,10 +11,9 @@ use Gzhegow\Router\Core\Handler\Middleware\GenericHandlerMiddleware;
 /**
  * @property GenericHandlerMiddleware[]      $middlewareList
  *
- * @property array<string, array<int, bool>> $middlewareIndexByPath
- * @property array<string, array<int, bool>> $middlewareIndexByTag
- *
- * @property array<string, int>              $middlewareMapKeyToId
+ * @property array<string, array<int, bool>> $middlewareIndexByRouteId
+ * @property array<string, array<int, bool>> $middlewareIndexByRoutePath
+ * @property array<string, array<int, bool>> $middlewareIndexByRouteTag
  */
 class RouterMiddlewareCollection implements \Serializable
 {
@@ -31,11 +30,15 @@ class RouterMiddlewareCollection implements \Serializable
     /**
      * @var array<string, array<int, bool>>
      */
-    protected $middlewareIndexByPath = [];
+    protected $middlewareIndexByRouteId = [];
     /**
      * @var array<string, array<int, bool>>
      */
-    protected $middlewareIndexByTag = [];
+    protected $middlewareIndexByRoutePath = [];
+    /**
+     * @var array<string, array<int, bool>>
+     */
+    protected $middlewareIndexByRouteTag = [];
 
     /**
      * @var array<string, int>
@@ -49,14 +52,15 @@ class RouterMiddlewareCollection implements \Serializable
             case 'middlewareList':
                 return $this->middlewareList;
 
-            case 'middlewareIndexByPath':
-                return $this->middlewareIndexByPath;
 
-            case 'middlewareIndexByTag':
-                return $this->middlewareIndexByTag;
+            case 'middlewareIndexByRouteId':
+                return $this->middlewareIndexByRouteId;
 
-            case 'middlewareMapKeyToId':
-                return $this->middlewareMapKeyToId;
+            case 'middlewareIndexByRoutePath':
+                return $this->middlewareIndexByRoutePath;
+
+            case 'middlewareIndexByRouteTag':
+                return $this->middlewareIndexByRouteTag;
 
             default:
                 throw new RuntimeException(
@@ -104,10 +108,25 @@ class RouterMiddlewareCollection implements \Serializable
         return $this->middlewareList;
     }
 
+
+    public function hasMiddleware(int $id, ?GenericHandlerMiddleware &$refMiddleware = null) : bool
+    {
+        $refMiddleware = null;
+
+        if (isset($this->middlewareList[ $id ])) {
+            $refMiddleware = $this->middlewareList[ $id ];
+
+            return true;
+        }
+
+        return false;
+    }
+
     public function getMiddleware(int $id) : GenericHandlerMiddleware
     {
         return $this->middlewareList[ $id ];
     }
+
 
     public function registerMiddleware(GenericHandlerMiddleware $middleware) : int
     {
@@ -127,20 +146,29 @@ class RouterMiddlewareCollection implements \Serializable
     }
 
 
-    public function addPathMiddleware(Path $path, GenericHandlerMiddleware $middleware) : int
+    public function addRouteIdMiddleware(int $routeId, GenericHandlerMiddleware $middleware) : int
     {
         $id = $this->registerMiddleware($middleware);
 
-        $this->middlewareIndexByPath[ $path->getValue() ][ $id ] = true;
+        $this->middlewareIndexByRouteId[ $routeId ][ $id ] = true;
 
         return $id;
     }
 
-    public function addTagMiddleware(Tag $tag, GenericHandlerMiddleware $middleware) : int
+    public function addRoutePathMiddleware(RoutePath $routePath, GenericHandlerMiddleware $middleware) : int
     {
         $id = $this->registerMiddleware($middleware);
 
-        $this->middlewareIndexByTag[ $tag->getValue() ][ $id ] = true;
+        $this->middlewareIndexByRoutePath[ $routePath->getValue() ][ $id ] = true;
+
+        return $id;
+    }
+
+    public function addRouteTagMiddleware(RouteTag $routeTag, GenericHandlerMiddleware $middleware) : int
+    {
+        $id = $this->registerMiddleware($middleware);
+
+        $this->middlewareIndexByRouteTag[ $routeTag->getValue() ][ $id ] = true;
 
         return $id;
     }

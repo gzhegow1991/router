@@ -8,16 +8,17 @@ use Gzhegow\Lib\Config\AbstractConfig;
 use Gzhegow\Router\Exception\LogicException;
 use Gzhegow\Router\Core\Cache\RouterCacheConfig;
 use Gzhegow\Router\Core\Route\Struct\HttpMethod;
+use Gzhegow\Router\Core\Route\Struct\RouteMethod;
 
 
 /**
- * @property RouterCacheConfig $cache
+ * @property RouterCacheConfig  $cache
  *
- * @property bool              $registerAllowObjectsAndClosures
- * @property int               $compileTrailingSlashMode
- * @property bool              $dispatchIgnoreMethod
- * @property string|HttpMethod $dispatchForceMethod
- * @property int               $dispatchTrailingSlashMode
+ * @property bool               $registerAllowObjectsAndClosures
+ * @property int                $compileTrailingSlashMode
+ * @property bool               $dispatchIgnoreMethod
+ * @property string|RouteMethod $dispatchForceMethod
+ * @property int                $dispatchTrailingSlashMode
  */
 class RouterConfig extends AbstractConfig
 {
@@ -49,7 +50,7 @@ class RouterConfig extends AbstractConfig
     /**
      * > 'GET|POST|PUT|OPTIONS', чтобы принудительно установить метод запроса при выполнении действия
      *
-     * @var HttpMethod|string
+     * @var RouteMethod|string
      */
     protected $dispatchForceMethod;
     /**

@@ -118,10 +118,25 @@ class RouterRouteCollection implements \Serializable
         return $this->routeList;
     }
 
+
+    public function hasRoute(int $id, ?Route &$refRoute = null) : bool
+    {
+        $refRoute = null;
+
+        if (isset($this->routeList[ $id ])) {
+            $refRoute = $this->routeList[ $id ];
+
+            return true;
+        }
+
+        return false;
+    }
+
     public function getRoute(int $id) : Route
     {
         return $this->routeList[ $id ];
     }
+
 
     public function registerRoute(Route $route) : int
     {
@@ -152,13 +167,19 @@ class RouterRouteCollection implements \Serializable
         $this->routeMapSplIdToBool[ $routeSplId ] = true;
 
         if (null !== $routeName) {
-            if (isset($this->routeMapPathToName[ $routeName ])) {
-                $existingPath = $this->routeMapPathToName[ $routeName ];
+            if (isset($this->routeIndexByName[ $routeName ])) {
+                foreach ( $this->routeIndexByName[ $routeName ] as $routeId => $bool ) {
+                    $existingRoute = $this->routeList[ $routeId ];
 
-                if ($existingPath !== $routePath) {
-                    throw new RuntimeException(
-                        [ 'Route with this `name` already exists: ' . $routeName ]
-                    );
+                    if (true
+                        && $route->path === $existingRoute->path
+                        && $route->methodIndex === $existingRoute->methodIndex
+                        && $route->tagIndex === $existingRoute->tagIndex
+                    ) {
+                        throw new RuntimeException(
+                            [ 'Route with this `name` already exists: ' . $routeName ]
+                        );
+                    }
                 }
 
             } else {
@@ -168,7 +189,7 @@ class RouterRouteCollection implements \Serializable
             $this->routeIndexByName[ $routeName ][ $route->id ] = true;
         }
 
-        foreach ( $route->httpMethodIndex as $routeHttpMethod => $bool ) {
+        foreach ( $route->methodIndex as $routeHttpMethod => $bool ) {
             $key = "{$routePath}\0{$routeHttpMethod}";
 
             if (isset($this->routeMapHttpMethodPathToBoolean[ $key ])) {

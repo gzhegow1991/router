@@ -71,12 +71,12 @@ class RouteGroup
     }
 
 
-    public function hasRoutes(?array &$routes = null) : bool
+    public function hasRoutes(?array &$refRoutes = null) : bool
     {
-        $routes = [];
+        $refRoutes = [];
 
         if ([] !== $this->routeList) {
-            $routes = $this->routeList;
+            $refRoutes = $this->routeList;
 
             return true;
         }
@@ -333,39 +333,42 @@ class RouteGroup
             return $this;
         }
 
-        foreach ( $this->routeList as $routeBlueprint ) {
-            $path = $this->routeBlueprint->path . $routeBlueprint->path;
-            $name = $this->routeBlueprint->name . $routeBlueprint->name;
+        foreach ( $this->routeList as $routeChildBlueprint ) {
+            $path = $this->routeBlueprint->path . '/' . ltrim($routeChildBlueprint->path, '/');
+            $name = $this->routeBlueprint->name . '.' . ltrim($routeChildBlueprint->name, '.');
+
+            $path = '/' . ltrim($path, '/');
+            $name = ltrim($name, '.');
 
             $tagsIndex = array_replace(
-                $routeBlueprint->tagIndex,
+                $routeChildBlueprint->tagIndex,
                 $this->routeBlueprint->tagIndex
             );
             $tagsList = array_keys($tagsIndex);
 
             $middlewaresDict = array_replace(
-                $routeBlueprint->middlewareDict,
+                $routeChildBlueprint->middlewareDict,
                 $this->routeBlueprint->middlewareDict
             );
 
             $fallbacksDict = array_replace(
-                $routeBlueprint->fallbackDict,
+                $routeChildBlueprint->fallbackDict,
                 $this->routeBlueprint->fallbackDict
             );
 
             if ('' !== $path) {
-                $routeBlueprint->path($path);
+                $routeChildBlueprint->path($path);
             }
 
             if ('' !== $name) {
-                $routeBlueprint->name($name);
+                $routeChildBlueprint->name($name);
             }
 
-            $routeBlueprint->setTags($tagsList);
-            $routeBlueprint->setMiddlewares($middlewaresDict);
-            $routeBlueprint->setFallbacks($fallbacksDict);
+            $routeChildBlueprint->setTags($tagsList);
+            $routeChildBlueprint->setMiddlewares($middlewaresDict);
+            $routeChildBlueprint->setFallbacks($fallbacksDict);
 
-            $this->parent->addRoute($routeBlueprint);
+            $this->parent->addRoute($routeChildBlueprint);
         }
 
         $this->routeList = [];

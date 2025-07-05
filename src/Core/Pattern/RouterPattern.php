@@ -59,8 +59,6 @@ class RouterPattern implements \Serializable
 
 
     /**
-     * @param Ret $ret
-     *
      * @return static|bool|null
      */
     public static function from($from, $ret = null)
@@ -79,8 +77,6 @@ class RouterPattern implements \Serializable
     }
 
     /**
-     * @param Ret $ret
-     *
      * @return static|bool|null
      */
     public static function fromStatic($from, $ret = null)
@@ -97,12 +93,12 @@ class RouterPattern implements \Serializable
     }
 
     /**
-     * @param Ret $ret
-     *
      * @return static|bool|null
      */
     public static function fromArray($from, $ret = null)
     {
+        $theType = Lib::type();
+
         if (! is_array($from)) {
             return Result::err(
                 $ret,
@@ -113,7 +109,7 @@ class RouterPattern implements \Serializable
 
         [ $pattern, $regex ] = $from + [ null, null ];
 
-        if (! Lib::type()->string_not_empty($patternString, $pattern)) {
+        if (! $theType->string_not_empty($patternString, $pattern)) {
             return Result::err(
                 $ret,
                 [ 'The `from[0]` should be non-empty string', $from ],
@@ -121,7 +117,7 @@ class RouterPattern implements \Serializable
             );
         }
 
-        if (! Lib::type()->string_not_empty($regexString, $regex)) {
+        if (! $theType->string_not_empty($regexString, $regex)) {
             return Result::err(
                 $ret,
                 [ 'The `from[1]` should be non-empty string', $from ],
@@ -138,8 +134,8 @@ class RouterPattern implements \Serializable
                 [
                     ''
                     . 'The `from[0]` should be wrapped with signs: '
-                    . '`' . Router::PATTERN_ENCLOSURE[ 0 ] . '`'
-                    . ' `' . Router::PATTERN_ENCLOSURE[ 1 ] . '`',
+                    . '[ ' . Router::PATTERN_ENCLOSURE[ 0 ] . ' ]'
+                    . '[ ' . Router::PATTERN_ENCLOSURE[ 1 ] . ' ]',
                     //
                     $from,
                 ],
@@ -155,7 +151,7 @@ class RouterPattern implements \Serializable
                 [
                     ''
                     . 'The `from[0]` should match regex: '
-                    . $regexp . ' / ' . $attributeString,
+                    . '[ ' . $regexp . ' ][ ' . $attributeString . ' ]',
                     //
                     $from,
                 ],

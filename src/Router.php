@@ -9,6 +9,10 @@ use Gzhegow\Router\Core\Config\RouterConfig;
 use Gzhegow\Router\Core\Route\RouteBlueprint;
 use Gzhegow\Router\Core\Pattern\RouterPattern;
 use Gzhegow\Lib\Modules\Func\Pipe\PipeContext;
+use Gzhegow\Router\Core\Route\Struct\RouteTag;
+use Gzhegow\Router\Core\Route\Struct\RouteName;
+use Gzhegow\Router\Core\Route\Struct\RoutePath;
+use Gzhegow\Router\Core\Route\Struct\RouteNameTag;
 use Gzhegow\Router\Core\Cache\RouterCacheInterface;
 use Gzhegow\Router\Core\Matcher\RouterMatcherContract;
 use Gzhegow\Router\Core\Matcher\RouterMatcherInterface;
@@ -138,6 +142,7 @@ class Router
      * @param string|null                                    $path
      * @param string|string[]|null                           $httpMethods
      * @param callable|object|array|class-string|string|null $action
+     *
      * @param string|null                                    $name
      * @param string|string[]|null                           $tags
      */
@@ -198,10 +203,10 @@ class Router
 
 
     /**
-     * @param string $pattern
-     * @param string $regex
+     * @param string|RouterPattern $pattern
+     * @param string|null          $regex
      */
-    public static function pattern($pattern, $regex) : RouterInterface
+    public static function pattern($pattern, $regex = null) : RouterInterface
     {
         return static::$facade->pattern($pattern, $regex);
     }
@@ -213,21 +218,29 @@ class Router
 
 
     /**
-     * @param string                                    $path
      * @param callable|object|array|class-string|string $middleware
      */
-    public static function middlewareOnPath($path, $middleware) : RouterInterface
+    public static function middlewareOnRouteId($routeId, $middleware) : RouterInterface
     {
-        return static::$facade->middlewareOnPath($path, $middleware);
+        return static::$facade->middlewareOnRouteId($routeId, $middleware);
     }
 
     /**
-     * @param string                                    $tag
+     * @param string|RoutePath                          $routePath
      * @param callable|object|array|class-string|string $middleware
      */
-    public static function middlewareOnTag($tag, $middleware) : RouterInterface
+    public static function middlewareOnRoutePath($routePath, $middleware) : RouterInterface
     {
-        return static::$facade->middlewareOnTag($tag, $middleware);
+        return static::$facade->middlewareOnRoutePath($routePath, $middleware);
+    }
+
+    /**
+     * @param string|RouteTag                           $routeTag
+     * @param callable|object|array|class-string|string $middleware
+     */
+    public static function middlewareOnRouteTag($routeTag, $middleware) : RouterInterface
+    {
+        return static::$facade->middlewareOnRouteTag($routeTag, $middleware);
     }
 
     public static function registerMiddleware(GenericHandlerMiddleware $middleware) : int
@@ -237,21 +250,30 @@ class Router
 
 
     /**
-     * @param string                                    $path
+     * @param int                                       $routeId
      * @param callable|object|array|class-string|string $fallback
      */
-    public static function fallbackOnPath($path, $fallback) : RouterInterface
+    public static function fallbackOnRouteId($routeId, $fallback) : RouterInterface
     {
-        return static::$facade->fallbackOnPath($path, $fallback);
+        return static::$facade->fallbackOnRouteId($routeId, $fallback);
     }
 
     /**
-     * @param string                                    $tag
+     * @param string|RoutePath                          $routePath
      * @param callable|object|array|class-string|string $fallback
      */
-    public static function fallbackOnTag($tag, $fallback) : RouterInterface
+    public static function fallbackOnRoutePath($routePath, $fallback) : RouterInterface
     {
-        return static::$facade->fallbackOnTag($tag, $fallback);
+        return static::$facade->fallbackOnRoutePath($routePath, $fallback);
+    }
+
+    /**
+     * @param string|RouteTag                           $routeTag
+     * @param callable|object|array|class-string|string $fallback
+     */
+    public function fallbackOnRouteTag($routeTag, $fallback) : RouterInterface
+    {
+        return static::$facade->fallbackOnRouteTag($routeTag, $fallback);
     }
 
     public static function registerFallback(GenericHandlerFallback $fallback) : int
@@ -260,10 +282,98 @@ class Router
     }
 
 
+
     public static function commit() : RouterInterface
     {
         return static::$facade->commit();
     }
+
+
+
+    /**
+     * @param int[] $routeIds
+     *
+     * @return Route[]
+     */
+    public static function matchAllByIds(array $routeIds) : array
+    {
+        return static::$facade->matchAllByIds($routeIds);
+    }
+
+    /**
+     * @param int[] $routeIds
+     */
+    public static function matchFirstByIds($routeIds) : ?Route
+    {
+        return static::$facade->matchFirstByIds($routeIds);
+    }
+
+
+    /**
+     * @param (string|RouteName)[] $routeNames
+     *
+     * @return Route[]|Route[][]
+     */
+    public static function matchAllByNames($routeNames, ?bool $unique = null) : array
+    {
+        return static::$facade->matchAllByNames($routeNames, $unique);
+    }
+
+    /**
+     * @param (string|RouteName)[] $routeNames
+     */
+    public static function matchFirstByNames($routeNames) : ?Route
+    {
+        return static::$facade->matchFirstByNames($routeNames);
+    }
+
+
+    /**
+     * @param (string|RouteTag)[] $routeTags
+     *
+     * @return Route[]|Route[][]
+     */
+    public static function matchAllByTags(array $routeTags, ?bool $unique = null) : array
+    {
+        return static::$facade->matchAllByTags($routeTags, $unique);
+    }
+
+    /**
+     * @param (string|RouteTag)[] $routeTags
+     */
+    public static function matchFirstByTags($routeTags) : ?Route
+    {
+        return static::$facade->matchFirstByTags($routeTags);
+    }
+
+
+    /**
+     * @param (array{ 0: string, 1: string }|RouteNameTag)[] $routeNameTags
+     *
+     * @return Route[]|Route[][]
+     */
+    public static function matchAllByNameTags(array $routeNameTags, ?bool $unique = null) : array
+    {
+        return static::$facade->matchAllByNameTags($routeNameTags, $unique);
+    }
+
+    /**
+     * @param (array{ 0: string, 1: string }|RouteNameTag)[] $routeNameTags
+     */
+    public static function matchFirstByNameTags(array $routeNameTags) : ?Route
+    {
+        return static::$facade->matchFirstByNameTags($routeNameTags);
+    }
+
+
+    /**
+     * @return Route[]
+     */
+    public static function matchByContract(RouterMatcherContract $contract) : array
+    {
+        return static::$facade->matchByContract($contract);
+    }
+
 
 
     /**
@@ -286,6 +396,7 @@ class Router
         );
     }
 
+
     public static function getDispatchContract() : RouterDispatcherContract
     {
         return static::$facade->getDispatchContract();
@@ -301,6 +412,12 @@ class Router
         return static::$facade->getDispatchRequestUri();
     }
 
+    public static function getDispatchRequestPath() : string
+    {
+        return static::$facade->getDispatchRequestPath();
+    }
+
+
     public static function getDispatchRoute() : Route
     {
         return static::$facade->getDispatchRoute();
@@ -312,75 +429,13 @@ class Router
     }
 
 
-    /**
-     * @param int|int[] $ids
-     *
-     * @return Route[]
-     */
-    public static function matchAllByIds($ids) : array
-    {
-        return static::$facade->matchAllByIds($ids);
-    }
 
     /**
-     * @param int|int[] $ids
-     */
-    public static function matchFirstByIds($ids) : ?Route
-    {
-        return static::$facade->matchFirstByIds($ids);
-    }
-
-    /**
-     * @param string|string[] $names
-     *
-     * @return Route[]|Route[][]
-     */
-    public static function matchAllByNames($names, ?bool $unique = null) : array
-    {
-        return static::$facade->matchAllByNames($names, $unique);
-    }
-
-    /**
-     * @param string|string[] $names
-     */
-    public static function matchFirstByNames($names) : ?Route
-    {
-        return static::$facade->matchFirstByNames($names);
-    }
-
-    /**
-     * @param string|string[] $tags
-     *
-     * @return Route[]|Route[][]
-     */
-    public static function matchAllByTags($tags, ?bool $unique = null) : array
-    {
-        return static::$facade->matchAllByTags($tags, $unique);
-    }
-
-    /**
-     * @param string|string[] $tags
-     */
-    public static function matchFirstByTags($tags) : ?Route
-    {
-        return static::$facade->matchFirstByTags($tags);
-    }
-
-    /**
-     * @return Route[]
-     */
-    public static function matchByContract(RouterMatcherContract $contract) : array
-    {
-        return static::$facade->matchByContract($contract);
-    }
-
-
-    /**
-     * @param Route|Route[]|string|string[] $routes
+     * @param (string|Route)[] $routes
      *
      * @return string[]
      */
-    public static function urls($routes, array $attributes = []) : array
+    public static function urls(array $routes, array $attributes = []) : array
     {
         return static::$facade->urls($routes, $attributes);
     }

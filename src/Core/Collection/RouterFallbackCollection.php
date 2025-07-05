@@ -2,8 +2,8 @@
 
 namespace Gzhegow\Router\Core\Collection;
 
-use Gzhegow\Router\Core\Route\Struct\Tag;
-use Gzhegow\Router\Core\Route\Struct\Path;
+use Gzhegow\Router\Core\Route\Struct\RouteTag;
+use Gzhegow\Router\Core\Route\Struct\RoutePath;
 use Gzhegow\Router\Exception\RuntimeException;
 use Gzhegow\Router\Core\Handler\Fallback\GenericHandlerFallback;
 
@@ -11,10 +11,9 @@ use Gzhegow\Router\Core\Handler\Fallback\GenericHandlerFallback;
 /**
  * @property GenericHandlerFallback[]        $fallbackList
  *
- * @property array<string, array<int, bool>> $fallbackIndexByPath
- * @property array<string, array<int, bool>> $fallbackIndexByTag
- *
- * @property array<string, int>              $fallbackMapKeyToId
+ * @property array<string, array<int, bool>> $fallbackIndexByRouteId
+ * @property array<string, array<int, bool>> $fallbackIndexByRoutePath
+ * @property array<string, array<int, bool>> $fallbackIndexByRouteTag
  */
 class RouterFallbackCollection implements \Serializable
 {
@@ -31,11 +30,15 @@ class RouterFallbackCollection implements \Serializable
     /**
      * @var array<string, array<int, bool>>
      */
-    protected $fallbackIndexByPath = [];
+    protected $fallbackIndexByRouteId = [];
     /**
      * @var array<string, array<int, bool>>
      */
-    protected $fallbackIndexByTag = [];
+    protected $fallbackIndexByRoutePath = [];
+    /**
+     * @var array<string, array<int, bool>>
+     */
+    protected $fallbackIndexByRouteTag = [];
 
     /**
      * @var array<string, int>
@@ -49,14 +52,16 @@ class RouterFallbackCollection implements \Serializable
             case 'fallbackList':
                 return $this->fallbackList;
 
-            case 'fallbackIndexByPath':
-                return $this->fallbackIndexByPath;
 
-            case 'fallbackIndexByTag':
-                return $this->fallbackIndexByTag;
+            case 'fallbackIndexByRouteId':
+                return $this->fallbackIndexByRouteId;
 
-            case 'fallbackMapKeyToId':
-                return $this->fallbackMapKeyToId;
+            case 'fallbackIndexByRoutePath':
+                return $this->fallbackIndexByRoutePath;
+
+            case 'fallbackIndexByRouteTag':
+                return $this->fallbackIndexByRouteTag;
+
 
             default:
                 throw new RuntimeException(
@@ -104,10 +109,25 @@ class RouterFallbackCollection implements \Serializable
         return $this->fallbackList;
     }
 
+
+    public function hasFallback(int $id, ?GenericHandlerFallback &$refFallback = null) : bool
+    {
+        $refFallback = null;
+
+        if (isset($this->fallbackList[ $id ])) {
+            $refFallback = $this->fallbackList[ $id ];
+
+            return true;
+        }
+
+        return false;
+    }
+
     public function getFallback(int $id) : GenericHandlerFallback
     {
         return $this->fallbackList[ $id ];
     }
+
 
     public function registerFallback(GenericHandlerFallback $fallback) : int
     {
@@ -127,20 +147,29 @@ class RouterFallbackCollection implements \Serializable
     }
 
 
-    public function addPathFallback(Path $path, GenericHandlerFallback $fallback) : int
+    public function addRouteIdFallback(int $routeId, GenericHandlerFallback $fallback) : int
     {
         $id = $this->registerFallback($fallback);
 
-        $this->fallbackIndexByPath[ $path->getValue() ][ $id ] = true;
+        $this->fallbackIndexByRouteId[ $routeId ][ $id ] = true;
 
         return $id;
     }
 
-    public function addTagFallback(Tag $tag, GenericHandlerFallback $fallback) : int
+    public function addRoutePathFallback(RoutePath $routePath, GenericHandlerFallback $fallback) : int
     {
         $id = $this->registerFallback($fallback);
 
-        $this->fallbackIndexByTag[ $tag->getValue() ][ $id ] = true;
+        $this->fallbackIndexByRoutePath[ $routePath->getValue() ][ $id ] = true;
+
+        return $id;
+    }
+
+    public function addRouteTagFallback(RouteTag $routeTag, GenericHandlerFallback $fallback) : int
+    {
+        $id = $this->registerFallback($fallback);
+
+        $this->fallbackIndexByRouteTag[ $routeTag->getValue() ][ $id ] = true;
 
         return $id;
     }

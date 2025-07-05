@@ -3,11 +3,10 @@
 namespace Gzhegow\Router\Core\Route\Struct;
 
 use Gzhegow\Lib\Lib;
-use Gzhegow\Lib\Modules\Php\Result\Ret;
 use Gzhegow\Lib\Modules\Php\Result\Result;
 
 
-class Name
+class RouteTag
 {
     /**
      * @var string
@@ -27,8 +26,6 @@ class Name
 
 
     /**
-     * @param Ret $ret
-     *
      * @return static|bool|null
      */
     public static function from($from, $ret = null)
@@ -47,8 +44,6 @@ class Name
     }
 
     /**
-     * @param Ret $ret
-     *
      * @return static|bool|null
      */
     public static function fromStatic($from, $ret = null)
@@ -65,16 +60,14 @@ class Name
     }
 
     /**
-     * @param Ret $ret
-     *
      * @return static|bool|null
      */
     public static function fromString($from, $ret = null)
     {
-        if (! Lib::type()->string_not_empty($fromString, $from)) {
+        if (! Lib::type()->trim($fromString, $from)) {
             return Result::err(
                 $ret,
-                [ 'The `from` should be non-empty string', $from ],
+                [ 'The `from` should be non-empty trim', $from ],
                 [ __FILE__, __LINE__ ]
             );
         }

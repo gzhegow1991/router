@@ -2,7 +2,7 @@
 
 namespace Gzhegow\Router\Demo\Handler\Action;
 
-use Gzhegow\Router\Core\Handler\Action\CorsAction;
+use Gzhegow\Router\Core\Http\Action\CorsAction;
 
 
 class DemoCorsAction extends CorsAction
@@ -13,7 +13,7 @@ class DemoCorsAction extends CorsAction
         array $args = []
     )
     {
-        echo __METHOD__ . PHP_EOL;
+        echo __METHOD__ . "\n";
 
         parent::__invoke($input, $context);
     }

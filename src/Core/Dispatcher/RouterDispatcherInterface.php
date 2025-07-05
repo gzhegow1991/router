@@ -32,6 +32,8 @@ interface RouterDispatcherInterface
 
     public function getDispatchRequestMethod() : string;
 
+    public function getDispatchRequestPath() : string;
+
     public function getDispatchRequestUri() : string;
 
 

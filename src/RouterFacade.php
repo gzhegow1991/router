@@ -5,14 +5,16 @@ namespace Gzhegow\Router;
 use Gzhegow\Lib\Lib;
 use Gzhegow\Router\Core\Route\Route;
 use Gzhegow\Router\Core\Node\RouterNode;
-use Gzhegow\Router\Core\Route\Struct\Tag;
 use Gzhegow\Router\Core\Route\RouteGroup;
-use Gzhegow\Router\Core\Route\Struct\Path;
 use Gzhegow\Router\Core\Config\RouterConfig;
 use Gzhegow\Router\Core\Route\RouteBlueprint;
+use Gzhegow\Router\Core\Route\Struct\RouteTag;
 use Gzhegow\Router\Core\Pattern\RouterPattern;
 use Gzhegow\Router\Exception\RuntimeException;
 use Gzhegow\Lib\Modules\Func\Pipe\PipeContext;
+use Gzhegow\Router\Core\Route\Struct\RoutePath;
+use Gzhegow\Router\Core\Route\Struct\RouteName;
+use Gzhegow\Router\Core\Route\Struct\RouteNameTag;
 use Gzhegow\Router\Core\Cache\RouterCacheInterface;
 use Gzhegow\Router\Core\Matcher\RouterMatcherContract;
 use Gzhegow\Router\Core\Matcher\RouterMatcherInterface;
@@ -125,7 +127,7 @@ class RouterFacade implements RouterInterface
         $this->rootRouterGroup = $this->routerFactory->newRouteGroup();
 
         $routerNodeRoot = $this->routerFactory->newRouterNode();
-        $routerNodeRoot->part = '/';
+        $routerNodeRoot->part = '';
         $this->rootRouterNode = $routerNodeRoot;
 
         $this->initialize();
@@ -338,9 +340,21 @@ class RouterFacade implements RouterInterface
         foreach ( $routeGroup->getRoutes() as $routeBlueprint ) {
             $route = $this->compileRoute($routeBlueprint);
 
-            $id = $this->registerRoute($route);
+            $routeId = $this->registerRoute($route);
 
-            $report[ $id ] = $route;
+            if ($routeBlueprint->middlewareDict) {
+                foreach ( $routeBlueprint->middlewareDict as $middleware ) {
+                    $this->middlewareOnRouteId($routeId, $middleware);
+                }
+            }
+
+            if ($routeBlueprint->fallbackDict) {
+                foreach ( $routeBlueprint->fallbackDict as $fallback ) {
+                    $this->fallbackOnRouteId($routeId, $fallback);
+                }
+            }
+
+            $report[ $routeId ] = $route;
         }
 
         return $report;
@@ -401,7 +415,7 @@ class RouterFacade implements RouterInterface
         $path = $route->path;
 
         $slice = $path;
-        $slice = trim($slice, '/');
+        $slice = ltrim($slice, '/');
         $slice = explode('/', $slice);
         while ( $slice ) {
             $routeNodePrevious = $routeNodePrevious ?? $this->rootRouterNode;
@@ -424,7 +438,7 @@ class RouterFacade implements RouterInterface
                     $routeNodePrevious->routeIndexByPart[ $part ][ $route->id ] = true;
                 }
 
-                foreach ( $route->httpMethodIndex as $httpMethod => $bool ) {
+                foreach ( $route->methodIndex as $httpMethod => $bool ) {
                     $routeNodePrevious->routeIndexByMethod[ $httpMethod ][ $route->id ] = true;
                 }
 
@@ -459,14 +473,18 @@ class RouterFacade implements RouterInterface
 
 
     /**
-     * @param string $pattern
-     * @param string $regex
+     * @param string|RouterPattern $pattern
+     * @param string|null          $regex
      */
-    public function pattern($pattern, $regex) : RouterInterface
+    public function pattern($pattern, $regex = null) : RouterInterface
     {
-        $pattern = RouterPattern::from([ $pattern, $regex ]);
+        $routePattern = (null === $regex)
+            ? $pattern
+            : [ $pattern, $regex ];
 
-        $this->registerPattern($pattern);
+        $routePatternObject = RouterPattern::from($routePattern);
+
+        $this->registerPattern($routePatternObject);
 
         return $this;
     }
@@ -482,52 +500,74 @@ class RouterFacade implements RouterInterface
 
 
     /**
-     * @param string                                    $path
+     * @param int                                       $routeId
      * @param callable|object|array|class-string|string $middleware
      */
-    public function middlewareOnPath($path, $middleware) : RouterInterface
+    public function middlewareOnRouteId($routeId, $middleware) : RouterInterface
     {
-        $pathObject = Path::from($path);
+        $routeIdInt = Lib::parseThrow()->int_positive($routeId);
+        $middlewareObject = GenericHandlerMiddleware::from($middleware);
+
+        if (! $this->routeCollection->hasRoute($routeIdInt)) {
+            throw new RuntimeException(
+                [ 'Route not found by id: ' . $routeId, $routeId ]
+            );
+        }
+
+        $this->registerMiddleware($middlewareObject);
+
+        $this->middlewareCollection->addRouteIdMiddleware($routeIdInt, $middlewareObject);
+
+        return $this;
+    }
+
+    /**
+     * @param string|RoutePath                          $routePath
+     * @param callable|object|array|class-string|string $middleware
+     */
+    public function middlewareOnRoutePath($routePath, $middleware) : RouterInterface
+    {
+        $routePathObject = RoutePath::from($routePath);
         $middlewareObject = GenericHandlerMiddleware::from($middleware);
 
         if ($this->config->compileTrailingSlashMode) {
-            $pathValue = $pathObject->getValue();
+            $routePathString = $routePathObject->getValue();
 
             $isEndsWithSlash = true
-                && ('/' !== $pathValue)
-                && ('/' === $pathValue[ strlen($pathValue) - 1 ]);
+                && ('/' !== $routePathString)
+                && ('/' === $routePathString[ strlen($routePathString) - 1 ]);
 
             if ($isEndsWithSlash && ($this->config->compileTrailingSlashMode === Router::TRAILING_SLASH_NEVER)) {
                 throw new RuntimeException(
-                    'The `path` must not end with `/` sign: ' . $pathValue
+                    'The `path` must not end with `/` sign: ' . $routePathString
                 );
 
             } elseif (! $isEndsWithSlash && ($this->config->compileTrailingSlashMode === Router::TRAILING_SLASH_ALWAYS)) {
                 throw new RuntimeException(
-                    'The `path` must end with `/` sign: ' . $pathValue
+                    'The `path` must end with `/` sign: ' . $routePathString
                 );
             }
         }
 
         $this->registerMiddleware($middlewareObject);
 
-        $this->middlewareCollection->addPathMiddleware($pathObject, $middlewareObject);
+        $this->middlewareCollection->addRoutePathMiddleware($routePathObject, $middlewareObject);
 
         return $this;
     }
 
     /**
-     * @param string                                    $tag
+     * @param string|RouteTag                           $routeTag
      * @param callable|object|array|class-string|string $middleware
      */
-    public function middlewareOnTag($tag, $middleware) : RouterInterface
+    public function middlewareOnRouteTag($routeTag, $middleware) : RouterInterface
     {
-        $tagObject = Tag::from($tag);
+        $routeTagObject = RouteTag::from($routeTag);
         $middlewareObject = GenericHandlerMiddleware::from($middleware);
 
         $this->registerMiddleware($middlewareObject);
 
-        $this->middlewareCollection->addTagMiddleware($tagObject, $middlewareObject);
+        $this->middlewareCollection->addRouteTagMiddleware($routeTagObject, $middlewareObject);
 
         return $this;
     }
@@ -558,52 +598,74 @@ class RouterFacade implements RouterInterface
 
 
     /**
-     * @param string                                    $path
+     * @param int                                       $routeId
      * @param callable|object|array|class-string|string $fallback
      */
-    public function fallbackOnPath($path, $fallback) : RouterInterface
+    public function fallbackOnRouteId($routeId, $fallback) : RouterInterface
     {
-        $pathObject = Path::from($path);
+        $routeIdInt = Lib::parseThrow()->int_positive($routeId);
         $fallbackObject = GenericHandlerFallback::from($fallback);
 
-        if (! $this->config->compileTrailingSlashMode) {
-            $pathValue = $pathObject->getValue();
+        if (! $this->routeCollection->hasRoute($routeIdInt)) {
+            throw new RuntimeException(
+                [ 'Route not found by id: ' . $routeId, $routeId ]
+            );
+        }
+
+        $this->registerFallback($fallbackObject);
+
+        $this->fallbackCollection->addRouteIdFallback($routeIdInt, $fallbackObject);
+
+        return $this;
+    }
+
+    /**
+     * @param string|RoutePath                          $routePath
+     * @param callable|object|array|class-string|string $fallback
+     */
+    public function fallbackOnRoutePath($routePath, $fallback) : RouterInterface
+    {
+        $routePathObject = RoutePath::from($routePath);
+        $fallbackObject = GenericHandlerFallback::from($fallback);
+
+        if ($this->config->compileTrailingSlashMode) {
+            $routePathString = $routePathObject->getValue();
 
             $isEndsWithSlash = true
-                && ('/' !== $pathValue)
-                && ('/' === $pathValue[ strlen($pathValue) - 1 ]);
+                && ('/' !== $routePathString)
+                && ('/' === $routePathString[ strlen($routePathString) - 1 ]);
 
             if ($isEndsWithSlash && ($this->config->compileTrailingSlashMode === Router::TRAILING_SLASH_NEVER)) {
                 throw new RuntimeException(
-                    'The `path` must not end with `/` sign: ' . $pathValue
+                    'The `path` must not end with `/` sign: ' . $routePathString
                 );
 
             } elseif (! $isEndsWithSlash && ($this->config->compileTrailingSlashMode === Router::TRAILING_SLASH_ALWAYS)) {
                 throw new RuntimeException(
-                    'The `path` must end with `/` sign: ' . $pathValue
+                    'The `path` must end with `/` sign: ' . $routePathString
                 );
             }
         }
 
         $this->registerFallback($fallbackObject);
 
-        $this->fallbackCollection->addPathFallback($pathObject, $fallbackObject);
+        $this->fallbackCollection->addRoutePathFallback($routePathObject, $fallbackObject);
 
         return $this;
     }
 
     /**
-     * @param string                                    $tag
+     * @param string|RouteTag                           $routeTag
      * @param callable|object|array|class-string|string $fallback
      */
-    public function fallbackOnTag($tag, $fallback) : RouterInterface
+    public function fallbackOnRouteTag($routeTag, $fallback) : RouterInterface
     {
-        $tagObject = Tag::from($tag);
+        $routeTagObject = RouteTag::from($routeTag);
         $fallbackObject = GenericHandlerFallback::from($fallback);
 
         $this->registerFallback($fallbackObject);
 
-        $this->fallbackCollection->addTagFallback($tagObject, $fallbackObject);
+        $this->fallbackCollection->addRouteTagFallback($routeTagObject, $fallbackObject);
 
         return $this;
     }
@@ -645,6 +707,93 @@ class RouterFacade implements RouterInterface
     }
 
 
+
+    /**
+     * @param int[] $routeIds
+     *
+     * @return Route[]
+     */
+    public function matchAllByIds(array $routeIds) : array
+    {
+        return $this->routerMatcher->matchAllByIds($routeIds);
+    }
+
+    /**
+     * @param int[] $routeIds
+     */
+    public function matchFirstByIds(array $routeIds) : ?Route
+    {
+        return $this->routerMatcher->matchFirstByIds($routeIds);
+    }
+
+
+    /**
+     * @param (string|RouteName)[] $routeNames
+     *
+     * @return Route[]|Route[][]
+     */
+    public function matchAllByNames(array $routeNames, ?bool $unique = null) : array
+    {
+        return $this->routerMatcher->matchAllByNames($routeNames, $unique);
+    }
+
+    /**
+     * @param (string|RouteName)[] $routeNames
+     */
+    public function matchFirstByNames(array $routeNames) : ?Route
+    {
+        return $this->routerMatcher->matchFirstByNames($routeNames);
+    }
+
+
+    /**
+     * @param (string|RouteTag)[] $routeTags
+     *
+     * @return Route[]|Route[][]
+     */
+    public function matchAllByTags(array $routeTags, ?bool $unique = null) : array
+    {
+        return $this->routerMatcher->matchAllByTags($routeTags, $unique);
+    }
+
+    /**
+     * @param (string|RouteTag)[] $routeTags
+     */
+    public function matchFirstByTags(array $routeTags) : ?Route
+    {
+        return $this->routerMatcher->matchFirstByTags($routeTags);
+    }
+
+
+    /**
+     * @param (array{ 0: string, 1: string }|RouteNameTag)[] $routeNameTags
+     *
+     * @return Route[]|Route[][]
+     */
+    public function matchAllByNameTags(array $routeNameTags, ?bool $unique = null) : array
+    {
+        return $this->routerMatcher->matchAllByNameTags($routeNameTags, $unique);
+    }
+
+    /**
+     * @param (array{ 0: string, 1: string }|RouteNameTag)[] $routeNameTags
+     */
+    public function matchFirstByNameTags(array $routeNameTags) : ?Route
+    {
+        return $this->routerMatcher->matchFirstByNameTags($routeNameTags);
+    }
+
+
+    /**
+     * @return Route[]
+     */
+    public function matchByContract(RouterMatcherContract $contract) : array
+    {
+        return $this->routerMatcher->matchByContract($contract);
+    }
+
+
+
     /**
      * @param mixed|RouterDispatcherContract $contract
      * @param array{ 0: array }|PipeContext  $context
@@ -680,6 +829,12 @@ class RouterFacade implements RouterInterface
         return $this->routerDispatcher->getDispatchRequestUri();
     }
 
+    public function getDispatchRequestPath() : string
+    {
+        return $this->routerDispatcher->getDispatchRequestPath();
+    }
+
+
     public function getDispatchRoute() : Route
     {
         return $this->routerDispatcher->getDispatchRoute();
@@ -691,66 +846,13 @@ class RouterFacade implements RouterInterface
     }
 
 
-    /**
-     * @param int[] $ids
-     *
-     * @return Route[]
-     */
-    public function matchAllByIds($ids) : array
-    {
-        return $this->routerMatcher->matchAllByIds($ids);
-    }
-
-    public function matchFirstByIds($ids) : ?Route
-    {
-        return $this->routerMatcher->matchFirstByIds($ids);
-    }
 
     /**
-     * @param string[] $names
-     *
-     * @return Route[]|Route[][]
-     */
-    public function matchAllByNames($names, ?bool $unique = null) : array
-    {
-        return $this->routerMatcher->matchAllByNames($names, $unique);
-    }
-
-    public function matchFirstByNames($names) : ?Route
-    {
-        return $this->routerMatcher->matchFirstByNames($names);
-    }
-
-    /**
-     * @param string[] $tags
-     *
-     * @return Route[]|Route[][]
-     */
-    public function matchAllByTags($tags, ?bool $unique = null) : array
-    {
-        return $this->routerMatcher->matchAllByTags($tags, $unique);
-    }
-
-    public function matchFirstByTags($tags) : ?Route
-    {
-        return $this->routerMatcher->matchFirstByTags($tags);
-    }
-
-    /**
-     * @return Route[]
-     */
-    public function matchByContract(RouterMatcherContract $contract) : array
-    {
-        return $this->routerMatcher->matchByContract($contract);
-    }
-
-
-    /**
-     * @param Route|Route[]|string|string[] $routes
+     * @param (string|Route)[] $routes
      *
      * @return string[]
      */
-    public function urls($routes, array $attributes = []) : array
+    public function urls(array $routes, array $attributes = []) : array
     {
         return $this->routerUrlGenerator->urls($routes, $attributes);
     }
@@ -766,7 +868,7 @@ class RouterFacade implements RouterInterface
 
     protected function compileRoute(RouteBlueprint $routeBlueprint) : Route
     {
-        if (null === ($path = $routeBlueprint->path)) {
+        if (null === ($routePath = $routeBlueprint->path)) {
             throw new RuntimeException(
                 [
                     'Missing `path` in route',
@@ -784,7 +886,7 @@ class RouterFacade implements RouterInterface
             );
         }
 
-        if (null === $routeBlueprint->httpMethodIndex) {
+        if (null === $routeBlueprint->methodIndex) {
             throw new RuntimeException(
                 [
                     'Missing `method` in route',
@@ -793,30 +895,30 @@ class RouterFacade implements RouterInterface
             );
         }
 
-        $pathValue = $path->getValue();
+        $routePathString = $routePath->getValue();
 
-        if (! $this->config->compileTrailingSlashMode) {
+        if ($this->config->compileTrailingSlashMode) {
             $isEndsWithSlash = true
-                && ('/' !== $pathValue)
-                && ('/' === $pathValue[ strlen($pathValue) - 1 ]);
+                && ('/' !== $routePathString)
+                && ('/' === $routePathString[ strlen($routePathString) - 1 ]);
 
             if ($isEndsWithSlash && ($this->config->compileTrailingSlashMode === Router::TRAILING_SLASH_NEVER)) {
                 throw new RuntimeException(
-                    'The `path` must not end with `/` sign: ' . $pathValue
+                    'The `path` must not end with `/` sign: ' . $routePathString
                 );
 
             } elseif (! $isEndsWithSlash && ($this->config->compileTrailingSlashMode === Router::TRAILING_SLASH_ALWAYS)) {
                 throw new RuntimeException(
-                    'The `path` must end with `/` sign: ' . $pathValue
+                    'The `path` must end with `/` sign: ' . $routePathString
                 );
             }
         }
 
-        $pathRegex = $this->compilePathRegex($pathValue, $attributesIndex);
+        $pathRegex = $this->compilePathRegex($routePathString, $attributesIndex);
 
         $route = $this->routerFactory->newRoute();
 
-        $route->path = $pathValue;
+        $route->path = $routePathString;
         $route->compiledPathRegex = $pathRegex;
 
         $route->action = $routeBlueprint->action;
@@ -826,19 +928,20 @@ class RouterFacade implements RouterInterface
             $route->name = $routeBlueprint->name->getValue();
         }
 
-        $route->httpMethodIndex = $routeBlueprint->httpMethodIndex;
-        $route->tagIndex = $routeBlueprint->tagIndex;
+        if ([] !== $routeBlueprint->methodIndex) {
+            $methodIndex = $routeBlueprint->methodIndex;
 
-        if ($routeBlueprint->middlewareDict) {
-            foreach ( $routeBlueprint->middlewareDict as $middleware ) {
-                $this->middlewareOnPath($pathValue, $middleware);
-            }
+            ksort($methodIndex);
+
+            $route->methodIndex = $methodIndex;
         }
 
-        if ($routeBlueprint->fallbackDict) {
-            foreach ( $routeBlueprint->fallbackDict as $fallback ) {
-                $this->fallbackOnPath($pathValue, $fallback);
-            }
+        if ([] !== $routeBlueprint->tagIndex) {
+            $tagIndex = $routeBlueprint->tagIndex;
+
+            ksort($tagIndex);
+
+            $route->tagIndex = $tagIndex;
         }
 
         return $route;
@@ -892,7 +995,7 @@ class RouterFacade implements RouterInterface
 
         unset($patternDict);
 
-        if (null === Lib::parse()->regex('/^' . $pathRegex . '$/')) {
+        if (! Lib::type()->regex($r, '/^' . $pathRegex . '$/')) {
             throw new RuntimeException(
                 'The output regex is not valid: ' . $pathRegex
             );

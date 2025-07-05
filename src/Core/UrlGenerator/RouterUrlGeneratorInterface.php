@@ -12,11 +12,11 @@ interface RouterUrlGeneratorInterface
 
 
     /**
-     * @param Route|Route[]|string|string[] $routes
+     * @param (string|Route)[] $routes
      *
      * @return string[]
      */
-    public function urls($routes, array $attributes = []) : array;
+    public function urls(array $routes, array $attributes = []) : array;
 
     /**
      * @param Route|string $route

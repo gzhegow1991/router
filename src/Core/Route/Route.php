@@ -41,29 +41,17 @@ class Route implements \Serializable
     /**
      * @var array<string, bool>
      */
-    public $httpMethodIndex = [];
+    public $methodIndex = [];
     /**
      * @var array<string, bool>
      */
     public $tagIndex = [];
 
     /**
-     * @var RouterDispatcherContract
-     */
-    public $dispatchContract;
-    /**
-     * @var string
-     */
-    public $dispatchRequestMethod;
-    /**
-     * @var string
-     */
-    public $dispatchRequestUri;
-
-    /**
      * @var array<string, mixed>
      */
     public $dispatchActionAttributes = [];
+
     /**
      * @var array<string, GenericHandlerMiddleware>
      */
@@ -72,6 +60,24 @@ class Route implements \Serializable
      * @var array<string, GenericHandlerFallback>
      */
     public $dispatchFallbackIndex = [];
+
+    /**
+     * @var string
+     */
+    public $dispatchRequestMethod;
+    /**
+     * @var string
+     */
+    public $dispatchRequestPath;
+    /**
+     * @var string
+     */
+    public $dispatchRequestUri;
+
+    /**
+     * @var RouterDispatcherContract
+     */
+    public $dispatchContract;
 
 
     public function getId() : int
@@ -84,13 +90,16 @@ class Route implements \Serializable
     {
         $vars = get_object_vars($this);
 
-        unset($vars[ 'dispatchContract' ]);
-        unset($vars[ 'dispatchRequestMethod' ]);
-        unset($vars[ 'dispatchRequestUri' ]);
-
         unset($vars[ 'dispatchActionAttributes' ]);
+
         unset($vars[ 'dispatchMiddlewareIndex' ]);
         unset($vars[ 'dispatchFallbackIndex' ]);
+
+        unset($vars[ 'dispatchRequestMethod' ]);
+        unset($vars[ 'dispatchRequestUri' ]);
+        unset($vars[ 'dispatchRequestPath' ]);
+
+        unset($vars[ 'dispatchContract' ]);
 
         return array_filter($vars);
     }

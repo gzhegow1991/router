@@ -25,18 +25,13 @@ class RouterUrlGenerator implements RouterUrlGeneratorInterface
 
 
     /**
-     * @param Route|Route[]|string|string[] $routes
+     * @param (string|Route)[] $routes
      *
      * @return string[]
      */
-    public function urls($routes, array $attributes = []) : array
+    public function urls(array $routes, array $attributes = []) : array
     {
         $theType = Lib::type();
-
-        $routes = $routes ?? [];
-        $routes = ($routes instanceof Route)
-            ? [ $routes ]
-            : (array) $routes;
 
         $result = [];
 
@@ -54,7 +49,7 @@ class RouterUrlGenerator implements RouterUrlGeneratorInterface
             } else {
                 throw new LogicException(
                     [
-                        'Each of `routes` should be string as route `name` or object of class: ' . Route::class,
+                        'Each of `routes` should be a string (route `name`) or instance of: ' . Route::class,
                         $routes,
                     ]
                 );

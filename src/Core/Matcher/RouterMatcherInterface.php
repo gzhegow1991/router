@@ -4,6 +4,9 @@ namespace Gzhegow\Router\Core\Matcher;
 
 use Gzhegow\Router\RouterInterface;
 use Gzhegow\Router\Core\Route\Route;
+use Gzhegow\Router\Core\Route\Struct\RouteTag;
+use Gzhegow\Router\Core\Route\Struct\RouteName;
+use Gzhegow\Router\Core\Route\Struct\RouteNameTag;
 
 
 interface RouterMatcherInterface
@@ -12,33 +15,55 @@ interface RouterMatcherInterface
 
 
     /**
-     * @param int[] $ids
+     * @param int[] $routeIds
      *
      * @return Route[]
      */
-    public function matchAllByIds($ids) : array;
+    public function matchAllByIds(array $routeIds) : array;
 
-    public function matchFirstByIds($ids) : ?Route;
+    /**
+     * @param int[] $routeIds
+     */
+    public function matchFirstByIds(array $routeIds) : ?Route;
 
 
     /**
-     * @param string[] $names
+     * @param (string|RouteName)[] $routeNames
      *
      * @return Route[]|Route[][]
      */
-    public function matchAllByNames($names, ?bool $unique = null) : array;
+    public function matchAllByNames(array $routeNames, ?bool $unique = null) : array;
 
-    public function matchFirstByNames($names) : ?Route;
+    /**
+     * @param (string|RouteName)[] $routeNames
+     */
+    public function matchFirstByNames(array $routeNames) : ?Route;
 
 
     /**
-     * @param string[] $tags
+     * @param (string|RouteTag)[] $routeTags
      *
      * @return Route[]|Route[][]
      */
-    public function matchAllByTags($tags, ?bool $unique = null) : array;
+    public function matchAllByTags(array $routeTags, ?bool $unique = null) : array;
 
-    public function matchFirstByTags($tags) : ?Route;
+    /**
+     * @param (string|RouteTag)[] $routeTags
+     */
+    public function matchFirstByTags(array $routeTags) : ?Route;
+
+
+    /**
+     * @param (array{ 0: string, 1: string }|RouteNameTag)[] $routeNameTags
+     *
+     * @return Route[]|Route[][]
+     */
+    public function matchAllByNameTags(array $routeNameTags, ?bool $unique = null) : array;
+
+    /**
+     * @param (array{ 0: string, 1: string }|RouteNameTag)[] $routeNameTags
+     */
+    public function matchFirstByNameTags(array $routeNameTags) : ?Route;
 
 
     /**

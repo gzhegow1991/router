@@ -11,11 +11,11 @@ class DemoThrowableFallback
         array $args = []
     )
     {
-        echo __METHOD__ . PHP_EOL;
+        echo __METHOD__ . "\n";
 
         // > any throwable is supported
         // if (! is_a($e, \Throwable::class)) {
-        //     return null;
+        //     throw $e;
         // }
 
         return __METHOD__ . ' result.';

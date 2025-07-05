@@ -73,45 +73,100 @@ class RouterMatcherContract
     /**
      * @return static|bool|null
      */
-    public static function fromArray($array, $ret = null)
+    public static function fromArray($from, $ret = null)
     {
-        if (! is_array($array)) {
+        $thePhp = Lib::php();
+        $theParse = Lib::parse();
+
+        if (! is_array($from)) {
             return Result::err(
                 $ret,
-                [ 'The `from` should be array', $array ],
+                [ 'The `from` should be array', $from ],
                 [ __FILE__, __LINE__ ]
             );
         }
 
-        $ids = [];
-        $pathes = [];
-        $methods = [];
-        $names = [];
-        $groups = [];
+        $idList = [];
+        $pathList = [];
+        $httpMethodList = [];
+        $nameList = [];
+        $tagList = [];
 
-        if (isset($array[ 'id' ])) $ids[] = (array) $array[ 'id' ];
-        if (isset($array[ 'ids' ])) $ids[] = (array) $array[ 'ids' ];
+        if (! empty($from[ 'id' ])) $idList = $thePhp->to_list($from[ 'id' ]);
+        if (! empty($from[ 'path' ])) $pathList = $thePhp->to_list($from[ 'path' ]);
+        if (! empty($from[ 'httpMethod' ])) $httpMethodList = $thePhp->to_list($from[ 'httpMethod' ]);
+        if (! empty($from[ 'name' ])) $nameList = $thePhp->to_list($from[ 'name' ]);
+        if (! empty($from[ 'tag' ])) $tagList = $thePhp->to_list($from[ 'tag' ]);
 
-        if (isset($array[ 'path' ])) $pathes[] = (array) $array[ 'path' ];
-        if (isset($array[ 'pathes' ])) $pathes[] = (array) $array[ 'pathes' ];
+        $idIndex = [];
+        $pathIndex = [];
+        $httpMethodIndex = [];
+        $nameIndex = [];
+        $tagIndex = [];
 
-        if (isset($array[ 'httpMethod' ])) $methods[] = (array) $array[ 'httpMethod' ];
-        if (isset($array[ 'httpMethods' ])) $methods[] = (array) $array[ 'httpMethods' ];
+        foreach ( $idList as $i => $id ) {
+            if (null === ($idInt = $theParse->int_positive($id))) {
+                return Result::err(
+                    $ret,
+                    [ 'Each of `from[id]` should be positive integer', $id, $i, $from ],
+                    [ __FILE__, __LINE__ ],
+                );
+            }
 
-        if (isset($array[ 'name' ])) $names[] = (array) $array[ 'name' ];
-        if (isset($array[ 'names' ])) $names[] = (array) $array[ 'names' ];
+            $idIndex[ $idInt ] = true;
+        }
+        foreach ( $pathList as $i => $path ) {
+            if (null === ($pathString = $theParse->string_not_empty($path))) {
+                return Result::err(
+                    $ret,
+                    [ 'Each of `from[path]` should be positive integer', $path, $i, $from ],
+                    [ __FILE__, __LINE__ ],
+                );
+            }
 
-        if (isset($array[ 'tag' ])) $groups[] = (array) $array[ 'tag' ];
-        if (isset($array[ 'tags' ])) $groups[] = (array) $array[ 'tags' ];
+            $pathIndex[ $pathString ] = true;
+        }
+        foreach ( $httpMethodList as $i => $httpMethod ) {
+            if (null === ($httpMethodString = $theParse->string_not_empty($httpMethod))) {
+                return Result::err(
+                    $ret,
+                    [ 'Each of `from[httpMethod]` should be positive integer', $httpMethod, $i, $from ],
+                    [ __FILE__, __LINE__ ],
+                );
+            }
+
+            $httpMethodIndex[ $httpMethodString ] = true;
+        }
+        foreach ( $nameList as $i => $name ) {
+            if (null === ($nameString = $theParse->string_not_empty($name))) {
+                return Result::err(
+                    $ret,
+                    [ 'Each of `from[name]` should be positive integer', $name, $i, $from ],
+                    [ __FILE__, __LINE__ ],
+                );
+            }
+
+            $nameIndex[ $nameString ] = true;
+        }
+        foreach ( $tagList as $i => $tag ) {
+            if (null === ($tagString = $theParse->string_not_empty($tag))) {
+                return Result::err(
+                    $ret,
+                    [ 'Each of `from[tag]` should be positive integer', $tag, $i, $from ],
+                    [ __FILE__, __LINE__ ],
+                );
+            }
+
+            $tagIndex[ $tagString ] = true;
+        }
 
         $instance = new static();
 
-        $instance->idIndex = Lib::arr()->index_int([], ...$ids);
-        $instance->nameIndex = Lib::arr()->index_string([], ...$names);
-        $instance->tagIndex = Lib::arr()->index_string([], ...$groups);
-
-        $instance->pathIndex = Lib::arr()->index_string([], ...$pathes);
-        $instance->httpMethodIndex = Lib::arr()->index_string([], ...$methods);
+        $instance->idIndex = $idIndex;
+        $instance->pathIndex = $pathIndex;
+        $instance->httpMethodIndex = $httpMethodIndex;
+        $instance->nameIndex = $nameIndex;
+        $instance->tagIndex = $tagIndex;
 
         return Result::ok($ret, $instance);
     }

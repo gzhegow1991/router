@@ -11,10 +11,10 @@ class DemoLogicExceptionFallback
         array $args = []
     )
     {
-        echo __METHOD__ . PHP_EOL;
+        echo __METHOD__ . "\n";
 
         if (! is_a($e, \LogicException::class)) {
-            return $e;
+            throw $e;
         }
 
         return __METHOD__ . ' result.';
