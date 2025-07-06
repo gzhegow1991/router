@@ -640,11 +640,8 @@ $test->expectStdout('
 [ 0 ] Unhandled exception during dispatch
 { object # Gzhegow\Router\Exception\Exception\DispatchException }
 --
--- [ 0.0 ] Unhandled exception during processing pipeline
--- { object # Gzhegow\Lib\Exception\Runtime\PipeException }
-----
----- [ 0.0.0 ] Route not found: [ /not-found ][ GET ]
----- { object # Gzhegow\Router\Exception\Runtime\NotFoundException }
+-- [ 0.0 ] Route not found: [ /not-found ][ GET ]
+-- { object # Gzhegow\Router\Exception\Runtime\NotFoundException }
 
 "[ RESULT ]" | NULL
 ');

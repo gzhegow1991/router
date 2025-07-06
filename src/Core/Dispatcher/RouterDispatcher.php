@@ -11,6 +11,7 @@ use Gzhegow\Lib\Modules\Php\Result\Result;
 use Gzhegow\Router\Core\Config\RouterConfig;
 use Gzhegow\Router\Exception\LogicException;
 use Gzhegow\Lib\Modules\Func\Pipe\PipeContext;
+use Gzhegow\Lib\Exception\Runtime\PipeException;
 use Gzhegow\Router\Exception\Runtime\NotFoundException;
 use Gzhegow\Router\Core\Invoker\RouterInvokerInterface;
 use Gzhegow\Router\Exception\Exception\DispatchException;
@@ -368,7 +369,13 @@ class RouterDispatcher implements RouterDispatcherInterface
 
                 } else {
                     throw new LogicException(
-                        [ 'The `context` should be an array like `[ &$context ]` or an instance of: ' . PipeContext::class, $context ]
+                        [
+                            ''
+                            . 'The `context` should be an array like `[ &$context ]` '
+                            . 'or an instance of: ' . PipeContext::class,
+                            //
+                            $context,
+                        ]
                     );
                 }
             }
@@ -456,9 +463,14 @@ class RouterDispatcher implements RouterDispatcherInterface
                     $input, $pipelineArgs
                 );
             }
+            catch ( \Gzhegow\Lib\Exception\Runtime\PipeException $e ) {
+                throw new DispatchException(
+                    [ 'Unhandled exception during dispatch' ], $e->getPrevious()
+                );
+            }
             catch ( \Throwable $e ) {
                 throw new DispatchException(
-                    [ 'Unhandled exception during dispatch', $e ], $e
+                    [ 'Unhandled exception during dispatch' ], $e
                 );
             }
         }
