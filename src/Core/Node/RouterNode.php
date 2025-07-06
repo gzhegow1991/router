@@ -13,11 +13,11 @@ class RouterNode implements \Serializable
     /**
      * @var array<string, RouterNode>
      */
-    public $childrenByPart = [];
+    public $childNodeListByPart = [];
     /**
      * @var array<string, RouterNode>
      */
-    public $childrenByRegex = [];
+    public $childNodeListByRegex = [];
 
     /**
      * @var array<string, array<int, bool>>

@@ -450,23 +450,23 @@ class RouterFacade implements RouterInterface
 
             } else {
                 if ($isPattern) {
-                    $routeNode = $routeNodePrevious->childrenByRegex[ $partRegex ] ?? null;
+                    $routeNode = $routeNodePrevious->childNodeListByRegex[ $partRegex ] ?? null;
 
                     if (null === $routeNode) {
                         $routeNode = $this->routerFactory->newRouterNode();
                         $routeNode->part = $part;
 
-                        $routeNodePrevious->childrenByRegex[ $partRegex ] = $routeNode;
+                        $routeNodePrevious->childNodeListByRegex[ $partRegex ] = $routeNode;
                     }
 
                 } else {
-                    $routeNode = $routeNodePrevious->childrenByPart[ $part ] ?? null;
+                    $routeNode = $routeNodePrevious->childNodeListByPart[ $part ] ?? null;
 
                     if (null === $routeNode) {
                         $routeNode = $this->routerFactory->newRouterNode();
                         $routeNode->part = $part;
 
-                        $routeNodePrevious->childrenByPart[ $part ] = $routeNode;
+                        $routeNodePrevious->childNodeListByPart[ $part ] = $routeNode;
                     }
                 }
 

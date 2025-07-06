@@ -285,8 +285,8 @@ class RouterDispatcher implements RouterDispatcherInterface
                 $routeSubpathList[] = implode('/', $routeSubpathCurrent);
 
             } else {
-                if (isset($routeNodeCurrent->childrenByPart[ $requestUriPart ])) {
-                    $routeNodeCurrent = $routeNodeCurrent->childrenByPart[ $requestUriPart ];
+                if (isset($routeNodeCurrent->childNodeListByPart[ $requestUriPart ])) {
+                    $routeNodeCurrent = $routeNodeCurrent->childNodeListByPart[ $requestUriPart ];
 
                     $routeSubpathCurrent[] = $routeNodeCurrent->part;
                     $routeSubpathList[] = implode('/', $routeSubpathCurrent);
@@ -294,7 +294,7 @@ class RouterDispatcher implements RouterDispatcherInterface
                     continue;
                 }
 
-                foreach ( $routeNodeCurrent->childrenByRegex as $regex => $routeNode ) {
+                foreach ( $routeNodeCurrent->childNodeListByRegex as $regex => $routeNode ) {
                     if (preg_match('/^' . $regex . '$/', $requestUriPart, $matches)) {
                         $routeNodeCurrent = $routeNode;
 
