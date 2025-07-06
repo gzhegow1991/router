@@ -243,63 +243,73 @@ interface RouterInterface
 
 
     /**
-     * @param int[] $routeIds
+     * @param int[] $idList
      *
      * @return Route[]
      */
-    public function matchAllByIds(array $routeIds) : array;
+    public function matchAllByIds(array $idList) : array;
 
     /**
-     * @param int[] $routeIds
+     * @param int[] $idList
      */
-    public function matchFirstByIds(array $routeIds) : ?Route;
+    public function matchFirstByIds(array $idList) : ?Route;
 
 
     /**
-     * @param (string|RouteName)[] $routeNames
+     * @param (string|RouteName)[] $nameList
      *
      * @return Route[]|Route[][]
      */
-    public function matchAllByNames(array $routeNames, ?bool $unique = null) : array;
+    public function matchAllByNames(array $nameList, ?bool $unique = null) : array;
 
     /**
-     * @param (string|RouteName)[] $routeNames
+     * @param (string|RouteName)[] $nameList
      */
-    public function matchFirstByNames(array $routeNames) : ?Route;
+    public function matchFirstByNames(array $nameList) : ?Route;
 
 
     /**
-     * @param (string|RouteTag)[] $routeTags
+     * @param (string|RouteTag)[] $tagList
      *
      * @return Route[]|Route[][]
      */
-    public function matchAllByTags(array $routeTags, ?bool $unique = null) : array;
+    public function matchAllByTags(array $tagList, ?bool $unique = null) : array;
 
     /**
-     * @param (string|RouteTag)[] $routeTags
+     * @param (string|RouteTag)[] $tagList
      */
-    public function matchFirstByTags(array $routeTags) : ?Route;
+    public function matchFirstByTags(array $tagList) : ?Route;
 
 
     /**
      * @param array{
+     *     name: string|false|null,
+     *     tag: string|false|null,
+     *     method: string|false|null,
+     *     path: string|false|null,
      *     0: string|false|null,
      *     1: string|false|null,
      *     2: string|false|null,
-     * }[] $routeNameTagMethods
+     *     3: string|false|null,
+     * }[] $paramsList
      *
      * @return Route[]|Route[][]
      */
-    public function matchAllByNameTagMethods(array $routeNameTagMethods, ?bool $unique = null) : array;
+    public function matchAllByParams(array $paramsList, ?bool $unique = null) : array;
 
     /**
      * @param array{
+     *     name: string|false|null,
+     *     tag: string|false|null,
+     *     method: string|false|null,
+     *     path: string|false|null,
      *     0: string|false|null,
      *     1: string|false|null,
      *     2: string|false|null,
-     * }[] $routeNameTagMethods
+     *     3: string|false|null,
+     * }[] $paramsList
      */
-    public function matchFirstByNameTagMethods(array $routeNameTagMethods) : ?Route;
+    public function matchFirstByParams(array $paramsList) : ?Route;
 
 
     /**

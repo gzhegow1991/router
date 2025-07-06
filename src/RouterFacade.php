@@ -231,12 +231,12 @@ class RouterFacade implements RouterInterface
 
         $fn($this);
 
-        if ($this->isRouterChanged) {
-            $this->cacheSave();
-        }
-
         if ($commit) {
             $this->commit();
+        }
+
+        if ($this->isRouterChanged) {
+            $this->cacheSave();
         }
 
         return $this;
@@ -709,86 +709,96 @@ class RouterFacade implements RouterInterface
 
 
     /**
-     * @param int[] $routeIds
+     * @param int[] $idList
      *
      * @return Route[]
      */
-    public function matchAllByIds(array $routeIds) : array
+    public function matchAllByIds(array $idList) : array
     {
-        return $this->routerMatcher->matchAllByIds($routeIds);
+        return $this->routerMatcher->matchAllByIds($idList);
     }
 
     /**
-     * @param int[] $routeIds
+     * @param int[] $idList
      */
-    public function matchFirstByIds(array $routeIds) : ?Route
+    public function matchFirstByIds(array $idList) : ?Route
     {
-        return $this->routerMatcher->matchFirstByIds($routeIds);
+        return $this->routerMatcher->matchFirstByIds($idList);
     }
 
 
     /**
-     * @param (string|RouteName)[] $routeNames
+     * @param (string|RouteName)[] $nameList
      *
      * @return Route[]|Route[][]
      */
-    public function matchAllByNames(array $routeNames, ?bool $unique = null) : array
+    public function matchAllByNames(array $nameList, ?bool $unique = null) : array
     {
-        return $this->routerMatcher->matchAllByNames($routeNames, $unique);
+        return $this->routerMatcher->matchAllByNames($nameList, $unique);
     }
 
     /**
-     * @param (string|RouteName)[] $routeNames
+     * @param (string|RouteName)[] $nameList
      */
-    public function matchFirstByNames(array $routeNames) : ?Route
+    public function matchFirstByNames(array $nameList) : ?Route
     {
-        return $this->routerMatcher->matchFirstByNames($routeNames);
+        return $this->routerMatcher->matchFirstByNames($nameList);
     }
 
 
     /**
-     * @param (string|RouteTag)[] $routeTags
+     * @param (string|RouteTag)[] $tagList
      *
      * @return Route[]|Route[][]
      */
-    public function matchAllByTags(array $routeTags, ?bool $unique = null) : array
+    public function matchAllByTags(array $tagList, ?bool $unique = null) : array
     {
-        return $this->routerMatcher->matchAllByTags($routeTags, $unique);
+        return $this->routerMatcher->matchAllByTags($tagList, $unique);
     }
 
     /**
-     * @param (string|RouteTag)[] $routeTags
+     * @param (string|RouteTag)[] $tagList
      */
-    public function matchFirstByTags(array $routeTags) : ?Route
+    public function matchFirstByTags(array $tagList) : ?Route
     {
-        return $this->routerMatcher->matchFirstByTags($routeTags);
+        return $this->routerMatcher->matchFirstByTags($tagList);
     }
 
 
     /**
      * @param array{
+     *     name: string|false|null,
+     *     tag: string|false|null,
+     *     method: string|false|null,
+     *     path: string|false|null,
      *     0: string|false|null,
      *     1: string|false|null,
      *     2: string|false|null,
-     * }[] $routeNameTagMethods
+     *     3: string|false|null,
+     * }[] $paramsList
      *
      * @return Route[]|Route[][]
      */
-    public function matchAllByNameTagMethods(array $routeNameTagMethods, ?bool $unique = null) : array
+    public function matchAllByParams(array $paramsList, ?bool $unique = null) : array
     {
-        return $this->routerMatcher->matchAllByNameTagMethods($routeNameTagMethods, $unique);
+        return $this->routerMatcher->matchAllByParams($paramsList, $unique);
     }
 
     /**
      * @param array{
+     *     name: string|false|null,
+     *     tag: string|false|null,
+     *     method: string|false|null,
+     *     path: string|false|null,
      *     0: string|false|null,
      *     1: string|false|null,
      *     2: string|false|null,
-     * }[] $routeNameTagMethods
+     *     3: string|false|null,
+     * }[] $paramsList
      */
-    public function matchFirstByNameTagMethods(array $routeNameTagMethods) : ?Route
+    public function matchFirstByParams(array $paramsList) : ?Route
     {
-        return $this->routerMatcher->matchFirstByNameTagMethods($routeNameTagMethods);
+        return $this->routerMatcher->matchFirstByParams($paramsList);
     }
 
 
@@ -1036,6 +1046,8 @@ class RouterFacade implements RouterInterface
     {
         $attributesIndex = null;
 
+        $theType = Lib::type();
+
         $patternDict = $this->patternCollection->patternDict;
 
         $regex = ''
@@ -1057,7 +1069,7 @@ class RouterFacade implements RouterInterface
 
                 if (isset($attributesIndex[ $attribute ])) {
                     throw new RuntimeException(
-                        'The `path` should not contain same attribute few times: ' . $attribute
+                        [ 'The `path` should not contain same attribute few times: ' . $attribute, $attribute ]
                     );
                 }
 
@@ -1080,9 +1092,9 @@ class RouterFacade implements RouterInterface
 
         unset($patternDict);
 
-        if (! Lib::type()->regex($r, '/^' . $pathRegex . '$/')) {
+        if (! $theType->regex($r, '/^' . $pathRegex . '$/')) {
             throw new RuntimeException(
-                'The output regex is not valid: ' . $pathRegex
+                [ 'The output regex is not valid: ' . $pathRegex, $pathRegex ]
             );
         }
 

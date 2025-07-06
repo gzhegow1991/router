@@ -9,7 +9,7 @@ use Gzhegow\Router\Core\Route\Struct\RouteName;
 use Gzhegow\Router\Core\Route\Struct\RouteMethod;
 
 
-class RouterNameTagMethodContract implements RouterMatcherContractInterface
+class DefaultRouterMatcherContract implements RouterMatcherContractInterface
 {
     /**
      * @var string|false|null
@@ -19,10 +19,15 @@ class RouterNameTagMethodContract implements RouterMatcherContractInterface
      * @var string|false|null
      */
     protected $tag;
+
     /**
      * @var string|false|null
      */
     protected $method;
+    /**
+     * @var string|false|null
+     */
+    protected $path;
 
 
     private function __construct()
@@ -80,6 +85,7 @@ class RouterNameTagMethodContract implements RouterMatcherContractInterface
         $fromName = $from[ 'name' ] ?? $from[ 0 ] ?? null;
         $fromTag = $from[ 'tag' ] ?? $from[ 1 ] ?? null;
         $fromMethod = $from[ 'method' ] ?? $from[ 2 ] ?? null;
+        $fromPath = $from[ 'path' ] ?? $from[ 3 ] ?? null;
 
         if (null === $fromName) {
             $fromName = null;
@@ -129,10 +135,27 @@ class RouterNameTagMethodContract implements RouterMatcherContractInterface
             $fromMethod = $fromMethod->getValue();
         }
 
+        if (null === $fromPath) {
+            $fromPath = null;
+
+        } elseif (false === $fromPath) {
+            $fromPath = false;
+
+        } else {
+            $fromPath = RouteMethod::from($fromPath, $retCur = Result::asValue());
+
+            if ($retCur->isErr()) {
+                return Result::err($ret, $retCur);
+            }
+
+            $fromPath = $fromPath->getValue();
+        }
+
         $instance = new static();
         $instance->name = $fromName;
         $instance->tag = $fromTag;
         $instance->method = $fromMethod;
+        $instance->path = $fromPath;
 
         return Result::ok($ret, $instance);
     }
@@ -189,6 +212,12 @@ class RouterNameTagMethodContract implements RouterMatcherContractInterface
                 if (! isset($route->methodIndex[ $this->method ])) {
                     return false;
                 }
+            }
+        }
+
+        if (null !== $this->path) {
+            if ($route->path !== $this->path) {
+                return false;
             }
         }
 

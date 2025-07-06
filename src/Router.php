@@ -349,28 +349,38 @@ class Router
 
     /**
      * @param array{
+     *     name: string|false|null,
+     *     tag: string|false|null,
+     *     method: string|false|null,
+     *     path: string|false|null,
      *     0: string|false|null,
      *     1: string|false|null,
      *     2: string|false|null,
-     * }[] $routeNameTagMethods
+     *     3: string|false|null,
+     * }[] $paramsList
      *
      * @return Route[]|Route[][]
      */
-    public static function matchAllByNameTags(array $routeNameTagMethods, ?bool $unique = null) : array
+    public static function matchAllByParams(array $paramsList, ?bool $unique = null) : array
     {
-        return static::$facade->matchAllByNameTagMethods($routeNameTagMethods, $unique);
+        return static::$facade->matchAllByParams($paramsList, $unique);
     }
 
     /**
      * @param array{
+     *     name: string|false|null,
+     *     tag: string|false|null,
+     *     method: string|false|null,
+     *     path: string|false|null,
      *     0: string|false|null,
      *     1: string|false|null,
      *     2: string|false|null,
-     * }[] $routeNameTagMethods
+     *     3: string|false|null,
+     * }[] $paramsList
      */
-    public static function matchFirstByNameTags(array $routeNameTagMethods) : ?Route
+    public static function matchFirstByParams(array $paramsList) : ?Route
     {
-        return static::$facade->matchFirstByNameTagMethods($routeNameTagMethods);
+        return static::$facade->matchFirstByParams($paramsList);
     }
 
 

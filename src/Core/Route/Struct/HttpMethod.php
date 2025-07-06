@@ -3,7 +3,6 @@
 namespace Gzhegow\Router\Core\Route\Struct;
 
 use Gzhegow\Lib\Lib;
-use Gzhegow\Lib\Modules\Php\Result\Ret;
 use Gzhegow\Lib\Modules\Php\Result\Result;
 
 

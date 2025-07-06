@@ -171,7 +171,7 @@ $router->cacheRemember(
     static function (\Gzhegow\Router\RouterInterface $router) {
         // > добавляем паттерн, который можно использовать в маршрутах
         $router->pattern('{id}', '[0-9]+');
-        $router->pattern('{lang}', '[a-z]{2}');
+        $router->pattern('{lang}', '(en|ru)');
 
 
         // // > так можно добавлять маршруты в главную группу
@@ -188,22 +188,17 @@ $router->cacheRemember(
         //
         $router->route('/', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'indexGet' ], 'index');
         $router->route('/', 'POST', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'indexPost' ], 'index');
-
-        // > будьте внимательны, это разные маршруты, чтобы сделать их одним и тем же (ИЛИ):
-        // - 1) уберите слеш в конце
-        // - 2) установите в конфиге параметр dispatchTrailingSlashMode на NEVER или ALWAYS
-        // - 3) если хотите, чтобы роутер запрещал/требовал ставить косую черту в конце, поставьте параметр compileTrailingSlashMode на NEVER или ALWAYS
-        $router->route('/{lang}', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'indexGet' ], 'index', 'i18n');
-        $router->route('/{lang}', 'POST', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'indexPost' ], 'index', 'i18n');
+        $router->route('/{lang}', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'indexGet' ], 'index', '+lang');
+        $router->route('/{lang}', 'POST', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'indexPost' ], 'index', '+lang');
 
         // > будьте внимательны, указанные ниже маршруты - разные, отличаются закрывающимся slash, чтобы сделать их одним и тем же (ИЛИ):
         // - 1) уберите slash в конце
         // - 2) установите в конфиге параметр `dispatchTrailingSlashMode` на NEVER или ALWAYS
         // - 3) если хотите, чтобы роутер запрещал/требовал ставить slash в конце, поставьте параметр `compileTrailingSlashMode` на NEVER или ALWAYS
-        $router->route('/hello-world', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'helloWorldGet' ]);
-        $router->route('/hello-world/', 'POST', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'helloWorldPost' ]);
-        $router->route('/{lang}/hello-world', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'helloWorldGet' ], null, 'i18n');
-        $router->route('/{lang}/hello-world/', 'POST', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'helloWorldPost' ], null, 'i18n');
+        $router->route('/hello-world', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'helloWorldGet' ], null, '-lang');
+        $router->route('/hello-world/', 'POST', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'helloWorldPost' ], null, '-lang');
+        $router->route('/{lang}/hello-world', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'helloWorldGet' ], null, '+lang');
+        $router->route('/{lang}/hello-world/', 'POST', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'helloWorldPost' ], null, '+lang');
 
         // // > добавляет middleware-посредник по пути (они отработают даже если маршрут не найден, но путь начинался с указанного)
         // // > будьте внимательны, посредники отрабатывают в той последовательности, в которой заданы, если задать их до группы, то и отработают они раньше
@@ -414,21 +409,22 @@ $fn = function () use ($ffn, $router) {
 
 
     $nameTagMethodList = [
-        '--' => [ null, null, null ],
-        '-!' => [ null, false, null ],
-        '!-' => [ false, null, null ],
-        '!!' => [ false, false, null ],
+        // key => [ name, tag, method, path ]
+        '--' => [ null, null ],
+        '-!' => [ null, false ],
+        '!-' => [ false, null ],
+        '!!' => [ false, false ],
 
-        '-t' => [ null, 'i18n', null ],
-        '!t' => [ false, 'i18n', null ],
+        '-t' => [ null, '+lang' ],
+        '!t' => [ false, '+lang' ],
 
-        'n-' => [ 'index', null, null ],
-        'n!' => [ 'index', false, null ],
+        'n-' => [ 'index', null ],
+        'n!' => [ 'index', false ],
 
-        'nt' => [ 'index', 'i18n', null ],
+        'nt' => [ 'index', '+lang' ],
     ];
 
-    $batch = $router->matchAllByNameTagMethods($nameTagMethodList);
+    $batch = $router->matchAllByParams($nameTagMethodList);
     foreach ( $batch as $i => $routes ) {
         $ffn->print('Attribute index', $i);
         $ffn->print_array_multiline($routes);
@@ -462,9 +458,7 @@ $test->expectStdout('
 ###
 [
   1 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
-  2 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
-  5 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
-  6 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }"
+  2 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }"
 ]
 ###
 
@@ -480,10 +474,7 @@ $test->expectStdout('
 
 "Attribute index" | "!!"
 ###
-[
-  5 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
-  6 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }"
-]
+[]
 ###
 
 "Attribute index" | "-t"

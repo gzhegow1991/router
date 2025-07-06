@@ -34,7 +34,7 @@ class Route implements \Serializable
     public $compiledActionAttributes = [];
 
     /**
-     * @var string
+     * @var string|null
      */
     public $name;
 

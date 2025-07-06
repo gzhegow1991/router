@@ -11,7 +11,6 @@ use Gzhegow\Lib\Modules\Php\Result\Result;
 use Gzhegow\Router\Core\Config\RouterConfig;
 use Gzhegow\Router\Exception\LogicException;
 use Gzhegow\Lib\Modules\Func\Pipe\PipeContext;
-use Gzhegow\Lib\Exception\Runtime\PipeException;
 use Gzhegow\Router\Exception\Runtime\NotFoundException;
 use Gzhegow\Router\Core\Invoker\RouterInvokerInterface;
 use Gzhegow\Router\Exception\Exception\DispatchException;

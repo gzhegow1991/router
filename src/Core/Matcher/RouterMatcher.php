@@ -8,7 +8,7 @@ use Gzhegow\Router\Core\Route\Route;
 use Gzhegow\Router\Core\Route\Struct\RouteTag;
 use Gzhegow\Router\Core\Route\Struct\RouteName;
 use Gzhegow\Router\Core\Collection\RouterRouteCollection;
-use Gzhegow\Router\Core\Matcher\Contract\RouterNameTagMethodContract;
+use Gzhegow\Router\Core\Matcher\Contract\DefaultRouterMatcherContract;
 use Gzhegow\Router\Core\Matcher\Contract\RouterMatcherContractInterface;
 
 
@@ -27,27 +27,27 @@ class RouterMatcher implements RouterMatcherInterface
 
 
     /**
-     * @param int[] $routeIds
+     * @param int[] $idList
      *
      * @return Route[]
      */
-    public function matchAllByIds(array $routeIds) : array
+    public function matchAllByIds(array $idList) : array
     {
         $theParseThrow = Lib::parseThrow();
 
         $result = [];
 
-        $idList = [];
-        foreach ( $routeIds as $idx => $routeId ) {
-            $idList[ $idx ] = $theParseThrow->int_non_negative($routeId);
-        }
-
         $routeList = $this->routeCollection->routeList;
 
-        // > отбрасываем оригинальные индексы, поскольку работаем с первичными
-        foreach ( $idList as $id ) {
-            if (isset($routeList[ $id ])) {
-                $result[ $id ] = $routeList[ $id ];
+        $routeIdList = [];
+        foreach ( $idList as $idx => $id ) {
+            $routeIdList[ $idx ] = $theParseThrow->int_non_negative($id);
+        }
+
+        // > отбрасываем оригинальные индексы, поскольку работаем с первичными и будет только одно совпадение
+        foreach ( $routeIdList as $routeId ) {
+            if (isset($routeList[ $routeId ])) {
+                $result[ $routeId ] = $routeList[ $routeId ];
             }
         }
 
@@ -55,25 +55,25 @@ class RouterMatcher implements RouterMatcherInterface
     }
 
     /**
-     * @param int[] $routeIds
+     * @param int[] $idList
      */
-    public function matchFirstByIds(array $routeIds) : ?Route
+    public function matchFirstByIds(array $idList) : ?Route
     {
         $theParseThrow = Lib::parseThrow();
 
         $result = null;
 
-        $idList = [];
-        foreach ( $routeIds as $idx => $routeId ) {
-            $idList[ $idx ] = $theParseThrow->int_non_negative($routeId);
-        }
-
         $routeList = $this->routeCollection->routeList;
 
-        // > отбрасываем оригинальные индексы, поскольку работаем с первичными
-        foreach ( $idList as $id ) {
-            if (isset($routeList[ $id ])) {
-                $result = $routeList[ $id ];
+        $routeIdList = [];
+        foreach ( $idList as $idx => $id ) {
+            $routeIdList[ $idx ] = $theParseThrow->int_non_negative($id);
+        }
+
+        // > отбрасываем оригинальные индексы, поскольку работаем с первичными и будет только одно совпадение
+        foreach ( $routeIdList as $routeId ) {
+            if (isset($routeList[ $routeId ])) {
+                $result = $routeList[ $routeId ];
 
                 break;
             }
@@ -84,29 +84,29 @@ class RouterMatcher implements RouterMatcherInterface
 
 
     /**
-     * @param (string|RouteName)[] $routeNames
+     * @param (string|RouteName)[] $nameList
      *
      * @return Route[]|Route[][]
      */
-    public function matchAllByNames(array $routeNames, ?bool $unique = null) : array
+    public function matchAllByNames(array $nameList, ?bool $unique = null) : array
     {
         $unique = $unique ?? false;
 
         $result = [];
 
-        $nameList = [];
-        foreach ( $routeNames as $idx => $routeName ) {
-            $nameList[ $idx ] = RouteName::from($routeName);
-        }
-
         $routeIndexByName = $this->routeCollection->routeIndexByName;
+
+        $routeNameList = [];
+        foreach ( $nameList as $idx => $name ) {
+            $routeNameList[ $idx ] = RouteName::from($name);
+        }
 
         $matchIndex = [];
         $namesIndex = [];
-        foreach ( $nameList as $idx => $name ) {
+        foreach ( $routeNameList as $idx => $routeName ) {
             $result[ $idx ] = [];
 
-            $nameString = $name->getValue();
+            $nameString = $routeName->getValue();
 
             if (isset($routeIndexByName[ $nameString ])) {
                 $matchIndex += $routeIndexByName[ $nameString ];
@@ -139,22 +139,22 @@ class RouterMatcher implements RouterMatcherInterface
     }
 
     /**
-     * @param (string|RouteName)[] $routeNames
+     * @param (string|RouteName)[] $nameList
      */
-    public function matchFirstByNames(array $routeNames) : ?Route
+    public function matchFirstByNames(array $nameList) : ?Route
     {
         $result = null;
 
-        $nameList = [];
-        foreach ( $routeNames as $idx => $routeName ) {
-            $nameList[ $idx ] = RouteName::from($routeName);
-        }
-
         $routeIndexByName = $this->routeCollection->routeIndexByName;
 
+        $routeNameList = [];
+        foreach ( $nameList as $idx => $name ) {
+            $routeNameList[ $idx ] = RouteName::from($name);
+        }
+
         $matchIndex = [];
-        foreach ( $nameList as $name ) {
-            $nameString = $name->getValue();
+        foreach ( $routeNameList as $routeName ) {
+            $nameString = $routeName->getValue();
 
             if (isset($routeIndexByName[ $nameString ])) {
                 $matchIndex += $routeIndexByName[ $nameString ];
@@ -172,29 +172,29 @@ class RouterMatcher implements RouterMatcherInterface
 
 
     /**
-     * @param (string|RouteTag)[] $routeTags
+     * @param (string|RouteTag)[] $tagList
      *
      * @return Route[]|Route[][]
      */
-    public function matchAllByTags(array $routeTags, ?bool $unique = null) : array
+    public function matchAllByTags(array $tagList, ?bool $unique = null) : array
     {
         $unique = $unique ?? false;
 
         $result = [];
 
-        $tagList = [];
-        foreach ( $routeTags as $idx => $routeTag ) {
-            $tagList[ $idx ] = RouteTag::from($routeTag);
-        }
-
         $routeIndexByTag = $this->routeCollection->routeIndexByTag;
+
+        $routeTagList = [];
+        foreach ( $tagList as $idx => $tag ) {
+            $routeTagList[ $idx ] = RouteTag::from($tag);
+        }
 
         $matchIndex = [];
         $tagsIndex = [];
-        foreach ( $tagList as $idx => $tag ) {
+        foreach ( $routeTagList as $idx => $routeTag ) {
             $result[ $idx ] = [];
 
-            $tagString = $tag->getValue();
+            $tagString = $routeTag->getValue();
 
             if (isset($routeIndexByTag[ $tagString ])) {
                 $matchIndex += $routeIndexByTag[ $tagString ];
@@ -229,22 +229,22 @@ class RouterMatcher implements RouterMatcherInterface
     }
 
     /**
-     * @param (string|RouteTag)[] $routeTags
+     * @param (string|RouteTag)[] $tagList
      */
-    public function matchFirstByTags(array $routeTags) : ?Route
+    public function matchFirstByTags(array $tagList) : ?Route
     {
         $result = null;
 
-        $tagList = [];
-        foreach ( $routeTags as $idx => $routeTag ) {
-            $tagList[ $idx ] = RouteTag::from($routeTag);
-        }
-
         $routeIndexByTag = $this->routeCollection->routeIndexByTag;
 
+        $routeTagList = [];
+        foreach ( $tagList as $idx => $tag ) {
+            $routeTagList[ $idx ] = RouteTag::from($tag);
+        }
+
         $matchIndex = [];
-        foreach ( $tagList as $tag ) {
-            $tagString = $tag->getValue();
+        foreach ( $routeTagList as $routeTag ) {
+            $tagString = $routeTag->getValue();
 
             if (isset($routeIndexByTag[ $tagString ])) {
                 $matchIndex += $routeIndexByTag[ $tagString ];
@@ -263,21 +263,26 @@ class RouterMatcher implements RouterMatcherInterface
 
     /**
      * @param array{
+     *     name: string|false|null,
+     *     tag: string|false|null,
+     *     method: string|false|null,
+     *     path: string|false|null,
      *     0: string|false|null,
      *     1: string|false|null,
      *     2: string|false|null,
-     * }[] $routeNameTagMethods
+     *     3: string|false|null,
+     * }[] $paramsList
      *
      * @return Route[]|Route[][]
      */
-    public function matchAllByNameTagMethods(array $routeNameTagMethods, ?bool $unique = null) : array
+    public function matchAllByParams(array $paramsList, ?bool $unique = null) : array
     {
         $unique = $unique ?? false;
 
         $result = [];
 
-        foreach ( $routeNameTagMethods as $idx => $array ) {
-            $contract = RouterNameTagMethodContract::from($array);
+        foreach ( $paramsList as $idx => $array ) {
+            $contract = DefaultRouterMatcherContract::from($array);
 
             if ($unique) {
                 $result += $this->matchByContract($contract);
@@ -293,17 +298,22 @@ class RouterMatcher implements RouterMatcherInterface
 
     /**
      * @param array{
+     *     name: string|false|null,
+     *     tag: string|false|null,
+     *     method: string|false|null,
+     *     path: string|false|null,
      *     0: string|false|null,
      *     1: string|false|null,
      *     2: string|false|null,
-     * }[] $routeNameTagMethods
+     *     3: string|false|null,
+     * }[] $paramsList
      */
-    public function matchFirstByNameTagMethods(array $routeNameTagMethods) : ?Route
+    public function matchFirstByParams(array $paramsList) : ?Route
     {
         $result = null;
 
-        foreach ( $routeNameTagMethods as $array ) {
-            $contract = RouterNameTagMethodContract::from($array);
+        foreach ( $paramsList as $array ) {
+            $contract = DefaultRouterMatcherContract::from($array);
 
             if ($route = $this->matchFirstByContract($contract)) {
                 $result = $route;

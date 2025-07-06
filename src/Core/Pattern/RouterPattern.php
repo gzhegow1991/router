@@ -4,7 +4,6 @@ namespace Gzhegow\Router\Core\Pattern;
 
 use Gzhegow\Lib\Lib;
 use Gzhegow\Router\Router;
-use Gzhegow\Lib\Modules\Php\Result\Ret;
 use Gzhegow\Lib\Modules\Php\Result\Result;
 
 
@@ -159,25 +158,23 @@ class RouterPattern implements \Serializable
             );
         }
 
-        $symbols = [ '/', '|', '(', ')' ];
-
-        $forbidden = implode('', $symbols);
-        $forbidden = preg_quote($forbidden, '/');
-        if (preg_match("/[{$forbidden}]/", $regexString)) {
+        if ($isContainSlashes = (false !== strpos($regexString, '/'))) {
             return Result::err(
                 $ret,
-                [
-                    ''
-                    . 'The `from[1]` should not contain symbols: '
-                    . '[ ' . implode(' ][ ', $symbols) . ' ]',
-                    //
-                    $from,
-                ],
+                [ 'The `from[1]` should not contain slash symbols', $from ],
                 [ __FILE__, __LINE__ ]
             );
         }
 
-        if (! Lib::type()->regex($var, $regexp = "/{$regexString}/")) {
+        if ($isContainNamedGroups = preg_match('/\(\?P\<[^\>]+\>/', $regexString)) {
+            return Result::err(
+                $ret,
+                [ 'The `from[1]` should not contain named groups', $from ],
+                [ __FILE__, __LINE__ ]
+            );
+        }
+
+        if (! $theType->regex($var, $regexp = "/{$regexString}/")) {
             return Result::err(
                 $ret,
                 [ 'The `from[1]` caused invalid regex: ' . $regexp, $from ],

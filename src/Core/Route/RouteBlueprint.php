@@ -4,7 +4,6 @@ namespace Gzhegow\Router\Core\Route;
 
 use Gzhegow\Router\Core\Route\Struct\RouteTag;
 use Gzhegow\Router\Core\Route\Struct\RouteName;
-use Gzhegow\Router\Exception\LogicException;
 use Gzhegow\Router\Core\Route\Struct\RoutePath;
 use Gzhegow\Router\Core\Route\Struct\RouteMethod;
 use Gzhegow\Router\Core\Handler\Action\RouterGenericHandlerAction;
