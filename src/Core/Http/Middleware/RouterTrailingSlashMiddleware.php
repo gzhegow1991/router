@@ -2,6 +2,7 @@
 
 namespace Gzhegow\Router\Core\Http\Middleware;
 
+use Gzhegow\Lib\Lib;
 use Gzhegow\Router\Core\Route\Route;
 
 
@@ -14,8 +15,13 @@ class RouterTrailingSlashMiddleware
         array $args = []
     )
     {
-        /** @var Route $route */
+        if (Lib::php()->is_terminal()) {
+            return $fnNext($input, $args);
+        }
 
+        /**
+         * @var Route $route
+         */
         $route = $args[ 0 ] ?? null;
 
         if (null === $route) {
