@@ -323,13 +323,23 @@ class RouterDispatcher implements RouterDispatcherInterface
 
             $intersect[] = $dispatchRouteIndex;
 
-            if (! $routerConfig->dispatchIgnoreMethod) {
-                $intersect[] = $routeNodeCurrent->routeIndexByMethod[ $dispatchRequestMethod ] ?? [];
+            if (true
+                && ! $routerConfig->dispatchIgnoreMethod
+                && isset($routeNodeCurrent->routeIndexByMethod[ $dispatchRequestMethod ])
+            ) {
+                $intersect[] = $routeNodeCurrent->routeIndexByMethod[ $dispatchRequestMethod ];
             }
 
-            $indexMatch = array_intersect_key(...$intersect);
+            $indexMatch = [];
 
-            if ($indexMatch) {
+            if (count($intersect) > 1) {
+                $indexMatch = array_intersect_key(...$intersect);
+
+            } elseif ([] !== $intersect) {
+                $indexMatch = $intersect[ 0 ];
+            }
+
+            if ([] !== $indexMatch) {
                 $dispatchRouteId = key($indexMatch);
             }
         }
