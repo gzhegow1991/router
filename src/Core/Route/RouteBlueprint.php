@@ -7,9 +7,9 @@ use Gzhegow\Router\Core\Route\Struct\RouteName;
 use Gzhegow\Router\Exception\LogicException;
 use Gzhegow\Router\Core\Route\Struct\RoutePath;
 use Gzhegow\Router\Core\Route\Struct\RouteMethod;
-use Gzhegow\Router\Core\Handler\Action\GenericHandlerAction;
-use Gzhegow\Router\Core\Handler\Fallback\GenericHandlerFallback;
-use Gzhegow\Router\Core\Handler\Middleware\GenericHandlerMiddleware;
+use Gzhegow\Router\Core\Handler\Action\RouterGenericHandlerAction;
+use Gzhegow\Router\Core\Handler\Fallback\RouterGenericHandlerFallback;
+use Gzhegow\Router\Core\Handler\Middleware\RouterGenericHandlerMiddleware;
 
 
 class RouteBlueprint
@@ -19,7 +19,7 @@ class RouteBlueprint
      */
     public $path;
     /**
-     * @var GenericHandlerAction
+     * @var RouterGenericHandlerAction
      */
     public $action;
     /**
@@ -37,11 +37,11 @@ class RouteBlueprint
     public $tagIndex = [];
 
     /**
-     * @var array<string, GenericHandlerMiddleware>
+     * @var array<string, RouterGenericHandlerMiddleware>
      */
     public $middlewareDict = [];
     /**
-     * @var array<string, GenericHandlerFallback>
+     * @var array<string, RouterGenericHandlerFallback>
      */
     public $fallbackDict = [];
 
@@ -70,7 +70,7 @@ class RouteBlueprint
      */
     public function action($action)
     {
-        $actionObject = GenericHandlerAction::from($action);
+        $actionObject = RouterGenericHandlerAction::from($action);
 
         $this->action = $actionObject;
 
@@ -216,7 +216,7 @@ class RouteBlueprint
      */
     public function middleware($middleware)
     {
-        $_middleware = GenericHandlerMiddleware::from($middleware);
+        $_middleware = RouterGenericHandlerMiddleware::from($middleware);
 
         $this->middlewareDict[ $_middleware->getKey() ] = $_middleware;
 
@@ -253,7 +253,7 @@ class RouteBlueprint
      */
     public function fallback($fallback)
     {
-        $_fallback = GenericHandlerFallback::from($fallback);
+        $_fallback = RouterGenericHandlerFallback::from($fallback);
 
         $this->fallbackDict[ $_fallback->getKey() ] = $_fallback;
 

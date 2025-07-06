@@ -13,7 +13,6 @@ use Gzhegow\Router\Exception\RuntimeException;
  * @property array<string, array<int, bool>> $routeIndexByTag
  *
  * @property array<string, bool>             $routeMapHttpMethodPathToBoolean
- * @property array<string, string>           $routeMapPathToName
  * @property array<string, bool>             $routeMapSplIdToBoolean
  */
 class RouterRouteCollection implements \Serializable
@@ -42,10 +41,6 @@ class RouterRouteCollection implements \Serializable
      */
     protected $routeMapHttpMethodPathToBoolean = [];
     /**
-     * @var array<string, string>
-     */
-    protected $routeMapPathToName = [];
-    /**
      * @var array<string, bool>
      */
     protected $routeMapSplIdToBool = [];
@@ -65,9 +60,6 @@ class RouterRouteCollection implements \Serializable
 
             case 'routeMapHttpMethodPathToBoolean':
                 return $this->routeMapHttpMethodPathToBoolean;
-
-            case 'routeMapPathToName':
-                return $this->routeMapPathToName;
 
             case 'routeMapSplIdToBool':
                 return $this->routeMapSplIdToBool;
@@ -166,7 +158,10 @@ class RouterRouteCollection implements \Serializable
 
         $this->routeMapSplIdToBool[ $routeSplId ] = true;
 
-        if (null !== $routeName) {
+        if (null === $routeName) {
+            $this->routeIndexByName[ '!' ][ $route->id ] = true;
+
+        } else {
             if (isset($this->routeIndexByName[ $routeName ])) {
                 foreach ( $this->routeIndexByName[ $routeName ] as $routeId => $bool ) {
                     $existingRoute = $this->routeList[ $routeId ];
@@ -181,9 +176,6 @@ class RouterRouteCollection implements \Serializable
                         );
                     }
                 }
-
-            } else {
-                $this->routeMapPathToName[ $routeName ] = $routePath;
             }
 
             $this->routeIndexByName[ $routeName ][ $route->id ] = true;
@@ -204,8 +196,13 @@ class RouterRouteCollection implements \Serializable
             $this->routeMapHttpMethodPathToBoolean[ $key ] = true;
         }
 
-        foreach ( $route->tagIndex as $routeTag => $bool ) {
-            $this->routeIndexByTag[ $routeTag ][ $route->id ] = true;
+        if ([] === $route->tagIndex) {
+            $this->routeIndexByTag[ '!' ][ $route->id ] = true;
+
+        } else {
+            foreach ( $route->tagIndex as $routeTag => $bool ) {
+                $this->routeIndexByTag[ $routeTag ][ $route->id ] = true;
+            }
         }
     }
 }

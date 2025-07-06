@@ -14,21 +14,21 @@ use Gzhegow\Router\Exception\RuntimeException;
 use Gzhegow\Lib\Modules\Func\Pipe\PipeContext;
 use Gzhegow\Router\Core\Route\Struct\RoutePath;
 use Gzhegow\Router\Core\Route\Struct\RouteName;
-use Gzhegow\Router\Core\Route\Struct\RouteNameTag;
 use Gzhegow\Router\Core\Cache\RouterCacheInterface;
-use Gzhegow\Router\Core\Matcher\RouterMatcherContract;
 use Gzhegow\Router\Core\Matcher\RouterMatcherInterface;
 use Gzhegow\Router\Core\Invoker\RouterInvokerInterface;
 use Gzhegow\Router\Core\Collection\RouterRouteCollection;
 use Gzhegow\Router\Exception\Exception\DispatchException;
 use Gzhegow\Router\Core\Collection\RouterPatternCollection;
-use Gzhegow\Router\Core\Dispatcher\RouterDispatcherContract;
 use Gzhegow\Router\Core\Collection\RouterFallbackCollection;
 use Gzhegow\Router\Core\Dispatcher\RouterDispatcherInterface;
 use Gzhegow\Router\Core\Collection\RouterMiddlewareCollection;
-use Gzhegow\Router\Core\Handler\Fallback\GenericHandlerFallback;
 use Gzhegow\Router\Core\UrlGenerator\RouterUrlGeneratorInterface;
-use Gzhegow\Router\Core\Handler\Middleware\GenericHandlerMiddleware;
+use Gzhegow\Router\Core\Handler\Fallback\RouterGenericHandlerFallback;
+use Gzhegow\Router\Core\Matcher\Contract\RouterMatcherContractInterface;
+use Gzhegow\Router\Core\Handler\Middleware\RouterGenericHandlerMiddleware;
+use Gzhegow\Router\Core\Dispatcher\Contract\RouterDispatcherRouteContractInterface;
+use Gzhegow\Router\Core\Dispatcher\Contract\RouterDispatcherRequestContractInterface;
 
 
 class RouterFacade implements RouterInterface
@@ -506,7 +506,7 @@ class RouterFacade implements RouterInterface
     public function middlewareOnRouteId($routeId, $middleware) : RouterInterface
     {
         $routeIdInt = Lib::parseThrow()->int_positive($routeId);
-        $middlewareObject = GenericHandlerMiddleware::from($middleware);
+        $middlewareObject = RouterGenericHandlerMiddleware::from($middleware);
 
         if (! $this->routeCollection->hasRoute($routeIdInt)) {
             throw new RuntimeException(
@@ -528,7 +528,7 @@ class RouterFacade implements RouterInterface
     public function middlewareOnRoutePath($routePath, $middleware) : RouterInterface
     {
         $routePathObject = RoutePath::from($routePath);
-        $middlewareObject = GenericHandlerMiddleware::from($middleware);
+        $middlewareObject = RouterGenericHandlerMiddleware::from($middleware);
 
         if ($this->config->compileTrailingSlashMode) {
             $routePathString = $routePathObject->getValue();
@@ -563,7 +563,7 @@ class RouterFacade implements RouterInterface
     public function middlewareOnRouteTag($routeTag, $middleware) : RouterInterface
     {
         $routeTagObject = RouteTag::from($routeTag);
-        $middlewareObject = GenericHandlerMiddleware::from($middleware);
+        $middlewareObject = RouterGenericHandlerMiddleware::from($middleware);
 
         $this->registerMiddleware($middlewareObject);
 
@@ -572,7 +572,7 @@ class RouterFacade implements RouterInterface
         return $this;
     }
 
-    public function registerMiddleware(GenericHandlerMiddleware $middleware) : int
+    public function registerMiddleware(RouterGenericHandlerMiddleware $middleware) : int
     {
         $this->isRouterChanged = true;
 
@@ -604,7 +604,7 @@ class RouterFacade implements RouterInterface
     public function fallbackOnRouteId($routeId, $fallback) : RouterInterface
     {
         $routeIdInt = Lib::parseThrow()->int_positive($routeId);
-        $fallbackObject = GenericHandlerFallback::from($fallback);
+        $fallbackObject = RouterGenericHandlerFallback::from($fallback);
 
         if (! $this->routeCollection->hasRoute($routeIdInt)) {
             throw new RuntimeException(
@@ -626,7 +626,7 @@ class RouterFacade implements RouterInterface
     public function fallbackOnRoutePath($routePath, $fallback) : RouterInterface
     {
         $routePathObject = RoutePath::from($routePath);
-        $fallbackObject = GenericHandlerFallback::from($fallback);
+        $fallbackObject = RouterGenericHandlerFallback::from($fallback);
 
         if ($this->config->compileTrailingSlashMode) {
             $routePathString = $routePathObject->getValue();
@@ -661,7 +661,7 @@ class RouterFacade implements RouterInterface
     public function fallbackOnRouteTag($routeTag, $fallback) : RouterInterface
     {
         $routeTagObject = RouteTag::from($routeTag);
-        $fallbackObject = GenericHandlerFallback::from($fallback);
+        $fallbackObject = RouterGenericHandlerFallback::from($fallback);
 
         $this->registerFallback($fallbackObject);
 
@@ -670,7 +670,7 @@ class RouterFacade implements RouterInterface
         return $this;
     }
 
-    public function registerFallback(GenericHandlerFallback $fallback) : int
+    public function registerFallback(RouterGenericHandlerFallback $fallback) : int
     {
         $this->isRouterChanged = true;
 
@@ -766,37 +766,50 @@ class RouterFacade implements RouterInterface
 
 
     /**
-     * @param (array{ 0: string, 1: string }|RouteNameTag)[] $routeNameTags
+     * @param array{
+     *     0: string|false|null,
+     *     1: string|false|null,
+     *     2: string|false|null,
+     * }[] $routeNameTagMethods
      *
      * @return Route[]|Route[][]
      */
-    public function matchAllByNameTags(array $routeNameTags, ?bool $unique = null) : array
+    public function matchAllByNameTagMethods(array $routeNameTagMethods, ?bool $unique = null) : array
     {
-        return $this->routerMatcher->matchAllByNameTags($routeNameTags, $unique);
+        return $this->routerMatcher->matchAllByNameTagMethods($routeNameTagMethods, $unique);
     }
 
     /**
-     * @param (array{ 0: string, 1: string }|RouteNameTag)[] $routeNameTags
+     * @param array{
+     *     0: string|false|null,
+     *     1: string|false|null,
+     *     2: string|false|null,
+     * }[] $routeNameTagMethods
      */
-    public function matchFirstByNameTags(array $routeNameTags) : ?Route
+    public function matchFirstByNameTagMethods(array $routeNameTagMethods) : ?Route
     {
-        return $this->routerMatcher->matchFirstByNameTags($routeNameTags);
+        return $this->routerMatcher->matchFirstByNameTagMethods($routeNameTagMethods);
     }
 
 
     /**
      * @return Route[]
      */
-    public function matchByContract(RouterMatcherContract $contract) : array
+    public function matchByContract(RouterMatcherContractInterface $contract) : array
     {
         return $this->routerMatcher->matchByContract($contract);
+    }
+
+    public function matchFirstByContract(RouterMatcherContractInterface $contract) : ?Route
+    {
+        return $this->routerMatcher->matchFirstByContract($contract);
     }
 
 
 
     /**
-     * @param mixed|RouterDispatcherContract $contract
-     * @param array{ 0: array }|PipeContext  $context
+     * @param mixed|RouterDispatcherRequestContractInterface|RouterDispatcherRouteContractInterface $contract
+     * @param array{ 0: array }|PipeContext                                                         $context
      *
      * @return mixed
      * @throws DispatchException
@@ -814,10 +827,66 @@ class RouterFacade implements RouterInterface
         );
     }
 
-    public function getDispatchContract() : RouterDispatcherContract
+    /**
+     * @param array{ 0: array }|PipeContext $context
+     *
+     * @return mixed
+     * @throws DispatchException
+     */
+    public function dispatchByRequest(
+        RouterDispatcherRequestContractInterface $contract,
+        $input = null,
+        $context = null,
+        array $args = []
+    )
     {
-        return $this->routerDispatcher->getDispatchContract();
+        return $this->routerDispatcher->dispatchByRequest(
+            $contract,
+            $input, $context, $args
+        );
     }
+
+    /**
+     * @param array{ 0: array }|PipeContext $context
+     *
+     * @return mixed
+     * @throws DispatchException
+     */
+    public function dispatchByRoute(
+        RouterDispatcherRouteContractInterface $contract,
+        $input = null,
+        $context = null,
+        array $args = []
+    )
+    {
+        return $this->routerDispatcher->dispatchByRoute(
+            $contract,
+            $input, $context, $args
+        );
+    }
+
+
+    public function hasRequestContract(?RouterDispatcherRequestContractInterface &$contract = null) : bool
+    {
+        return $this->routerDispatcher->hasRequestContract($contract);
+    }
+
+    public function getRequestContract() : RouterDispatcherRequestContractInterface
+    {
+        return $this->routerDispatcher->getRequestContract();
+    }
+
+
+    public function hasRouteContract(?RouterDispatcherRouteContractInterface &$contract = null) : bool
+    {
+        return $this->routerDispatcher->hasRouteContract($contract);
+    }
+
+    public function getRouteContract() : RouterDispatcherRouteContractInterface
+    {
+        return $this->routerDispatcher->getRouteContract();
+    }
+
 
     public function getDispatchRequestMethod() : string
     {
@@ -845,6 +914,22 @@ class RouterFacade implements RouterInterface
         return $this->routerDispatcher->getDispatchActionAttributes();
     }
 
+
+    /**
+     * @return RouterGenericHandlerMiddleware[]
+     */
+    public function getDispatchMiddlewareIndex() : array
+    {
+        return $this->routerDispatcher->getDispatchMiddlewareIndex();
+    }
+
+    /**
+     * @return RouterGenericHandlerFallback[]
+     */
+    public function getDispatchFallbackIndex() : array
+    {
+        return $this->routerDispatcher->getDispatchFallbackIndex();
+    }
 
 
     /**

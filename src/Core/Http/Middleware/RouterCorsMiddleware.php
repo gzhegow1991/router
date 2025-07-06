@@ -2,10 +2,11 @@
 
 namespace Gzhegow\Router\Core\Http\Middleware;
 
-class CorsMiddleware
+class RouterCorsMiddleware
 {
     public function __invoke(
-        $fnNext, $input,
+        $fnNext,
+        $input,
         array $context = [],
         array $args = []
     )

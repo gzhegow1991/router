@@ -7,6 +7,7 @@ use Gzhegow\Router\Router;
 use Gzhegow\Router\RouterInterface;
 use Gzhegow\Router\Core\Route\Route;
 use Gzhegow\Router\Core\Node\RouterNode;
+use Gzhegow\Lib\Modules\Php\Result\Result;
 use Gzhegow\Router\Core\Config\RouterConfig;
 use Gzhegow\Router\Exception\LogicException;
 use Gzhegow\Lib\Modules\Func\Pipe\PipeContext;
@@ -16,8 +17,12 @@ use Gzhegow\Router\Exception\Exception\DispatchException;
 use Gzhegow\Router\Core\Collection\RouterRouteCollection;
 use Gzhegow\Router\Core\Collection\RouterFallbackCollection;
 use Gzhegow\Router\Core\Collection\RouterMiddlewareCollection;
-use Gzhegow\Router\Core\Handler\Fallback\GenericHandlerFallback;
-use Gzhegow\Router\Core\Handler\Middleware\GenericHandlerMiddleware;
+use Gzhegow\Router\Core\Handler\Fallback\RouterGenericHandlerFallback;
+use Gzhegow\Router\Core\Dispatcher\Contract\RouterDispatcherRouteContract;
+use Gzhegow\Router\Core\Handler\Middleware\RouterGenericHandlerMiddleware;
+use Gzhegow\Router\Core\Dispatcher\Contract\RouterDispatcherRequestContract;
+use Gzhegow\Router\Core\Dispatcher\Contract\RouterDispatcherRouteContractInterface;
+use Gzhegow\Router\Core\Dispatcher\Contract\RouterDispatcherRequestContractInterface;
 
 
 class RouterDispatcher implements RouterDispatcherInterface
@@ -51,21 +56,26 @@ class RouterDispatcher implements RouterDispatcherInterface
     protected $rootRouterNode;
 
     /**
-     * @var RouterDispatcherContract
-     */
-    protected $dispatchContract;
-    /**
      * @var string
      */
     protected $dispatchRequestMethod;
     /**
      * @var string
      */
-    protected $dispatchRequestPath;
+    protected $dispatchRequestUri;
     /**
      * @var string
      */
-    protected $dispatchRequestUri;
+    protected $dispatchRequestPath;
+
+    /**
+     * @var RouterDispatcherRequestContractInterface
+     */
+    protected $requestContract;
+    /**
+     * @var RouterDispatcherRouteContractInterface
+     */
+    protected $routeContract;
 
     /**
      * @var Route
@@ -75,6 +85,15 @@ class RouterDispatcher implements RouterDispatcherInterface
      * @var array
      */
     protected $dispatchActionAttributes = [];
+
+    /**
+     * @var array<string, RouterGenericHandlerMiddleware>
+     */
+    protected $dispatchMiddlewareIndex = [];
+    /**
+     * @var array<string, RouterGenericHandlerFallback>
+     */
+    protected $dispatchFallbackIndex = [];
 
 
     public function initialize(RouterInterface $router) : void
@@ -91,9 +110,28 @@ class RouterDispatcher implements RouterDispatcherInterface
     }
 
 
+    protected function resetRequest() : void
+    {
+        $this->dispatchRequestMethod = null;
+        $this->dispatchRequestUri = null;
+        $this->dispatchRequestPath = null;
+
+        $this->requestContract = null;
+    }
+
+    protected function resetDispatch() : void
+    {
+        $this->dispatchRoute = null;
+        $this->dispatchActionAttributes = [];
+
+        $this->dispatchMiddlewareIndex = [];
+        $this->dispatchFallbackIndex = [];
+    }
+
+
     /**
-     * @param mixed|RouterDispatcherContract $contract
-     * @param array{ 0: array }|PipeContext  $context
+     * @param mixed|RouterDispatcherRequestContractInterface $contract
+     * @param array{ 0: array }|PipeContext                  $context
      *
      * @return mixed
      * @throws DispatchException
@@ -105,33 +143,58 @@ class RouterDispatcher implements RouterDispatcherInterface
         array $args = []
     )
     {
+        $contract = null
+            ?? RouterDispatcherRequestContract::from($contract, $retCur = Result::asValue())
+            ?? RouterDispatcherRouteContract::from($contract, $retCur = Result::asValue());
+
+        if ($contract instanceof RouterDispatcherRequestContractInterface) {
+            $result = $this->dispatchByRequest($contract);
+
+        } elseif ($contract instanceof RouterDispatcherRouteContractInterface) {
+            $result = $this->dispatchByRoute($contract);
+
+        } else {
+            throw new LogicException(
+                [
+                    ''
+                    . 'The `contract` should be array or instance one of: '
+                    . '[ '
+                    . implode(' ][ ', [
+                        RouterDispatcherRequestContract::class,
+                        RouterDispatcherRouteContract::class,
+                    ])
+                    . ' ]',
+                    //
+                    $contract,
+                ]
+            );
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param array{ 0: array }|PipeContext $context
+     *
+     * @return mixed
+     * @throws DispatchException
+     */
+    public function dispatchByRequest(
+        RouterDispatcherRequestContractInterface $contract,
+        $input = null,
+        $context = null,
+        array $args = []
+    )
+    {
         /**
-         * @var GenericHandlerMiddleware[] $dispatchMiddlewareList
-         * @var GenericHandlerFallback[]   $dispatchFallbackList
+         * @var RouterGenericHandlerMiddleware[] $dispatchMiddlewareList
+         * @var RouterGenericHandlerFallback[]   $dispatchFallbackList
          */
 
         $theFunc = Lib::func();
 
-        $dispatchContract = RouterDispatcherContract::from($contract);
-
-        $pipeContext = null;
-        if (null !== $context) {
-            if ($context instanceof PipeContext) {
-                $pipeContext = $context;
-
-            } elseif (true
-                && is_array($context)
-                && isset($context[ 0 ])
-                && is_array($context[ 0 ])
-            ) {
-                $pipeContext = new PipeContext($context[ 0 ]);
-
-            } else {
-                throw new LogicException(
-                    [ 'The `context` should be an array like `[ &$context ]` or an instance of: ' . PipeContext::class, $context ]
-                );
-            }
-        }
+        $this->resetRequest();
+        $this->resetDispatch();
 
         $routerConfig = $this->routerConfig;
 
@@ -139,17 +202,16 @@ class RouterDispatcher implements RouterDispatcherInterface
         $middlewareCollection = $this->middlewareCollection;
         $fallbackCollection = $this->fallbackCollection;
 
-        $contractRequestMethod = $dispatchContract->getRequestMethod();
+        $requestContract = $contract;
 
-        $contractRequestHttpPath = $dispatchContract->getRequestHttpPath();
-        $contractRequestUri = $dispatchContract->getRequestUri();
-        $contractRequestPath = $dispatchContract->getRequestPath();
-
+        $contractRequestMethod = $requestContract->getRequestMethod();
         $dispatchRequestMethod = $contractRequestMethod;
         if ($routerConfig->dispatchForceMethod) {
             $dispatchRequestMethod = $routerConfig->dispatchForceMethod;
         }
 
+        $contractRequestUri = $requestContract->getRequestUri();
+        $contractRequestPath = $requestContract->getRequestPath();
         $dispatchRequestUri = $contractRequestUri;
         $dispatchRequestPath = $contractRequestPath;
         if ($routerConfig->dispatchTrailingSlashMode) {
@@ -167,27 +229,22 @@ class RouterDispatcher implements RouterDispatcherInterface
         if ($dispatchRequestPath !== $contractRequestPath) {
             $dispatchRequestUri = $dispatchRequestPath;
 
-            if ($contractRequestHttpPath->hasQueryString($queryString)) {
+            if ($contract->hasRequestQueryString($queryString)) {
                 $dispatchRequestUri .= "?{$queryString}";
             }
-            if ($contractRequestHttpPath->hasFragment($fragment)) {
+            if ($contract->hasRequestFragment($fragment)) {
                 $dispatchRequestUri .= "#{$fragment}";
             }
         }
 
-        $this->dispatchContract = $dispatchContract;
+        $this->requestContract = $requestContract;
         $this->dispatchRequestMethod = $dispatchRequestMethod;
         $this->dispatchRequestUri = $dispatchRequestUri;
         $this->dispatchRequestPath = $dispatchRequestPath;
 
-        $this->dispatchRoute = null;
-        $this->dispatchActionAttributes = [];
-
         $dispatchRouteIndex = [];
 
         $dispatchActionAttributes = [];
-        $dispatchMiddlewareList = [];
-        $dispatchFallbackList = [];
 
         $routeNodeCurrent = $this->rootRouterNode;
 
@@ -259,26 +316,6 @@ class RouterDispatcher implements RouterDispatcherInterface
             }
         }
 
-        $middlewareIndexes = [
-            'id'   => [],
-            'path' => [],
-            'tag'  => [],
-        ];
-        $fallbackIndexes = [
-            'id'   => [],
-            'path' => [],
-            'tag'  => [],
-        ];
-        foreach ( $routeSubpathList as $routeSubpath ) {
-            if (isset($middlewareCollection->middlewareIndexByRoutePath[ $routeSubpath ])) {
-                $middlewareIndexes[ 'path' ][ $routeSubpath ] = $middlewareCollection->middlewareIndexByRoutePath[ $routeSubpath ];
-            }
-
-            if (isset($fallbackCollection->fallbackIndexByRoutePath[ $routeSubpath ])) {
-                $fallbackIndexes[ 'path' ][ $routeSubpath ] = $fallbackCollection->fallbackIndexByRoutePath[ $routeSubpath ];
-            }
-        }
-
         $dispatchRouteId = null;
         if ([] !== $dispatchRouteIndex) {
             $intersect = [];
@@ -296,52 +333,233 @@ class RouterDispatcher implements RouterDispatcherInterface
             }
         }
 
-        $dispatchRouteClone = null;
         if (null !== $dispatchRouteId) {
             $dispatchRoute = $routeCollection->routeList[ $dispatchRouteId ];
-            $dispatchRouteClone = clone $dispatchRoute;
-        }
 
-        if (null !== $dispatchRouteClone) {
-            $routeId = $dispatchRouteClone->id;
-            $routePath = $dispatchRouteClone->path;
+            $dispatchRoute->requestContract = $requestContract;
 
+            $dispatchRoute->dispatchRequestMethod = $dispatchRequestMethod;
+            $dispatchRoute->dispatchRequestUri = $dispatchRequestUri;
+            $dispatchRoute->dispatchRequestPath = $dispatchRequestPath;
 
-            if (isset($middlewareCollection->middlewareIndexByRouteId[ $routeId ])) {
-                $middlewareIndexes[ 'id' ][ $routeId ] = $middlewareCollection->middlewareIndexByRouteId[ $routeId ];
+            $routeContract = RouterDispatcherRouteContract::fromArray(
+                [ $dispatchRoute, $dispatchActionAttributes ]
+            );
+
+            $result = $this->dispatchByRoute(
+                $routeContract,
+                $input,
+                $context,
+                $args
+            );
+
+        } else {
+            $pipeContext = null;
+            if (null !== $context) {
+                if ($context instanceof PipeContext) {
+                    $pipeContext = $context;
+
+                } elseif (true
+                    && is_array($context)
+                    && isset($context[ 0 ])
+                    && is_array($context[ 0 ])
+                ) {
+                    $pipeContext = new PipeContext($context[ 0 ]);
+
+                } else {
+                    throw new LogicException(
+                        [ 'The `context` should be an array like `[ &$context ]` or an instance of: ' . PipeContext::class, $context ]
+                    );
+                }
             }
 
-            if (isset($fallbackCollection->fallbackIndexByRouteId[ $routeId ])) {
-                $fallbackIndexes[ 'id' ][ $routeId ] = $fallbackCollection->fallbackIndexByRouteId[ $routeId ];
-            }
+            $middlewareIndexes = [
+                'path' => [],
+            ];
+            $fallbackIndexes = [
+                'path' => [],
+            ];
 
-
-            if (isset($middlewareCollection->middlewareIndexByRoutePath[ $routePath ])) {
-                $middlewareIndexes[ 'path' ][ $routePath ] = $middlewareCollection->middlewareIndexByRoutePath[ $routePath ];
-            }
-
-            if (isset($fallbackCollection->fallbackIndexByRoutePath[ $routePath ])) {
-                $fallbackIndexes[ 'path' ][ $routePath ] = $fallbackCollection->fallbackIndexByRoutePath[ $routePath ];
-            }
-
-
-            foreach ( $dispatchRouteClone->tagIndex as $tag => $bool ) {
-                if (isset($middlewareCollection->middlewareIndexByRouteTag[ $tag ])) {
-                    $middlewareIndexes[ 'tag' ][ $tag ] = $middlewareCollection->middlewareIndexByRouteTag[ $tag ];
+            foreach ( $routeSubpathList as $routeSubpath ) {
+                if (isset($middlewareCollection->middlewareIndexByRoutePath[ $routeSubpath ])) {
+                    $middlewareIndexes[ 'path' ][ $routeSubpath ] = $middlewareCollection->middlewareIndexByRoutePath[ $routeSubpath ];
                 }
 
-                if (isset($fallbackCollection->fallbackIndexByRouteTag[ $tag ])) {
-                    $fallbackIndexes[ 'tag' ][ $tag ] = $fallbackCollection->fallbackIndexByRouteTag[ $tag ];
+                if (isset($fallbackCollection->fallbackIndexByRoutePath[ $routeSubpath ])) {
+                    $fallbackIndexes[ 'path' ][ $routeSubpath ] = $fallbackCollection->fallbackIndexByRoutePath[ $routeSubpath ];
                 }
+            }
+
+            $middlewareIndex = [];
+            foreach ( $middlewareIndexes[ 'path' ] as $index ) {
+                $middlewareIndex += $index;
+            }
+
+            $fallbackIndex = [];
+            foreach ( $fallbackIndexes[ 'path' ] as $index ) {
+                $fallbackIndex += $index;
+            }
+
+            $dispatchMiddlewareList = [];
+            $dispatchFallbackList = [];
+
+            foreach ( $middlewareIndex as $i => $bool ) {
+                $dispatchMiddlewareList[ $i ] = $middlewareCollection->middlewareList[ $i ];
+            }
+
+            foreach ( $fallbackIndex as $i => $bool ) {
+                $dispatchFallbackList[ $i ] = $fallbackCollection->fallbackList[ $i ];
+            }
+
+            foreach ( $dispatchMiddlewareList as $middleware ) {
+                $this->dispatchMiddlewareIndex[ $middleware->getKey() ] = true;
+            }
+
+            foreach ( $dispatchFallbackList as $fallback ) {
+                $this->dispatchFallbackIndex[ $fallback->getKey() ] = true;
+            }
+
+            $fnPipelineCallGenericHandler = $this->fnPipelineCallGenericHandler();
+
+            $pipeline = $theFunc->newPipe();
+            $pipeline
+                ->setContext($pipeContext)
+                ->setFnCallUserFuncArray($fnPipelineCallGenericHandler)
+            ;
+
+            $pipelineChild = $pipeline;
+            foreach ( $dispatchMiddlewareList as $middleware ) {
+                $pipelineChild = $pipelineChild->middleware($middleware);
+            }
+
+            $throwable = new NotFoundException(
+                ''
+                . 'Route not found: '
+                . '[ ' . $contractRequestUri . ' ]'
+                . '[ ' . $contractRequestMethod . ' ]'
+            );
+
+            $pipelineChild->setThrowable($throwable);
+
+            foreach ( $dispatchMiddlewareList as $devnull ) {
+                $pipelineChild = $pipelineChild->endMiddleware();
+            }
+
+            foreach ( $dispatchFallbackList as $fallback ) {
+                $pipeline->catch($fallback);
+            }
+
+            $pipelineArgs = $args;
+
+            try {
+                $result = $pipeline->run(
+                    $input, $pipelineArgs
+                );
+            }
+            catch ( \Throwable $e ) {
+                throw new DispatchException(
+                    [ 'Unhandled exception during dispatch', $e ], $e
+                );
             }
         }
 
-        $fnSortStrlenDesc = static function ($a, $b) {
-            return strlen($b) <=> strlen($a);
-        };
+        return $result;
+    }
 
-        uksort($middlewareIndexes[ 'path' ], $fnSortStrlenDesc);
-        uksort($fallbackIndexes[ 'path' ], $fnSortStrlenDesc);
+    /**
+     * @param array{ 0: array }|PipeContext $context
+     *
+     * @return mixed
+     * @throws DispatchException
+     */
+    public function dispatchByRoute(
+        RouterDispatcherRouteContractInterface $contract,
+        $input = null,
+        $context = null,
+        array $args = []
+    )
+    {
+        $theFunc = Lib::func();
+
+        $middlewareCollection = $this->middlewareCollection;
+        $fallbackCollection = $this->fallbackCollection;
+
+        $pipeContext = null;
+        if (null !== $context) {
+            if ($context instanceof PipeContext) {
+                $pipeContext = $context;
+
+            } elseif (true
+                && is_array($context)
+                && isset($context[ 0 ])
+                && is_array($context[ 0 ])
+            ) {
+                $pipeContext = new PipeContext($context[ 0 ]);
+
+            } else {
+                throw new LogicException(
+                    [ 'The `context` should be an array like `[ &$context ]` or an instance of: ' . PipeContext::class, $context ]
+                );
+            }
+        }
+
+        $this->resetDispatch();
+
+        $dispatchRouteClone = clone $contract->getRoute();
+        $dispatchActionAttributes = $contract->getRouteAttributes();
+
+        $routeId = $dispatchRouteClone->id;
+        $routePath = $dispatchRouteClone->path;
+
+        $routeSubpathList = [];
+        $split = ltrim('/', $routePath);
+        $split = explode('/', $split);
+        while ( [] !== $split ) {
+            $routeSubpathList[] = implode('/', $split);
+
+            array_pop($split);
+        }
+        $routeSubpathList[] = '/';
+        $routeSubpathList = array_reverse($routeSubpathList);
+
+        $middlewareIndexes = [
+            'id'   => [],
+            'path' => [],
+            'tag'  => [],
+        ];
+        $fallbackIndexes = [
+            'id'   => [],
+            'path' => [],
+            'tag'  => [],
+        ];
+
+        if (isset($middlewareCollection->middlewareIndexByRouteId[ $routeId ])) {
+            $middlewareIndexes[ 'id' ][ $routeId ] = $middlewareCollection->middlewareIndexByRouteId[ $routeId ];
+        }
+
+        if (isset($fallbackCollection->fallbackIndexByRouteId[ $routeId ])) {
+            $fallbackIndexes[ 'id' ][ $routeId ] = $fallbackCollection->fallbackIndexByRouteId[ $routeId ];
+        }
+
+        foreach ( $routeSubpathList as $routeSubpath ) {
+            if (isset($middlewareCollection->middlewareIndexByRoutePath[ $routeSubpath ])) {
+                $middlewareIndexes[ 'path' ][ $routeSubpath ] = $middlewareCollection->middlewareIndexByRoutePath[ $routeSubpath ];
+            }
+
+            if (isset($fallbackCollection->fallbackIndexByRoutePath[ $routeSubpath ])) {
+                $fallbackIndexes[ 'path' ][ $routeSubpath ] = $fallbackCollection->fallbackIndexByRoutePath[ $routeSubpath ];
+            }
+        }
+
+        foreach ( $dispatchRouteClone->tagIndex as $tag => $bool ) {
+            if (isset($middlewareCollection->middlewareIndexByRouteTag[ $tag ])) {
+                $middlewareIndexes[ 'tag' ][ $tag ] = $middlewareCollection->middlewareIndexByRouteTag[ $tag ];
+            }
+
+            if (isset($fallbackCollection->fallbackIndexByRouteTag[ $tag ])) {
+                $fallbackIndexes[ 'tag' ][ $tag ] = $fallbackCollection->fallbackIndexByRouteTag[ $tag ];
+            }
+        }
 
         $middlewareIndex = [];
         foreach ( $middlewareIndexes[ 'id' ] as $index ) {
@@ -365,12 +583,28 @@ class RouterDispatcher implements RouterDispatcherInterface
             $fallbackIndex += $index;
         }
 
+        $dispatchMiddlewareList = [];
+        $dispatchFallbackList = [];
+
         foreach ( $middlewareIndex as $i => $bool ) {
             $dispatchMiddlewareList[ $i ] = $middlewareCollection->middlewareList[ $i ];
         }
 
         foreach ( $fallbackIndex as $i => $bool ) {
             $dispatchFallbackList[ $i ] = $fallbackCollection->fallbackList[ $i ];
+        }
+
+        $this->dispatchRoute = $dispatchRouteClone;
+        $this->dispatchActionAttributes = $dispatchActionAttributes;
+
+        $dispatchRouteClone->dispatchActionAttributes = $dispatchActionAttributes;
+
+        foreach ( $dispatchMiddlewareList as $middleware ) {
+            $dispatchRouteClone->dispatchMiddlewareIndex[ $middleware->getKey() ] = true;
+        }
+
+        foreach ( $dispatchFallbackList as $fallback ) {
+            $dispatchRouteClone->dispatchFallbackIndex[ $fallback->getKey() ] = true;
         }
 
         $fnPipelineCallGenericHandler = $this->fnPipelineCallGenericHandler();
@@ -386,39 +620,7 @@ class RouterDispatcher implements RouterDispatcherInterface
             $pipelineChild = $pipelineChild->middleware($middleware);
         }
 
-        if ($dispatchRouteClone) {
-            $this->dispatchRoute = $dispatchRouteClone;
-            $this->dispatchActionAttributes = $dispatchActionAttributes;
-
-            $dispatchRouteClone->dispatchContract = $dispatchContract;
-            $dispatchRouteClone->dispatchRequestMethod = $dispatchRequestMethod;
-            $dispatchRouteClone->dispatchRequestUri = $dispatchRequestUri;
-            $dispatchRouteClone->dispatchRequestPath = $dispatchRequestPath;
-
-            $dispatchRouteClone->dispatchActionAttributes = $dispatchActionAttributes;
-
-            $dispatchRouteClone->dispatchMiddlewareIndex = [];
-            foreach ( $dispatchMiddlewareList as $middleware ) {
-                $dispatchRouteClone->dispatchMiddlewareIndex[ $middleware->getKey() ] = true;
-            }
-
-            $dispatchRouteClone->dispatchFallbackIndex = [];
-            foreach ( $dispatchFallbackList as $fallback ) {
-                $dispatchRouteClone->dispatchFallbackIndex[ $fallback->getKey() ] = true;
-            }
-
-            $pipelineChild->map($dispatchRouteClone->action);
-
-        } else {
-            $throwable = new NotFoundException(
-                ''
-                . 'Route not found: '
-                . '[ ' . $contractRequestUri . ' ]'
-                . '[ ' . $contractRequestMethod . ' ]'
-            );
-
-            $pipelineChild->setThrowable($throwable);
-        }
+        $pipelineChild->map($dispatchRouteClone->action);
 
         foreach ( $dispatchMiddlewareList as $devnull ) {
             $pipelineChild = $pipelineChild->endMiddleware();
@@ -448,10 +650,43 @@ class RouterDispatcher implements RouterDispatcherInterface
     }
 
 
-    public function getDispatchContract() : RouterDispatcherContract
+    public function hasRequestContract(?RouterDispatcherRequestContractInterface &$contract = null) : bool
     {
-        return $this->dispatchContract;
+        $contract = null;
+
+        if (null !== $this->requestContract) {
+            $contract = $this->requestContract;
+
+            return true;
+        }
+
+        return false;
     }
+
+    public function getRequestContract() : RouterDispatcherRequestContractInterface
+    {
+        return $this->requestContract;
+    }
+
+
+    public function hasRouteContract(?RouterDispatcherRouteContractInterface &$contract = null) : bool
+    {
+        $contract = null;
+
+        if (null !== $this->routeContract) {
+            $contract = $this->routeContract;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public function getRouteContract() : RouterDispatcherRouteContractInterface
+    {
+        return $this->routeContract;
+    }
+
 
     public function getDispatchRequestMethod() : string
     {
@@ -477,6 +712,23 @@ class RouterDispatcher implements RouterDispatcherInterface
     public function getDispatchActionAttributes() : array
     {
         return $this->dispatchActionAttributes;
+    }
+
+
+    /**
+     * @return RouterGenericHandlerMiddleware[]
+     */
+    public function getDispatchMiddlewareIndex() : array
+    {
+        return $this->dispatchMiddlewareIndex;
+    }
+
+    /**
+     * @return RouterGenericHandlerFallback[]
+     */
+    public function getDispatchFallbackIndex() : array
+    {
+        return $this->dispatchFallbackIndex;
     }
 
 

@@ -5,11 +5,11 @@ namespace Gzhegow\Router\Core\Collection;
 use Gzhegow\Router\Core\Route\Struct\RouteTag;
 use Gzhegow\Router\Core\Route\Struct\RoutePath;
 use Gzhegow\Router\Exception\RuntimeException;
-use Gzhegow\Router\Core\Handler\Fallback\GenericHandlerFallback;
+use Gzhegow\Router\Core\Handler\Fallback\RouterGenericHandlerFallback;
 
 
 /**
- * @property GenericHandlerFallback[]        $fallbackList
+ * @property RouterGenericHandlerFallback[]  $fallbackList
  *
  * @property array<string, array<int, bool>> $fallbackIndexByRouteId
  * @property array<string, array<int, bool>> $fallbackIndexByRoutePath
@@ -23,7 +23,7 @@ class RouterFallbackCollection implements \Serializable
     protected $fallbackLastId = 0;
 
     /**
-     * @var GenericHandlerFallback[]
+     * @var RouterGenericHandlerFallback[]
      */
     protected $fallbackList = [];
 
@@ -102,7 +102,7 @@ class RouterFallbackCollection implements \Serializable
 
 
     /**
-     * @return GenericHandlerFallback[]
+     * @return RouterGenericHandlerFallback[]
      */
     public function getFallbackList() : array
     {
@@ -110,7 +110,7 @@ class RouterFallbackCollection implements \Serializable
     }
 
 
-    public function hasFallback(int $id, ?GenericHandlerFallback &$refFallback = null) : bool
+    public function hasFallback(int $id, ?RouterGenericHandlerFallback &$refFallback = null) : bool
     {
         $refFallback = null;
 
@@ -123,13 +123,13 @@ class RouterFallbackCollection implements \Serializable
         return false;
     }
 
-    public function getFallback(int $id) : GenericHandlerFallback
+    public function getFallback(int $id) : RouterGenericHandlerFallback
     {
         return $this->fallbackList[ $id ];
     }
 
 
-    public function registerFallback(GenericHandlerFallback $fallback) : int
+    public function registerFallback(RouterGenericHandlerFallback $fallback) : int
     {
         $key = $fallback->getKey();
 
@@ -147,7 +147,7 @@ class RouterFallbackCollection implements \Serializable
     }
 
 
-    public function addRouteIdFallback(int $routeId, GenericHandlerFallback $fallback) : int
+    public function addRouteIdFallback(int $routeId, RouterGenericHandlerFallback $fallback) : int
     {
         $id = $this->registerFallback($fallback);
 
@@ -156,7 +156,7 @@ class RouterFallbackCollection implements \Serializable
         return $id;
     }
 
-    public function addRoutePathFallback(RoutePath $routePath, GenericHandlerFallback $fallback) : int
+    public function addRoutePathFallback(RoutePath $routePath, RouterGenericHandlerFallback $fallback) : int
     {
         $id = $this->registerFallback($fallback);
 
@@ -165,7 +165,7 @@ class RouterFallbackCollection implements \Serializable
         return $id;
     }
 
-    public function addRouteTagFallback(RouteTag $routeTag, GenericHandlerFallback $fallback) : int
+    public function addRouteTagFallback(RouteTag $routeTag, RouterGenericHandlerFallback $fallback) : int
     {
         $id = $this->registerFallback($fallback);
 

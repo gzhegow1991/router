@@ -1,22 +1,22 @@
 <?php
 
-namespace Gzhegow\Router\Core\Dispatcher;
+namespace Gzhegow\Router\Core\Dispatcher\Contract;
 
 use Gzhegow\Lib\Modules\Php\Result\Result;
 use Gzhegow\Router\Core\Route\Struct\HttpPath;
 use Gzhegow\Router\Core\Route\Struct\HttpMethod;
 
 
-class RouterDispatcherContract
+class RouterDispatcherRequestContract implements RouterDispatcherRequestContractInterface
 {
     /**
      * @var HttpMethod
      */
-    public $requestHttpMethod;
+    protected $requestHttpMethod;
     /**
      * @var HttpPath
      */
-    public $requestHttpPath;
+    protected $requestHttpPath;
 
 
     private function __construct()
@@ -85,17 +85,6 @@ class RouterDispatcherContract
     }
 
 
-    public function getRequestHttpMethod() : HttpMethod
-    {
-        return $this->requestHttpMethod;
-    }
-
-    public function getRequestHttpPath() : HttpPath
-    {
-        return $this->requestHttpPath;
-    }
-
-
     public function getRequestMethod() : string
     {
         return $this->requestHttpMethod->getValue();
@@ -110,5 +99,38 @@ class RouterDispatcherContract
     public function getRequestPath() : string
     {
         return $this->requestHttpPath->getPath();
+    }
+
+
+    public function hasRequestQuery(?array &$refQuery = null) : bool
+    {
+        return $this->requestHttpPath->hasQuery($refQuery);
+    }
+
+    public function getRequestQuery() : array
+    {
+        return $this->requestHttpPath->getQuery();
+    }
+
+
+    public function hasRequestQueryString(?string &$refQueryString = null) : bool
+    {
+        return $this->requestHttpPath->hasQueryString($refQueryString);
+    }
+
+    public function getRequestQueryString() : string
+    {
+        return $this->requestHttpPath->getQueryString();
+    }
+
+
+    public function hasRequestFragment(?string &$refFragment = null) : bool
+    {
+        return $this->requestHttpPath->hasQueryString($refFragment);
+    }
+
+    public function getRequestFragment() : string
+    {
+        return $this->requestHttpPath->getFragment();
     }
 }

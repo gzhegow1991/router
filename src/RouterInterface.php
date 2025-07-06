@@ -12,21 +12,21 @@ use Gzhegow\Router\Core\Route\Struct\RouteTag;
 use Gzhegow\Lib\Modules\Func\Pipe\PipeContext;
 use Gzhegow\Router\Core\Route\Struct\RoutePath;
 use Gzhegow\Router\Core\Route\Struct\RouteName;
-use Gzhegow\Router\Core\Route\Struct\RouteNameTag;
 use Gzhegow\Router\Core\Cache\RouterCacheInterface;
-use Gzhegow\Router\Core\Matcher\RouterMatcherContract;
 use Gzhegow\Router\Core\Matcher\RouterMatcherInterface;
 use Gzhegow\Router\Core\Invoker\RouterInvokerInterface;
 use Gzhegow\Router\Core\Collection\RouterRouteCollection;
 use Gzhegow\Router\Exception\Exception\DispatchException;
 use Gzhegow\Router\Core\Collection\RouterPatternCollection;
 use Gzhegow\Router\Core\Collection\RouterFallbackCollection;
-use Gzhegow\Router\Core\Dispatcher\RouterDispatcherContract;
 use Gzhegow\Router\Core\Dispatcher\RouterDispatcherInterface;
 use Gzhegow\Router\Core\Collection\RouterMiddlewareCollection;
-use Gzhegow\Router\Core\Handler\Fallback\GenericHandlerFallback;
 use Gzhegow\Router\Core\UrlGenerator\RouterUrlGeneratorInterface;
-use Gzhegow\Router\Core\Handler\Middleware\GenericHandlerMiddleware;
+use Gzhegow\Router\Core\Handler\Fallback\RouterGenericHandlerFallback;
+use Gzhegow\Router\Core\Matcher\Contract\RouterMatcherContractInterface;
+use Gzhegow\Router\Core\Handler\Middleware\RouterGenericHandlerMiddleware;
+use Gzhegow\Router\Core\Dispatcher\Contract\RouterDispatcherRouteContractInterface;
+use Gzhegow\Router\Core\Dispatcher\Contract\RouterDispatcherRequestContractInterface;
 
 
 interface RouterInterface
@@ -138,7 +138,7 @@ interface RouterInterface
      */
     public function middlewareOnRouteTag($routeTag, $middleware) : RouterInterface;
 
-    public function registerMiddleware(GenericHandlerMiddleware $middleware) : int;
+    public function registerMiddleware(RouterGenericHandlerMiddleware $middleware) : int;
 
 
     /**
@@ -159,7 +159,7 @@ interface RouterInterface
      */
     public function fallbackOnRouteTag($routeTag, $fallback) : RouterInterface;
 
-    public function registerFallback(GenericHandlerFallback $fallback) : int;
+    public function registerFallback(RouterGenericHandlerFallback $fallback) : int;
 
 
 
@@ -168,8 +168,8 @@ interface RouterInterface
 
 
     /**
-     * @param mixed|RouterDispatcherContract $contract
-     * @param array{ 0: array }|PipeContext  $context
+     * @param mixed|RouterDispatcherRequestContractInterface $contract
+     * @param array{ 0: array }|PipeContext                  $context
      *
      * @return mixed
      * @throws DispatchException
@@ -181,8 +181,42 @@ interface RouterInterface
         array $args = []
     );
 
+    /**
+     * @param array{ 0: array }|PipeContext $context
+     *
+     * @return mixed
+     * @throws DispatchException
+     */
+    public function dispatchByRequest(
+        RouterDispatcherRequestContractInterface $contract,
+        $input = null,
+        $context = null,
+        array $args = []
+    );
 
-    public function getDispatchContract() : RouterDispatcherContract;
+    /**
+     * @param array{ 0: array }|PipeContext $context
+     *
+     * @return mixed
+     * @throws DispatchException
+     */
+    public function dispatchByRoute(
+        RouterDispatcherRouteContractInterface $contract,
+        $input = null,
+        $context = null,
+        array $args = []
+    );
+
+
+    public function hasRequestContract(?RouterDispatcherRequestContractInterface &$contract = null) : bool;
+
+    public function getRequestContract() : RouterDispatcherRequestContractInterface;
+
+
+    public function hasRouteContract(?RouterDispatcherRouteContractInterface &$contract = null) : bool;
+
+    public function getRouteContract() : RouterDispatcherRouteContractInterface;
+
 
     public function getDispatchRequestMethod() : string;
 
@@ -194,6 +228,17 @@ interface RouterInterface
     public function getDispatchRoute() : Route;
 
     public function getDispatchActionAttributes() : array;
+
+
+    /**
+     * @return RouterGenericHandlerMiddleware[]
+     */
+    public function getDispatchMiddlewareIndex() : array;
+
+    /**
+     * @return RouterGenericHandlerFallback[]
+     */
+    public function getDispatchFallbackIndex() : array;
 
 
 
@@ -237,22 +282,32 @@ interface RouterInterface
 
 
     /**
-     * @param (array{ 0: string, 1: string }|RouteNameTag)[] $routeNameTags
+     * @param array{
+     *     0: string|false|null,
+     *     1: string|false|null,
+     *     2: string|false|null,
+     * }[] $routeNameTagMethods
      *
      * @return Route[]|Route[][]
      */
-    public function matchAllByNameTags(array $routeNameTags, ?bool $unique = null) : array;
+    public function matchAllByNameTagMethods(array $routeNameTagMethods, ?bool $unique = null) : array;
 
     /**
-     * @param (array{ 0: string, 1: string }|RouteNameTag)[] $routeNameTags
+     * @param array{
+     *     0: string|false|null,
+     *     1: string|false|null,
+     *     2: string|false|null,
+     * }[] $routeNameTagMethods
      */
-    public function matchFirstByNameTags(array $routeNameTags) : ?Route;
+    public function matchFirstByNameTagMethods(array $routeNameTagMethods) : ?Route;
 
 
     /**
      * @return Route[]
      */
-    public function matchByContract(RouterMatcherContract $contract) : array;
+    public function matchByContract(RouterMatcherContractInterface $contract) : array;
+
+    public function matchFirstByContract(RouterMatcherContractInterface $contract) : ?Route;
 
 
 

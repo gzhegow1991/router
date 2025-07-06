@@ -5,15 +5,15 @@ namespace Gzhegow\Router\Core\Collection;
 use Gzhegow\Router\Core\Route\Struct\RouteTag;
 use Gzhegow\Router\Core\Route\Struct\RoutePath;
 use Gzhegow\Router\Exception\RuntimeException;
-use Gzhegow\Router\Core\Handler\Middleware\GenericHandlerMiddleware;
+use Gzhegow\Router\Core\Handler\Middleware\RouterGenericHandlerMiddleware;
 
 
 /**
- * @property GenericHandlerMiddleware[]      $middlewareList
+ * @property RouterGenericHandlerMiddleware[] $middlewareList
  *
- * @property array<string, array<int, bool>> $middlewareIndexByRouteId
- * @property array<string, array<int, bool>> $middlewareIndexByRoutePath
- * @property array<string, array<int, bool>> $middlewareIndexByRouteTag
+ * @property array<string, array<int, bool>>  $middlewareIndexByRouteId
+ * @property array<string, array<int, bool>>  $middlewareIndexByRoutePath
+ * @property array<string, array<int, bool>>  $middlewareIndexByRouteTag
  */
 class RouterMiddlewareCollection implements \Serializable
 {
@@ -23,7 +23,7 @@ class RouterMiddlewareCollection implements \Serializable
     protected $middlewareLastId = 0;
 
     /**
-     * @var GenericHandlerMiddleware[]
+     * @var RouterGenericHandlerMiddleware[]
      */
     protected $middlewareList = [];
 
@@ -101,7 +101,7 @@ class RouterMiddlewareCollection implements \Serializable
 
 
     /**
-     * @return GenericHandlerMiddleware[]
+     * @return RouterGenericHandlerMiddleware[]
      */
     public function getMiddlewareList() : array
     {
@@ -109,7 +109,7 @@ class RouterMiddlewareCollection implements \Serializable
     }
 
 
-    public function hasMiddleware(int $id, ?GenericHandlerMiddleware &$refMiddleware = null) : bool
+    public function hasMiddleware(int $id, ?RouterGenericHandlerMiddleware &$refMiddleware = null) : bool
     {
         $refMiddleware = null;
 
@@ -122,13 +122,13 @@ class RouterMiddlewareCollection implements \Serializable
         return false;
     }
 
-    public function getMiddleware(int $id) : GenericHandlerMiddleware
+    public function getMiddleware(int $id) : RouterGenericHandlerMiddleware
     {
         return $this->middlewareList[ $id ];
     }
 
 
-    public function registerMiddleware(GenericHandlerMiddleware $middleware) : int
+    public function registerMiddleware(RouterGenericHandlerMiddleware $middleware) : int
     {
         $key = $middleware->getKey();
 
@@ -146,7 +146,7 @@ class RouterMiddlewareCollection implements \Serializable
     }
 
 
-    public function addRouteIdMiddleware(int $routeId, GenericHandlerMiddleware $middleware) : int
+    public function addRouteIdMiddleware(int $routeId, RouterGenericHandlerMiddleware $middleware) : int
     {
         $id = $this->registerMiddleware($middleware);
 
@@ -155,7 +155,7 @@ class RouterMiddlewareCollection implements \Serializable
         return $id;
     }
 
-    public function addRoutePathMiddleware(RoutePath $routePath, GenericHandlerMiddleware $middleware) : int
+    public function addRoutePathMiddleware(RoutePath $routePath, RouterGenericHandlerMiddleware $middleware) : int
     {
         $id = $this->registerMiddleware($middleware);
 
@@ -164,7 +164,7 @@ class RouterMiddlewareCollection implements \Serializable
         return $id;
     }
 
-    public function addRouteTagMiddleware(RouteTag $routeTag, GenericHandlerMiddleware $middleware) : int
+    public function addRouteTagMiddleware(RouteTag $routeTag, RouterGenericHandlerMiddleware $middleware) : int
     {
         $id = $this->registerMiddleware($middleware);
 

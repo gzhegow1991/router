@@ -72,6 +72,14 @@ class RouteTag
             );
         }
 
+        if (false !== strpos($fromString, '!')) {
+            return Result::err(
+                $ret,
+                [ 'The `from` should not contain symbol `!`', $from ],
+                [ __FILE__, __LINE__ ]
+            );
+        }
+
         $instance = new static();
         $instance->value = $fromString;
 

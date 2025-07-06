@@ -2,10 +2,10 @@
 
 namespace Gzhegow\Router\Demo\Handler\Action;
 
-use Gzhegow\Router\Core\Http\Action\CorsAction;
+use Gzhegow\Router\Core\Http\Action\RouterCorsAction;
 
 
-class DemoCorsAction extends CorsAction
+class DemoCorsAction extends RouterCorsAction
 {
     public function __invoke(
         $input,

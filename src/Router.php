@@ -12,21 +12,21 @@ use Gzhegow\Lib\Modules\Func\Pipe\PipeContext;
 use Gzhegow\Router\Core\Route\Struct\RouteTag;
 use Gzhegow\Router\Core\Route\Struct\RouteName;
 use Gzhegow\Router\Core\Route\Struct\RoutePath;
-use Gzhegow\Router\Core\Route\Struct\RouteNameTag;
 use Gzhegow\Router\Core\Cache\RouterCacheInterface;
-use Gzhegow\Router\Core\Matcher\RouterMatcherContract;
 use Gzhegow\Router\Core\Matcher\RouterMatcherInterface;
 use Gzhegow\Router\Core\Invoker\RouterInvokerInterface;
 use Gzhegow\Router\Exception\Exception\DispatchException;
 use Gzhegow\Router\Core\Collection\RouterRouteCollection;
 use Gzhegow\Router\Core\Collection\RouterPatternCollection;
-use Gzhegow\Router\Core\Dispatcher\RouterDispatcherContract;
 use Gzhegow\Router\Core\Collection\RouterFallbackCollection;
 use Gzhegow\Router\Core\Dispatcher\RouterDispatcherInterface;
 use Gzhegow\Router\Core\Collection\RouterMiddlewareCollection;
-use Gzhegow\Router\Core\Handler\Fallback\GenericHandlerFallback;
 use Gzhegow\Router\Core\UrlGenerator\RouterUrlGeneratorInterface;
-use Gzhegow\Router\Core\Handler\Middleware\GenericHandlerMiddleware;
+use Gzhegow\Router\Core\Handler\Fallback\RouterGenericHandlerFallback;
+use Gzhegow\Router\Core\Matcher\Contract\RouterMatcherContractInterface;
+use Gzhegow\Router\Core\Handler\Middleware\RouterGenericHandlerMiddleware;
+use Gzhegow\Router\Core\Dispatcher\Contract\RouterDispatcherRouteContractInterface;
+use Gzhegow\Router\Core\Dispatcher\Contract\RouterDispatcherRequestContractInterface;
 
 
 class Router
@@ -243,7 +243,7 @@ class Router
         return static::$facade->middlewareOnRouteTag($routeTag, $middleware);
     }
 
-    public static function registerMiddleware(GenericHandlerMiddleware $middleware) : int
+    public static function registerMiddleware(RouterGenericHandlerMiddleware $middleware) : int
     {
         return static::$facade->registerMiddleware($middleware);
     }
@@ -276,7 +276,7 @@ class Router
         return static::$facade->fallbackOnRouteTag($routeTag, $fallback);
     }
 
-    public static function registerFallback(GenericHandlerFallback $fallback) : int
+    public static function registerFallback(RouterGenericHandlerFallback $fallback) : int
     {
         return static::$facade->registerFallback($fallback);
     }
@@ -348,37 +348,50 @@ class Router
 
 
     /**
-     * @param (array{ 0: string, 1: string }|RouteNameTag)[] $routeNameTags
+     * @param array{
+     *     0: string|false|null,
+     *     1: string|false|null,
+     *     2: string|false|null,
+     * }[] $routeNameTagMethods
      *
      * @return Route[]|Route[][]
      */
-    public static function matchAllByNameTags(array $routeNameTags, ?bool $unique = null) : array
+    public static function matchAllByNameTags(array $routeNameTagMethods, ?bool $unique = null) : array
     {
-        return static::$facade->matchAllByNameTags($routeNameTags, $unique);
+        return static::$facade->matchAllByNameTagMethods($routeNameTagMethods, $unique);
     }
 
     /**
-     * @param (array{ 0: string, 1: string }|RouteNameTag)[] $routeNameTags
+     * @param array{
+     *     0: string|false|null,
+     *     1: string|false|null,
+     *     2: string|false|null,
+     * }[] $routeNameTagMethods
      */
-    public static function matchFirstByNameTags(array $routeNameTags) : ?Route
+    public static function matchFirstByNameTags(array $routeNameTagMethods) : ?Route
     {
-        return static::$facade->matchFirstByNameTags($routeNameTags);
+        return static::$facade->matchFirstByNameTagMethods($routeNameTagMethods);
     }
 
 
     /**
      * @return Route[]
      */
-    public static function matchByContract(RouterMatcherContract $contract) : array
+    public static function matchByContract(RouterMatcherContractInterface $contract) : array
     {
         return static::$facade->matchByContract($contract);
+    }
+
+    public static function matchFirstByContract(RouterMatcherContractInterface $contract) : ?Route
+    {
+        return static::$facade->matchFirstByContract($contract);
     }
 
 
 
     /**
-     * @param mixed|RouterDispatcherContract $contract
-     * @param array{ 0: array }|PipeContext  $context
+     * @param mixed|RouterDispatcherRequestContractInterface|RouterDispatcherRouteContractInterface $contract
+     * @param array{ 0: array }|PipeContext                                                         $context
      *
      * @return mixed
      * @throws DispatchException
@@ -396,11 +409,66 @@ class Router
         );
     }
 
-
-    public static function getDispatchContract() : RouterDispatcherContract
+    /**
+     * @param array{ 0: array }|PipeContext $context
+     *
+     * @return mixed
+     * @throws DispatchException
+     */
+    public static function dispatchByRequest(
+        RouterDispatcherRequestContractInterface $contract,
+        $input = null,
+        $context = null,
+        array $args = []
+    )
     {
-        return static::$facade->getDispatchContract();
+        return static::$facade->dispatchByRequest(
+            $contract,
+            $input, $context, $args
+        );
     }
+
+    /**
+     * @param array{ 0: array }|PipeContext $context
+     *
+     * @return mixed
+     * @throws DispatchException
+     */
+    public static function dispatchByRoute(
+        RouterDispatcherRouteContractInterface $contract,
+        $input = null,
+        $context = null,
+        array $args = []
+    )
+    {
+        return static::$facade->dispatchByRoute(
+            $contract,
+            $input, $context, $args
+        );
+    }
+
+
+    public static function hasRequestContract(?RouterDispatcherRequestContractInterface &$contract = null) : bool
+    {
+        return static::$facade->hasRequestContract($contract);
+    }
+
+    public static function getRequestContract() : RouterDispatcherRequestContractInterface
+    {
+        return static::$facade->getRequestContract();
+    }
+
+
+    public static function hasRouteContract(?RouterDispatcherRouteContractInterface &$contract = null) : bool
+    {
+        return static::$facade->hasRouteContract($contract);
+    }
+
+    public static function getRouteContract() : RouterDispatcherRouteContractInterface
+    {
+        return static::$facade->getRouteContract();
+    }
+
 
     public static function getDispatchRequestMethod() : string
     {
@@ -426,6 +494,23 @@ class Router
     public static function getDispatchActionAttributes() : array
     {
         return static::$facade->getDispatchActionAttributes();
+    }
+
+
+    /**
+     * @return RouterGenericHandlerMiddleware[]
+     */
+    public function getDispatchMiddlewareIndex() : array
+    {
+        return static::$facade->getDispatchMiddlewareIndex();
+    }
+
+    /**
+     * @return RouterGenericHandlerFallback[]
+     */
+    public function getDispatchFallbackIndex() : array
+    {
+        return static::$facade->getDispatchFallbackIndex();
     }
 
 

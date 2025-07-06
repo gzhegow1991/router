@@ -69,6 +69,9 @@ class RouterConfig extends AbstractConfig
     }
 
 
+    /**
+     * @noinspection PhpCastIsUnnecessaryInspection
+     */
     protected function validation(array &$refContext = []) : bool
     {
         $this->registerAllowObjectsAndClosures = (bool) $this->registerAllowObjectsAndClosures;

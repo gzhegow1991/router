@@ -26,6 +26,7 @@ class HttpPath
      * @var string
      */
     protected $queryString;
+
     /**
      * @var string
      */

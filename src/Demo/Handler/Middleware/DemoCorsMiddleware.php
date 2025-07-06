@@ -2,10 +2,10 @@
 
 namespace Gzhegow\Router\Demo\Handler\Middleware;
 
-use Gzhegow\Router\Core\Http\Middleware\CorsMiddleware;
+use Gzhegow\Router\Core\Http\Middleware\RouterCorsMiddleware;
 
 
-class DemoCorsMiddleware extends CorsMiddleware
+class DemoCorsMiddleware extends RouterCorsMiddleware
 {
     public function __invoke(
         $fnNext, $input,

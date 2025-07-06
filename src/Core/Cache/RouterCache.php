@@ -126,6 +126,8 @@ class RouterCache implements RouterCacheInterface
 
     /**
      * @return \Psr\Cache\CacheItemInterface|null
+     *
+     * @noinspection PhpFullyQualifiedNameUsageInspection
      */
     protected function cacheAdapterGetItem()
     {

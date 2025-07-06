@@ -18,6 +18,8 @@ use Gzhegow\Router\Exception\LogicException;
  *
  * @property string|null                                   $cacheDirpath
  * @property string|null                                   $cacheFilename
+ *
+ * @noinspection PhpFullyQualifiedNameUsageInspection
  */
 class RouterCacheConfig extends AbstractConfig
 {

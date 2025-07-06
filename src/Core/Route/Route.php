@@ -2,10 +2,10 @@
 
 namespace Gzhegow\Router\Core\Route;
 
-use Gzhegow\Router\Core\Handler\Action\GenericHandlerAction;
-use Gzhegow\Router\Core\Dispatcher\RouterDispatcherContract;
-use Gzhegow\Router\Core\Handler\Fallback\GenericHandlerFallback;
-use Gzhegow\Router\Core\Handler\Middleware\GenericHandlerMiddleware;
+use Gzhegow\Router\Core\Handler\Action\RouterGenericHandlerAction;
+use Gzhegow\Router\Core\Dispatcher\Contract\RouterDispatcherRequestContract;
+use Gzhegow\Router\Core\Handler\Fallback\RouterGenericHandlerFallback;
+use Gzhegow\Router\Core\Handler\Middleware\RouterGenericHandlerMiddleware;
 
 
 class Route implements \Serializable
@@ -25,7 +25,7 @@ class Route implements \Serializable
     public $compiledPathRegex;
 
     /**
-     * @var GenericHandlerAction
+     * @var RouterGenericHandlerAction
      */
     public $action;
     /**
@@ -48,18 +48,9 @@ class Route implements \Serializable
     public $tagIndex = [];
 
     /**
-     * @var array<string, mixed>
+     * @var RouterDispatcherRequestContract
      */
-    public $dispatchActionAttributes = [];
-
-    /**
-     * @var array<string, GenericHandlerMiddleware>
-     */
-    public $dispatchMiddlewareIndex = [];
-    /**
-     * @var array<string, GenericHandlerFallback>
-     */
-    public $dispatchFallbackIndex = [];
+    public $requestContract;
 
     /**
      * @var string
@@ -75,9 +66,18 @@ class Route implements \Serializable
     public $dispatchRequestUri;
 
     /**
-     * @var RouterDispatcherContract
+     * @var array<string, mixed>
      */
-    public $dispatchContract;
+    public $dispatchActionAttributes = [];
+
+    /**
+     * @var array<string, RouterGenericHandlerMiddleware>
+     */
+    public $dispatchMiddlewareIndex = [];
+    /**
+     * @var array<string, RouterGenericHandlerFallback>
+     */
+    public $dispatchFallbackIndex = [];
 
 
     public function getId() : int

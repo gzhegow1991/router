@@ -196,12 +196,14 @@ $router->cacheRemember(
         $router->route('/{lang}', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'indexGet' ], 'index', 'i18n');
         $router->route('/{lang}', 'POST', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'indexPost' ], 'index', 'i18n');
 
-        // > будьте внимательны, это разные маршруты, чтобы сделать их одним и тем же (ИЛИ):
-        // - 1) уберите слеш в конце
-        // - 2) установите в конфиге параметр dispatchTrailingSlashMode на NEVER или ALWAYS
-        // - 3) если хотите, чтобы роутер запрещал/требовал ставить косую черту в конце, поставьте параметр compileTrailingSlashMode на NEVER или ALWAYS
-        $router->route('/hello-world', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'helloWorldGet' ], 'index');
-        $router->route('/hello-world/', 'POST', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'helloWorldPost' ], 'index');
+        // > будьте внимательны, указанные ниже маршруты - разные, отличаются закрывающимся slash, чтобы сделать их одним и тем же (ИЛИ):
+        // - 1) уберите slash в конце
+        // - 2) установите в конфиге параметр `dispatchTrailingSlashMode` на NEVER или ALWAYS
+        // - 3) если хотите, чтобы роутер запрещал/требовал ставить slash в конце, поставьте параметр `compileTrailingSlashMode` на NEVER или ALWAYS
+        $router->route('/hello-world', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'helloWorldGet' ]);
+        $router->route('/hello-world/', 'POST', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'helloWorldPost' ]);
+        $router->route('/{lang}/hello-world', 'GET', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'helloWorldGet' ], null, 'i18n');
+        $router->route('/{lang}/hello-world/', 'POST', [ '\Gzhegow\Router\Demo\Handler\Controller\DemoController', 'helloWorldPost' ], null, 'i18n');
 
         // // > добавляет middleware-посредник по пути (они отработают даже если маршрут не найден, но путь начинался с указанного)
         // // > будьте внимательны, посредники отрабатывают в той последовательности, в которой заданы, если задать их до группы, то и отработают они раньше
@@ -283,11 +285,9 @@ $router->cacheRemember(
                     //     )
                     //     ->name('')
                     //     ->tags([])
-                    // ;
-
-                    // // > также как и к группам, можно указывать теги и middleware-посредники/fallback-обработчики и для конкретного роута
-                    // // > при этом, если такие же уже были зарегистрированы раньше, то повторно они не добавятся
-                    // $route
+                    //     //
+                    //     // > также как и к группам, можно указывать теги и middleware-посредники/fallback-обработчики и для конкретного роута
+                    //     // > при этом, если такие же уже были зарегистрированы раньше, то повторно они не добавятся
                     //     ->middlewares([])
                     //     ->fallbacks([])
                     // ;
@@ -329,9 +329,6 @@ $router->cacheRemember(
 
 // > TEST
 // > так можно искать маршруты с помощью имен или тегов
-// > первый результат
-// $route = $router->matchFirstByName('user.main');
-// $route = $router->matchFirstByTag('user');
 $fn = function () use ($ffn, $router) {
     $ffn->print('TEST 1');
     echo "\n";
@@ -346,7 +343,6 @@ $fn = function () use ($ffn, $router) {
 
     $names = [ 'idx1' => 'user.main' ];
     $tags = [ 'idx1' => 'user' ];
-    $nameTagPairs = [ 'idx1' => [ 'user.main', 'user' ] ];
 
     $batch = $router->matchAllByNames($names);
     foreach ( $batch as $i => $routes ) {
@@ -362,13 +358,6 @@ $fn = function () use ($ffn, $router) {
     }
     echo "\n";
 
-    $batch = $router->matchAllByNameTags($nameTagPairs);
-    foreach ( $batch as $i => $routes ) {
-        $ffn->print('Attribute index', $i);
-        $ffn->print_array_multiline($routes);
-    }
-    echo "\n";
-
 
     $route = $router->matchFirstByIds($ids);
     $ffn->print($route);
@@ -377,9 +366,6 @@ $fn = function () use ($ffn, $router) {
     $ffn->print($route);
 
     $route = $router->matchFirstByTags($tags);
-    $ffn->print($route);
-
-    $route = $router->matchFirstByNameTags($nameTagPairs);
     $ffn->print($route);
 };
 $test = $ffn->test($fn);
@@ -396,17 +382,6 @@ $test->expectStdout('
 "Attribute index" | "idx1"
 ###
 [
-  7 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
-  8 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
-  9 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }"
-]
-###
-
-"Attribute index" | "idx1"
-###
-[
-  7 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
-  8 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
   9 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
   10 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
   11 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }"
@@ -416,13 +391,14 @@ $test->expectStdout('
 "Attribute index" | "idx1"
 ###
 [
-  7 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
-  8 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
-  9 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }"
+  9 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  10 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  11 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  12 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  13 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }"
 ]
 ###
 
-{ object(serializable) # Gzhegow\Router\Core\Route\Route }
 { object(serializable) # Gzhegow\Router\Core\Route\Route }
 { object(serializable) # Gzhegow\Router\Core\Route\Route }
 { object(serializable) # Gzhegow\Router\Core\Route\Route }
@@ -431,36 +407,128 @@ $test->run();
 
 
 // > TEST
-// > так можно искать маршруты с помощью нескольких фильтров (если указать массивы - они работают как логическое ИЛИ, тогда как сами фильтры работают через логическое И
+// > так можно искать маршруты с по парам "имя-тег", чтобы найти два одинаковых роута для противоположных контекстов
 $fn = function () use ($ffn, $router) {
     $ffn->print('TEST 2');
     echo "\n";
 
 
-    $contract = \Gzhegow\Router\Core\Matcher\RouterMatcherContract::from([
-        // 'id'          => [ 1 ],
-        // 'path'        => [ '/api/v1/user/{id}' ],
-        // 'httpMethod'  => [ 'GET' ],
-        // 'name'        => [ 'user.main' ],
-        // 'tag'         => [ 'user' ],
-        //
-        'name'       => 'user.main',
-        'tag'        => 'user',
-        'httpMethod' => [ 'GET', 'POST' ],
-    ]);
+    $nameTagMethodList = [
+        '--' => [ null, null, null ],
+        '-!' => [ null, false, null ],
+        '!-' => [ false, null, null ],
+        '!!' => [ false, false, null ],
 
-    $routes = $router->matchByContract($contract);
+        '-t' => [ null, 'i18n', null ],
+        '!t' => [ false, 'i18n', null ],
 
-    foreach ( $routes as $id => $route ) {
-        $ffn->print($id, $route);
+        'n-' => [ 'index', null, null ],
+        'n!' => [ 'index', false, null ],
+
+        'nt' => [ 'index', 'i18n', null ],
+    ];
+
+    $batch = $router->matchAllByNameTagMethods($nameTagMethodList);
+    foreach ( $batch as $i => $routes ) {
+        $ffn->print('Attribute index', $i);
+        $ffn->print_array_multiline($routes);
+        echo "\n";
     }
 };
 $test = $ffn->test($fn);
 $test->expectStdout('
 "TEST 2"
 
-8 | { object(serializable) # Gzhegow\Router\Core\Route\Route }
-9 | { object(serializable) # Gzhegow\Router\Core\Route\Route }
+"Attribute index" | "--"
+###
+[
+  1 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  2 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  3 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  4 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  5 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  6 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  7 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  8 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  9 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  10 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  11 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  12 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  13 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }"
+]
+###
+
+"Attribute index" | "-!"
+###
+[
+  1 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  2 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  5 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  6 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }"
+]
+###
+
+"Attribute index" | "!-"
+###
+[
+  5 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  6 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  7 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  8 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }"
+]
+###
+
+"Attribute index" | "!!"
+###
+[
+  5 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  6 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }"
+]
+###
+
+"Attribute index" | "-t"
+###
+[
+  3 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  4 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  7 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  8 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }"
+]
+###
+
+"Attribute index" | "!t"
+###
+[
+  7 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  8 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }"
+]
+###
+
+"Attribute index" | "n-"
+###
+[
+  1 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  2 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  3 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  4 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }"
+]
+###
+
+"Attribute index" | "n!"
+###
+[
+  1 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  2 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }"
+]
+###
+
+"Attribute index" | "nt"
+###
+[
+  3 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }",
+  4 => "{ object(serializable) # Gzhegow\Router\Core\Route\Route }"
+]
+###
 ');
 $test->run();
 
@@ -468,7 +536,7 @@ $test->run();
 // > TEST
 // > так можно сгенерировать ссылки для зарегистрированных маршрутов
 $fn = function () use ($ffn, $router) {
-    $ffn->print('TEST 3');
+    $ffn->print('TEST 4');
     echo "\n";
 
 
@@ -495,7 +563,7 @@ $fn = function () use ($ffn, $router) {
 };
 $test = $ffn->test($fn);
 $test->expectStdout('
-"TEST 3"
+"TEST 4"
 
 ###
 [
@@ -511,11 +579,11 @@ $test->run();
 // > TEST
 // > так можно запустить выполнение маршрута в вашем файле index.php, на который указывает apache2/nginx
 $fn = function () use ($ffn, $router) {
-    $ffn->print('TEST 4');
+    $ffn->print('TEST 5');
     echo "\n";
 
 
-    $contract = \Gzhegow\Router\Core\Dispatcher\RouterDispatcherContract::fromArray(
+    $contract = \Gzhegow\Router\Core\Dispatcher\Contract\RouterDispatcherRequestContract::fromArray(
         [ 'GET', '/api/v1/user/1/main' ]
     );
 
@@ -525,7 +593,7 @@ $fn = function () use ($ffn, $router) {
 };
 $test = $ffn->test($fn);
 $test->expectStdout('
-"TEST 4"
+"TEST 5"
 
 @before :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
 @before :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
@@ -543,7 +611,7 @@ $test->run();
 // > TEST
 // > такого маршрута нет, запустится ранее указанный fallback-обработчик
 $fn = function () use ($ffn, $router) {
-    $ffn->print('TEST 5');
+    $ffn->print('TEST 6');
     echo "\n";
 
 
@@ -553,7 +621,7 @@ $fn = function () use ($ffn, $router) {
 };
 $test = $ffn->test($fn);
 $test->expectStdout('
-"TEST 5"
+"TEST 6"
 
 @before :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
 @after :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
@@ -567,7 +635,7 @@ $test->run();
 // > TEST
 // > такого маршрута нет, и одновременно с этим обработчик ошибок не был задан (либо был задан, но перебросил ошибку, что трактуется как "обработка не удалась")
 $fn = function () use ($ffn, $router) {
-    $ffn->print('TEST 6');
+    $ffn->print('TEST 7');
     echo "\n";
 
 
@@ -589,7 +657,7 @@ $fn = function () use ($ffn, $router) {
 };
 $test = $ffn->test($fn);
 $test->expectStdout('
-"TEST 6"
+"TEST 7"
 
 [ CATCH ]
 [ 0 ] Unhandled exception during dispatch
@@ -609,7 +677,7 @@ $test->run();
 // > TEST
 // > этот маршрут бросает \LogicException, запустятся DemoLogicExceptionFallback и DemoThrowableFallback
 $fn = function () use ($ffn, $router) {
-    $ffn->print('TEST 7');
+    $ffn->print('TEST 8');
     echo "\n";
 
 
@@ -619,7 +687,7 @@ $fn = function () use ($ffn, $router) {
 };
 $test = $ffn->test($fn);
 $test->expectStdout('
-"TEST 7"
+"TEST 8"
 
 @before :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
 @before :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke
@@ -639,7 +707,7 @@ $test->run();
 // > TEST
 // > этот маршрут бросает \RuntimeException, запустится DemoRuntimeExceptionFallback (т.к. он объявлен первым)
 $fn = function () use ($ffn, $router) {
-    $ffn->print('TEST 8');
+    $ffn->print('TEST 9');
     echo "\n";
 
 
@@ -649,7 +717,7 @@ $fn = function () use ($ffn, $router) {
 };
 $test = $ffn->test($fn);
 $test->expectStdout('
-"TEST 8"
+"TEST 9"
 
 @before :: Gzhegow\Router\Demo\Handler\Middleware\DemoCorsMiddleware::__invoke
 @before :: Gzhegow\Router\Demo\Handler\Middleware\Demo1stMiddleware::__invoke

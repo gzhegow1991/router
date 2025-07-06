@@ -40,12 +40,26 @@ class DemoController
     {
         echo __METHOD__ . "\n";
 
+        /** @var Route $route */
+        $route = $args[ 0 ] ?? null;
+
+        if (null !== $route) {
+            echo '[ LANG ] ' . $route->dispatchActionAttributes[ 'lang' ] . "\n";
+        }
+
         return 1;
     }
 
     public function helloWorldPost()
     {
         echo __METHOD__ . "\n";
+
+        /** @var Route $route */
+        $route = $args[ 0 ] ?? null;
+
+        if (null !== $route) {
+            echo '[ LANG ] ' . $route->dispatchActionAttributes[ 'lang' ] . "\n";
+        }
 
         return 1;
     }

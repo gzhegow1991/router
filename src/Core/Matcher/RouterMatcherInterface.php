@@ -6,7 +6,7 @@ use Gzhegow\Router\RouterInterface;
 use Gzhegow\Router\Core\Route\Route;
 use Gzhegow\Router\Core\Route\Struct\RouteTag;
 use Gzhegow\Router\Core\Route\Struct\RouteName;
-use Gzhegow\Router\Core\Route\Struct\RouteNameTag;
+use Gzhegow\Router\Core\Matcher\Contract\RouterMatcherContractInterface;
 
 
 interface RouterMatcherInterface
@@ -54,20 +54,30 @@ interface RouterMatcherInterface
 
 
     /**
-     * @param (array{ 0: string, 1: string }|RouteNameTag)[] $routeNameTags
+     * @param array{
+     *     0: string|false|null,
+     *     1: string|false|null,
+     *     2: string|false|null,
+     * }[] $routeNameTagMethods
      *
      * @return Route[]|Route[][]
      */
-    public function matchAllByNameTags(array $routeNameTags, ?bool $unique = null) : array;
+    public function matchAllByNameTagMethods(array $routeNameTagMethods, ?bool $unique = null) : array;
 
     /**
-     * @param (array{ 0: string, 1: string }|RouteNameTag)[] $routeNameTags
+     * @param array{
+     *     0: string|false|null,
+     *     1: string|false|null,
+     *     2: string|false|null,
+     * }[] $routeNameTagMethods
      */
-    public function matchFirstByNameTags(array $routeNameTags) : ?Route;
+    public function matchFirstByNameTagMethods(array $routeNameTagMethods) : ?Route;
 
 
     /**
      * @return Route[]
      */
-    public function matchByContract(RouterMatcherContract $contract) : array;
+    public function matchByContract(RouterMatcherContractInterface $contract) : array;
+
+    public function matchFirstByContract(RouterMatcherContractInterface $contract) : ?Route;
 }

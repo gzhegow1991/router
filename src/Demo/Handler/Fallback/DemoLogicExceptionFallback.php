@@ -5,6 +5,9 @@ namespace Gzhegow\Router\Demo\Handler\Fallback;
 
 class DemoLogicExceptionFallback
 {
+    /**
+     * @throws \Throwable
+     */
     public function __invoke(
         \Throwable $e, $input,
         array $context = [],

@@ -3,7 +3,7 @@
 namespace Gzhegow\Router\Core\Http\Action;
 
 
-class CorsAction
+class RouterCorsAction
 {
     public function __invoke(
         $input,
