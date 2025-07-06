@@ -260,7 +260,8 @@ class RouterFacade implements RouterInterface
             'middlewareCollection' => true,
             'fallbackCollection'   => true,
             'patternCollection'    => true,
-            'routerNodeRoot'       => true,
+            //
+            'rootRouterNode'       => true,
         ];
 
         foreach ( $keys as $key => $bool ) {
@@ -274,8 +275,13 @@ class RouterFacade implements RouterInterface
 
     protected function cacheSave() : RouterInterface
     {
-        if (! $this->isRouterChanged) return $this;
-        if ($this->config->registerAllowObjectsAndClosures) return $this;
+        if (! $this->isRouterChanged) {
+            return $this;
+        }
+
+        if ($this->config->registerAllowObjectsAndClosures) {
+            return $this;
+        }
 
         $cacheData = [
             'routeCollection'      => $this->routeCollection,
@@ -283,7 +289,7 @@ class RouterFacade implements RouterInterface
             'fallbackCollection'   => $this->fallbackCollection,
             'patternCollection'    => $this->patternCollection,
             //
-            'routerNodeRoot'       => $this->rootRouterNode,
+            'rootRouterNode'       => $this->rootRouterNode,
         ];
 
         $this->routerCache->saveCache($cacheData);
@@ -414,17 +420,17 @@ class RouterFacade implements RouterInterface
 
         $path = $route->path;
 
-        $slice = $path;
-        $slice = ltrim($slice, '/');
-        $slice = explode('/', $slice);
-        while ( $slice ) {
+        $split = $path;
+        $split = ltrim($split, '/');
+        $split = explode('/', $split);
+        while ( [] !== $split ) {
             $routeNodePrevious = $routeNodePrevious ?? $this->rootRouterNode;
 
-            $part = array_shift($slice);
+            $part = array_shift($split);
             $partRegex = null;
 
             $isPattern = (false !== strpos($part, Router::PATTERN_ENCLOSURE[ 0 ]));
-            $isLast = ([] === $slice);
+            $isLast = ([] === $split);
 
             if ($isPattern) {
                 $partRegex = $this->compilePathRegex($part);

@@ -238,6 +238,7 @@ class RouterDispatcher implements RouterDispatcherInterface
         }
 
         $this->requestContract = $requestContract;
+
         $this->dispatchRequestMethod = $dispatchRequestMethod;
         $this->dispatchRequestUri = $dispatchRequestUri;
         $this->dispatchRequestPath = $dispatchRequestPath;
