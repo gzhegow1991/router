@@ -252,13 +252,13 @@ class RouterDispatcher implements RouterDispatcherInterface
         $routeSubpathCurrent = [ '' ];
         $routeSubpathList = [ '/' ];
 
-        $slice = $dispatchRequestPath;
-        $slice = ltrim($slice, '/');
-        $slice = explode('/', $slice);
-        while ( [] !== $slice ) {
-            $requestUriPart = array_shift($slice);
+        $split = $dispatchRequestPath;
+        $split = ltrim($split, '/');
+        $split = explode('/', $split);
+        while ( [] !== $split ) {
+            $requestUriPart = array_shift($split);
 
-            $isLast = ([] === $slice);
+            $isLast = ([] === $split);
 
             if ($isLast) {
                 if (isset($routeNodeCurrent->routeIndexByPart[ $requestUriPart ])) {
