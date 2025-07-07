@@ -646,9 +646,14 @@ class RouterDispatcher implements RouterDispatcherInterface
                 $input, $pipelineArgs
             );
         }
+        catch ( \Gzhegow\Lib\Exception\Runtime\PipeException $e ) {
+            throw new DispatchException(
+                [ 'Unhandled exception during dispatch' ], $e->getPrevious()
+            );
+        }
         catch ( \Throwable $e ) {
             throw new DispatchException(
-                [ 'Unhandled exception during dispatch', $e ], $e
+                [ 'Unhandled exception during dispatch' ], $e
             );
         }
 
