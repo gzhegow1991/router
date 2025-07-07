@@ -23,7 +23,6 @@ php test.php
 ```php
 <?php
 
-// > подключаем сторонние пакеты из composer.json
 require_once __DIR__ . '/../vendor/autoload.php';
 
 
