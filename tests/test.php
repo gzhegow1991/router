@@ -141,7 +141,7 @@ $router = new \Gzhegow\Router\RouterFacade(
 
 
 // // > так можно очистить кэш
-$router->cacheClear();
+// $router->cacheClear();
 
 // > вызываем функцию, которая загрузит кеш, и если его нет - выполнит регистрацию маршрутов и сохранение их в кэш (не обязательно)
 $router->cacheRemember(

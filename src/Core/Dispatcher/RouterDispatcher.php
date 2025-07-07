@@ -6,17 +6,14 @@ use Gzhegow\Lib\Lib;
 use Gzhegow\Router\Router;
 use Gzhegow\Router\RouterInterface;
 use Gzhegow\Router\Core\Route\Route;
-use Gzhegow\Router\Core\Node\RouterNode;
 use Gzhegow\Lib\Modules\Php\Result\Result;
+use Gzhegow\Router\Core\Store\RouterStore;
 use Gzhegow\Router\Core\Config\RouterConfig;
 use Gzhegow\Router\Exception\LogicException;
 use Gzhegow\Lib\Modules\Func\Pipe\PipeContext;
 use Gzhegow\Router\Exception\Runtime\NotFoundException;
 use Gzhegow\Router\Core\Invoker\RouterInvokerInterface;
 use Gzhegow\Router\Exception\Exception\DispatchException;
-use Gzhegow\Router\Core\Collection\RouterRouteCollection;
-use Gzhegow\Router\Core\Collection\RouterFallbackCollection;
-use Gzhegow\Router\Core\Collection\RouterMiddlewareCollection;
 use Gzhegow\Router\Core\Handler\Fallback\RouterGenericHandlerFallback;
 use Gzhegow\Router\Core\Dispatcher\Contract\RouterDispatcherRouteContract;
 use Gzhegow\Router\Core\Handler\Middleware\RouterGenericHandlerMiddleware;
@@ -38,22 +35,9 @@ class RouterDispatcher implements RouterDispatcherInterface
     protected $routerInvoker;
 
     /**
-     * @var RouterRouteCollection
+     * @var RouterStore
      */
-    protected $routeCollection;
-    /**
-     * @var RouterMiddlewareCollection
-     */
-    protected $middlewareCollection;
-    /**
-     * @var RouterFallbackCollection
-     */
-    protected $fallbackCollection;
-
-    /**
-     * @var RouterNode
-     */
-    protected $rootRouterNode;
+    protected $routerStore;
 
     /**
      * @var string
@@ -102,11 +86,7 @@ class RouterDispatcher implements RouterDispatcherInterface
 
         $this->routerInvoker = $router->getRouterInvoker();
 
-        $this->routeCollection = $router->getRouteCollection();
-        $this->middlewareCollection = $router->getMiddlewareCollection();
-        $this->fallbackCollection = $router->getFallbackCollection();
-
-        $this->rootRouterNode = $router->getRootRouterNode();
+        $this->routerStore = $router->getRouterStore();
     }
 
 
@@ -144,8 +124,8 @@ class RouterDispatcher implements RouterDispatcherInterface
     )
     {
         $contract = null
-            ?? RouterDispatcherRequestContract::from($contract, $retCur = Result::asValue())
-            ?? RouterDispatcherRouteContract::from($contract, $retCur = Result::asValue());
+            ?? RouterDispatcherRequestContract::from($contract, Result::asValueNull())
+            ?? RouterDispatcherRouteContract::from($contract, Result::asValueNull());
 
         if ($contract instanceof RouterDispatcherRequestContractInterface) {
             $result = $this->dispatchByRequest($contract);
@@ -178,6 +158,8 @@ class RouterDispatcher implements RouterDispatcherInterface
      *
      * @return mixed
      * @throws DispatchException
+     *
+     * @noinspection PhpFullyQualifiedNameUsageInspection
      */
     public function dispatchByRequest(
         RouterDispatcherRequestContractInterface $contract,
@@ -198,9 +180,9 @@ class RouterDispatcher implements RouterDispatcherInterface
 
         $routerConfig = $this->routerConfig;
 
-        $routeCollection = $this->routeCollection;
-        $middlewareCollection = $this->middlewareCollection;
-        $fallbackCollection = $this->fallbackCollection;
+        $routeCollection = $this->routerStore->routeCollection;
+        $middlewareCollection = $this->routerStore->middlewareCollection;
+        $fallbackCollection = $this->routerStore->fallbackCollection;
 
         $requestContract = $contract;
 
@@ -247,7 +229,7 @@ class RouterDispatcher implements RouterDispatcherInterface
 
         $dispatchActionAttributes = [];
 
-        $routeNodeCurrent = $this->rootRouterNode;
+        $routeNodeCurrent = $this->routerStore->rootRouterNode;
 
         $routeSubpathCurrent = [ '' ];
         $routeSubpathList = [ '/' ];
@@ -493,6 +475,8 @@ class RouterDispatcher implements RouterDispatcherInterface
      *
      * @return mixed
      * @throws DispatchException
+     *
+     * @noinspection PhpFullyQualifiedNameUsageInspection
      */
     public function dispatchByRoute(
         RouterDispatcherRouteContractInterface $contract,
@@ -503,8 +487,8 @@ class RouterDispatcher implements RouterDispatcherInterface
     {
         $theFunc = Lib::func();
 
-        $middlewareCollection = $this->middlewareCollection;
-        $fallbackCollection = $this->fallbackCollection;
+        $middlewareCollection = $this->routerStore->middlewareCollection;
+        $fallbackCollection = $this->routerStore->fallbackCollection;
 
         $pipeContext = null;
         if (null !== $context) {

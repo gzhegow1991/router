@@ -3,8 +3,8 @@
 namespace Gzhegow\Router;
 
 use Gzhegow\Router\Core\Route\Route;
-use Gzhegow\Router\Core\Node\RouterNode;
 use Gzhegow\Router\Core\Route\RouteGroup;
+use Gzhegow\Router\Core\Store\RouterStore;
 use Gzhegow\Router\Core\Config\RouterConfig;
 use Gzhegow\Router\Core\Route\RouteBlueprint;
 use Gzhegow\Router\Core\Pattern\RouterPattern;
@@ -15,12 +15,8 @@ use Gzhegow\Router\Core\Route\Struct\RouteName;
 use Gzhegow\Router\Core\Cache\RouterCacheInterface;
 use Gzhegow\Router\Core\Matcher\RouterMatcherInterface;
 use Gzhegow\Router\Core\Invoker\RouterInvokerInterface;
-use Gzhegow\Router\Core\Collection\RouterRouteCollection;
 use Gzhegow\Router\Exception\Exception\DispatchException;
-use Gzhegow\Router\Core\Collection\RouterPatternCollection;
-use Gzhegow\Router\Core\Collection\RouterFallbackCollection;
 use Gzhegow\Router\Core\Dispatcher\RouterDispatcherInterface;
-use Gzhegow\Router\Core\Collection\RouterMiddlewareCollection;
 use Gzhegow\Router\Core\UrlGenerator\RouterUrlGeneratorInterface;
 use Gzhegow\Router\Core\Handler\Fallback\RouterGenericHandlerFallback;
 use Gzhegow\Router\Core\Matcher\Contract\RouterMatcherContractInterface;
@@ -45,18 +41,7 @@ interface RouterInterface
     public function getRouterUrlGenerator() : RouterUrlGeneratorInterface;
 
 
-    public function getRouteCollection() : RouterRouteCollection;
-
-    public function getPatternCollection() : RouterPatternCollection;
-
-    public function getMiddlewareCollection() : RouterMiddlewareCollection;
-
-    public function getFallbackCollection() : RouterFallbackCollection;
-
-
-    public function getRootRouterGroup() : RouteGroup;
-
-    public function getRootRouterNode() : RouterNode;
+    public function getRouterStore() : RouterStore;
 
 
     public function getConfig() : RouterConfig;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Gzhegow\Router\Core\Collection;
+namespace Gzhegow\Router\Core\Store;
 
 use Gzhegow\Router\Core\Route\Struct\RouteTag;
 use Gzhegow\Router\Core\Route\Struct\RoutePath;

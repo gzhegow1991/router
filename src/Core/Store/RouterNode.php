@@ -1,6 +1,6 @@
 <?php
 
-namespace Gzhegow\Router\Core\Node;
+namespace Gzhegow\Router\Core\Store;
 
 
 class RouterNode implements \Serializable

@@ -119,8 +119,11 @@ class RouterUrlGenerator implements RouterUrlGeneratorInterface
             if (null === $attr) {
                 throw new RuntimeException(
                     [
-                        'Missing attributes: '
-                        . "attributes[ {$key} ][ {$idx} ], attributes[ {$key} ]",
+                        ''
+                        . 'Missing attributes: '
+                        . "attributes[ {$key} ][ {$idx} ] "
+                        . "attributes[ {$key} ]",
+                        //
                         $attributes,
                     ]
                 );

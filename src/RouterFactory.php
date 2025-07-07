@@ -3,17 +3,24 @@
 namespace Gzhegow\Router;
 
 use Gzhegow\Router\Core\Route\Route;
-use Gzhegow\Router\Core\Node\RouterNode;
+use Gzhegow\Router\Core\Store\RouterNode;
 use Gzhegow\Router\Core\Route\RouteGroup;
+use Gzhegow\Router\Core\Store\RouterStore;
 use Gzhegow\Router\Core\Route\RouteBlueprint;
-use Gzhegow\Router\Core\Collection\RouterRouteCollection;
-use Gzhegow\Router\Core\Collection\RouterPatternCollection;
-use Gzhegow\Router\Core\Collection\RouterFallbackCollection;
-use Gzhegow\Router\Core\Collection\RouterMiddlewareCollection;
+use Gzhegow\Router\Core\Store\RouterRouteCollection;
+use Gzhegow\Router\Core\Store\RouterPatternCollection;
+use Gzhegow\Router\Core\Store\RouterFallbackCollection;
+use Gzhegow\Router\Core\Store\RouterMiddlewareCollection;
 
 
 class RouterFactory implements RouterFactoryInterface
 {
+    public function newRouterStore() : RouterStore
+    {
+        return new RouterStore($this);
+    }
+
+
     public function newRouteCollection() : RouterRouteCollection
     {
         return new RouterRouteCollection();

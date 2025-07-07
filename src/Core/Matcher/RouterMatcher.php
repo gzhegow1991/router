@@ -5,9 +5,9 @@ namespace Gzhegow\Router\Core\Matcher;
 use Gzhegow\Lib\Lib;
 use Gzhegow\Router\RouterInterface;
 use Gzhegow\Router\Core\Route\Route;
+use Gzhegow\Router\Core\Store\RouterStore;
 use Gzhegow\Router\Core\Route\Struct\RouteTag;
 use Gzhegow\Router\Core\Route\Struct\RouteName;
-use Gzhegow\Router\Core\Collection\RouterRouteCollection;
 use Gzhegow\Router\Core\Matcher\Contract\DefaultRouterMatcherContract;
 use Gzhegow\Router\Core\Matcher\Contract\RouterMatcherContractInterface;
 
@@ -15,14 +15,14 @@ use Gzhegow\Router\Core\Matcher\Contract\RouterMatcherContractInterface;
 class RouterMatcher implements RouterMatcherInterface
 {
     /**
-     * @var RouterRouteCollection
+     * @var RouterStore
      */
-    protected $routeCollection;
+    protected $routerStore;
 
 
     public function initialize(RouterInterface $router) : void
     {
-        $this->routeCollection = $router->getRouteCollection();
+        $this->routerStore = $router->getRouterStore();
     }
 
 
@@ -37,7 +37,7 @@ class RouterMatcher implements RouterMatcherInterface
 
         $result = [];
 
-        $routeList = $this->routeCollection->routeList;
+        $routeList = $this->routerStore->routeCollection->routeList;
 
         $routeIdList = [];
         foreach ( $idList as $idx => $id ) {
@@ -63,7 +63,7 @@ class RouterMatcher implements RouterMatcherInterface
 
         $result = null;
 
-        $routeList = $this->routeCollection->routeList;
+        $routeList = $this->routerStore->routeCollection->routeList;
 
         $routeIdList = [];
         foreach ( $idList as $idx => $id ) {
@@ -94,7 +94,7 @@ class RouterMatcher implements RouterMatcherInterface
 
         $result = [];
 
-        $routeIndexByName = $this->routeCollection->routeIndexByName;
+        $routeIndexByName = $this->routerStore->routeCollection->routeIndexByName;
 
         $routeNameList = [];
         foreach ( $nameList as $idx => $name ) {
@@ -119,7 +119,7 @@ class RouterMatcher implements RouterMatcherInterface
 
         $routesMatch = [];
         foreach ( $matchIndex as $id => $bool ) {
-            $routesMatch[ $id ] = $this->routeCollection->routeList[ $id ];
+            $routesMatch[ $id ] = $this->routerStore->routeCollection->routeList[ $id ];
         }
 
         if ($unique) {
@@ -145,7 +145,7 @@ class RouterMatcher implements RouterMatcherInterface
     {
         $result = null;
 
-        $routeIndexByName = $this->routeCollection->routeIndexByName;
+        $routeIndexByName = $this->routerStore->routeCollection->routeIndexByName;
 
         $routeNameList = [];
         foreach ( $nameList as $idx => $name ) {
@@ -161,7 +161,7 @@ class RouterMatcher implements RouterMatcherInterface
             }
 
             if ([] !== $matchIndex) {
-                $result = $this->routeCollection->routeList[ key($matchIndex) ];
+                $result = $this->routerStore->routeCollection->routeList[ key($matchIndex) ];
 
                 break;
             }
@@ -182,7 +182,7 @@ class RouterMatcher implements RouterMatcherInterface
 
         $result = [];
 
-        $routeIndexByTag = $this->routeCollection->routeIndexByTag;
+        $routeIndexByTag = $this->routerStore->routeCollection->routeIndexByTag;
 
         $routeTagList = [];
         foreach ( $tagList as $idx => $tag ) {
@@ -207,7 +207,7 @@ class RouterMatcher implements RouterMatcherInterface
 
         $routesMatch = [];
         foreach ( $matchIndex as $id => $bool ) {
-            $routesMatch[ $id ] = $this->routeCollection->routeList[ $id ];
+            $routesMatch[ $id ] = $this->routerStore->routeCollection->routeList[ $id ];
         }
 
         if ($unique) {
@@ -235,7 +235,7 @@ class RouterMatcher implements RouterMatcherInterface
     {
         $result = null;
 
-        $routeIndexByTag = $this->routeCollection->routeIndexByTag;
+        $routeIndexByTag = $this->routerStore->routeCollection->routeIndexByTag;
 
         $routeTagList = [];
         foreach ( $tagList as $idx => $tag ) {
@@ -251,7 +251,7 @@ class RouterMatcher implements RouterMatcherInterface
             }
 
             if ([] !== $matchIndex) {
-                $result = $this->routeCollection->routeList[ key($matchIndex) ];
+                $result = $this->routerStore->routeCollection->routeList[ key($matchIndex) ];
 
                 break;
             }
@@ -333,7 +333,9 @@ class RouterMatcher implements RouterMatcherInterface
     {
         $result = [];
 
-        foreach ( $this->routeCollection->routeList as $routeId => $route ) {
+        $routeList = $this->routerStore->routeCollection->routeList;
+
+        foreach ( $routeList as $routeId => $route ) {
             if (! $contract->isMatch($route)) {
                 continue;
             }
@@ -348,7 +350,9 @@ class RouterMatcher implements RouterMatcherInterface
     {
         $result = null;
 
-        foreach ( $this->routeCollection->routeList as $route ) {
+        $routeList = $this->routerStore->routeCollection->routeList;
+
+        foreach ( $routeList as $route ) {
             if (! $contract->isMatch($route)) {
                 continue;
             }

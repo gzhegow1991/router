@@ -4,8 +4,8 @@ namespace Gzhegow\Router;
 
 use Gzhegow\Lib\Lib;
 use Gzhegow\Router\Core\Route\Route;
-use Gzhegow\Router\Core\Node\RouterNode;
 use Gzhegow\Router\Core\Route\RouteGroup;
+use Gzhegow\Router\Core\Store\RouterStore;
 use Gzhegow\Router\Core\Config\RouterConfig;
 use Gzhegow\Router\Core\Route\RouteBlueprint;
 use Gzhegow\Router\Core\Route\Struct\RouteTag;
@@ -17,12 +17,8 @@ use Gzhegow\Router\Core\Route\Struct\RouteName;
 use Gzhegow\Router\Core\Cache\RouterCacheInterface;
 use Gzhegow\Router\Core\Matcher\RouterMatcherInterface;
 use Gzhegow\Router\Core\Invoker\RouterInvokerInterface;
-use Gzhegow\Router\Core\Collection\RouterRouteCollection;
 use Gzhegow\Router\Exception\Exception\DispatchException;
-use Gzhegow\Router\Core\Collection\RouterPatternCollection;
-use Gzhegow\Router\Core\Collection\RouterFallbackCollection;
 use Gzhegow\Router\Core\Dispatcher\RouterDispatcherInterface;
-use Gzhegow\Router\Core\Collection\RouterMiddlewareCollection;
 use Gzhegow\Router\Core\UrlGenerator\RouterUrlGeneratorInterface;
 use Gzhegow\Router\Core\Handler\Fallback\RouterGenericHandlerFallback;
 use Gzhegow\Router\Core\Matcher\Contract\RouterMatcherContractInterface;
@@ -65,30 +61,14 @@ class RouterFacade implements RouterInterface
     protected $routerUrlGenerator;
 
     /**
-     * @var RouterRouteCollection
+     * @var RouterStore
      */
-    protected $routeCollection;
-    /**
-     * @var RouterPatternCollection
-     */
-    protected $patternCollection;
-    /**
-     * @var RouterMiddlewareCollection
-     */
-    protected $middlewareCollection;
-    /**
-     * @var RouterFallbackCollection
-     */
-    protected $fallbackCollection;
+    protected $routerStore;
 
     /**
      * @var RouteGroup
      */
     protected $rootRouterGroup;
-    /**
-     * @var RouterNode
-     */
-    protected $rootRouterNode;
 
     /**
      * @var bool
@@ -108,6 +88,9 @@ class RouterFacade implements RouterInterface
         RouterConfig $config
     )
     {
+        $this->config = $config;
+        $this->config->validate();
+
         $this->routerFactory = $routerFactory;
 
         $this->routerCache = $routerCache;
@@ -116,19 +99,9 @@ class RouterFacade implements RouterInterface
         $this->routerMatcher = $routerMatcher;
         $this->routerUrlGenerator = $routerUrlGenerator;
 
-        $this->routeCollection = $this->routerFactory->newRouteCollection();
-        $this->patternCollection = $this->routerFactory->newPatternCollection();
-        $this->middlewareCollection = $this->routerFactory->newMiddlewareCollection();
-        $this->fallbackCollection = $this->routerFactory->newFallbackCollection();
-
-        $this->config = $config;
-        $this->config->validate();
+        $this->routerStore = $this->routerFactory->newRouterStore();
 
         $this->rootRouterGroup = $this->routerFactory->newRouteGroup();
-
-        $routerNodeRoot = $this->routerFactory->newRouterNode();
-        $routerNodeRoot->part = '';
-        $this->rootRouterNode = $routerNodeRoot;
 
         $this->initialize();
     }
@@ -173,35 +146,9 @@ class RouterFacade implements RouterInterface
     }
 
 
-    public function getRouteCollection() : RouterRouteCollection
+    public function getRouterStore() : RouterStore
     {
-        return $this->routeCollection;
-    }
-
-    public function getPatternCollection() : RouterPatternCollection
-    {
-        return $this->patternCollection;
-    }
-
-    public function getMiddlewareCollection() : RouterMiddlewareCollection
-    {
-        return $this->middlewareCollection;
-    }
-
-    public function getFallbackCollection() : RouterFallbackCollection
-    {
-        return $this->fallbackCollection;
-    }
-
-
-    public function getRootRouterGroup() : RouteGroup
-    {
-        return $this->rootRouterGroup;
-    }
-
-    public function getRootRouterNode() : RouterNode
-    {
-        return $this->rootRouterNode;
+        return $this->routerStore;
     }
 
 
@@ -266,7 +213,7 @@ class RouterFacade implements RouterInterface
 
         foreach ( $keys as $key => $bool ) {
             if (isset($cacheData[ $key ])) {
-                $this->{$key} = $cacheData[ $key ];
+                $this->routerStore->{$key} = $cacheData[ $key ];
             }
         }
 
@@ -284,12 +231,12 @@ class RouterFacade implements RouterInterface
         }
 
         $cacheData = [
-            'routeCollection'      => $this->routeCollection,
-            'middlewareCollection' => $this->middlewareCollection,
-            'fallbackCollection'   => $this->fallbackCollection,
-            'patternCollection'    => $this->patternCollection,
+            'routeCollection'      => $this->routerStore->routeCollection,
+            'middlewareCollection' => $this->routerStore->middlewareCollection,
+            'fallbackCollection'   => $this->routerStore->fallbackCollection,
+            'patternCollection'    => $this->routerStore->patternCollection,
             //
-            'rootRouterNode'       => $this->rootRouterNode,
+            'rootRouterNode'       => $this->routerStore->rootRouterNode,
         ];
 
         $this->routerCache->saveCache($cacheData);
@@ -416,7 +363,7 @@ class RouterFacade implements RouterInterface
             }
         }
 
-        $id = $this->routeCollection->registerRoute($route);
+        $id = $this->routerStore->routeCollection->registerRoute($route);
 
         $path = $route->path;
 
@@ -424,7 +371,7 @@ class RouterFacade implements RouterInterface
         $split = ltrim($split, '/');
         $split = explode('/', $split);
         while ( [] !== $split ) {
-            $routeNodePrevious = $routeNodePrevious ?? $this->rootRouterNode;
+            $routeNodePrevious = $routeNodePrevious ?? $this->routerStore->rootRouterNode;
 
             $part = array_shift($split);
             $partRegex = null;
@@ -499,7 +446,7 @@ class RouterFacade implements RouterInterface
     {
         $this->isRouterChanged = true;
 
-        $id = $this->patternCollection->registerPattern($pattern);
+        $id = $this->routerStore->patternCollection->registerPattern($pattern);
 
         return $id;
     }
@@ -514,7 +461,7 @@ class RouterFacade implements RouterInterface
         $routeIdInt = Lib::parseThrow()->int_positive($routeId);
         $middlewareObject = RouterGenericHandlerMiddleware::from($middleware);
 
-        if (! $this->routeCollection->hasRoute($routeIdInt)) {
+        if (! $this->routerStore->routeCollection->hasRoute($routeIdInt)) {
             throw new RuntimeException(
                 [ 'Route not found by id: ' . $routeId, $routeId ]
             );
@@ -522,7 +469,7 @@ class RouterFacade implements RouterInterface
 
         $this->registerMiddleware($middlewareObject);
 
-        $this->middlewareCollection->addRouteIdMiddleware($routeIdInt, $middlewareObject);
+        $this->routerStore->middlewareCollection->addRouteIdMiddleware($routeIdInt, $middlewareObject);
 
         return $this;
     }
@@ -557,7 +504,7 @@ class RouterFacade implements RouterInterface
 
         $this->registerMiddleware($middlewareObject);
 
-        $this->middlewareCollection->addRoutePathMiddleware($routePathObject, $middlewareObject);
+        $this->routerStore->middlewareCollection->addRoutePathMiddleware($routePathObject, $middlewareObject);
 
         return $this;
     }
@@ -573,7 +520,7 @@ class RouterFacade implements RouterInterface
 
         $this->registerMiddleware($middlewareObject);
 
-        $this->middlewareCollection->addRouteTagMiddleware($routeTagObject, $middlewareObject);
+        $this->routerStore->middlewareCollection->addRouteTagMiddleware($routeTagObject, $middlewareObject);
 
         return $this;
     }
@@ -597,7 +544,7 @@ class RouterFacade implements RouterInterface
             }
         }
 
-        $id = $this->middlewareCollection->registerMiddleware($middleware);
+        $id = $this->routerStore->middlewareCollection->registerMiddleware($middleware);
 
         return $id;
     }
@@ -612,7 +559,7 @@ class RouterFacade implements RouterInterface
         $routeIdInt = Lib::parseThrow()->int_positive($routeId);
         $fallbackObject = RouterGenericHandlerFallback::from($fallback);
 
-        if (! $this->routeCollection->hasRoute($routeIdInt)) {
+        if (! $this->routerStore->routeCollection->hasRoute($routeIdInt)) {
             throw new RuntimeException(
                 [ 'Route not found by id: ' . $routeId, $routeId ]
             );
@@ -620,7 +567,7 @@ class RouterFacade implements RouterInterface
 
         $this->registerFallback($fallbackObject);
 
-        $this->fallbackCollection->addRouteIdFallback($routeIdInt, $fallbackObject);
+        $this->routerStore->fallbackCollection->addRouteIdFallback($routeIdInt, $fallbackObject);
 
         return $this;
     }
@@ -655,7 +602,7 @@ class RouterFacade implements RouterInterface
 
         $this->registerFallback($fallbackObject);
 
-        $this->fallbackCollection->addRoutePathFallback($routePathObject, $fallbackObject);
+        $this->routerStore->fallbackCollection->addRoutePathFallback($routePathObject, $fallbackObject);
 
         return $this;
     }
@@ -671,7 +618,7 @@ class RouterFacade implements RouterInterface
 
         $this->registerFallback($fallbackObject);
 
-        $this->fallbackCollection->addRouteTagFallback($routeTagObject, $fallbackObject);
+        $this->routerStore->fallbackCollection->addRouteTagFallback($routeTagObject, $fallbackObject);
 
         return $this;
     }
@@ -695,7 +642,7 @@ class RouterFacade implements RouterInterface
             }
         }
 
-        $id = $this->fallbackCollection->registerFallback($fallback);
+        $id = $this->routerStore->fallbackCollection->registerFallback($fallback);
 
         return $id;
     }
@@ -1054,7 +1001,7 @@ class RouterFacade implements RouterInterface
 
         $theType = Lib::type();
 
-        $patternDict = $this->patternCollection->patternDict;
+        $patternDict = $this->routerStore->patternCollection->patternDict;
 
         $regex = ''
             . preg_quote(Router::PATTERN_ENCLOSURE[ 0 ], '/')

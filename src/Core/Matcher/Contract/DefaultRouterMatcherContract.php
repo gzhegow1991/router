@@ -94,7 +94,7 @@ class DefaultRouterMatcherContract implements RouterMatcherContractInterface
             $fromName = false;
 
         } else {
-            $fromName = RouteName::from($fromName, $retCur = Result::asValue());
+            $fromName = RouteName::from($fromName, $retCur = Result::asValueNull());
 
             if ($retCur->isErr()) {
                 return Result::err($ret, $retCur);
@@ -110,7 +110,7 @@ class DefaultRouterMatcherContract implements RouterMatcherContractInterface
             $fromTag = false;
 
         } else {
-            $fromTag = RouteTag::from($fromTag, $retCur = Result::asValue());
+            $fromTag = RouteTag::from($fromTag, $retCur = Result::asValueNull());
 
             if ($retCur->isErr()) {
                 return Result::err($ret, $retCur);
@@ -126,7 +126,7 @@ class DefaultRouterMatcherContract implements RouterMatcherContractInterface
             $fromMethod = false;
 
         } else {
-            $fromMethod = RouteMethod::from($fromMethod, $retCur = Result::asValue());
+            $fromMethod = RouteMethod::from($fromMethod, $retCur = Result::asValueNull());
 
             if ($retCur->isErr()) {
                 return Result::err($ret, $retCur);
@@ -142,7 +142,7 @@ class DefaultRouterMatcherContract implements RouterMatcherContractInterface
             $fromPath = false;
 
         } else {
-            $fromPath = RouteMethod::from($fromPath, $retCur = Result::asValue());
+            $fromPath = RouteMethod::from($fromPath, $retCur = Result::asValueNull());
 
             if ($retCur->isErr()) {
                 return Result::err($ret, $retCur);

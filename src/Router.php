@@ -3,8 +3,8 @@
 namespace Gzhegow\Router;
 
 use Gzhegow\Router\Core\Route\Route;
-use Gzhegow\Router\Core\Node\RouterNode;
 use Gzhegow\Router\Core\Route\RouteGroup;
+use Gzhegow\Router\Core\Store\RouterStore;
 use Gzhegow\Router\Core\Config\RouterConfig;
 use Gzhegow\Router\Core\Route\RouteBlueprint;
 use Gzhegow\Router\Core\Pattern\RouterPattern;
@@ -16,11 +16,7 @@ use Gzhegow\Router\Core\Cache\RouterCacheInterface;
 use Gzhegow\Router\Core\Matcher\RouterMatcherInterface;
 use Gzhegow\Router\Core\Invoker\RouterInvokerInterface;
 use Gzhegow\Router\Exception\Exception\DispatchException;
-use Gzhegow\Router\Core\Collection\RouterRouteCollection;
-use Gzhegow\Router\Core\Collection\RouterPatternCollection;
-use Gzhegow\Router\Core\Collection\RouterFallbackCollection;
 use Gzhegow\Router\Core\Dispatcher\RouterDispatcherInterface;
-use Gzhegow\Router\Core\Collection\RouterMiddlewareCollection;
 use Gzhegow\Router\Core\UrlGenerator\RouterUrlGeneratorInterface;
 use Gzhegow\Router\Core\Handler\Fallback\RouterGenericHandlerFallback;
 use Gzhegow\Router\Core\Matcher\Contract\RouterMatcherContractInterface;
@@ -81,35 +77,9 @@ class Router
     }
 
 
-    public static function getRouteCollection() : RouterRouteCollection
+    public static function getRouterStore() : RouterStore
     {
-        return static::$facade->getRouteCollection();
-    }
-
-    public static function getPatternCollection() : RouterPatternCollection
-    {
-        return static::$facade->getPatternCollection();
-    }
-
-    public static function getMiddlewareCollection() : RouterMiddlewareCollection
-    {
-        return static::$facade->getMiddlewareCollection();
-    }
-
-    public static function getFallbackCollection() : RouterFallbackCollection
-    {
-        return static::$facade->getFallbackCollection();
-    }
-
-
-    public static function getRootRouterGroup() : RouteGroup
-    {
-        return static::$facade->getRootRouterGroup();
-    }
-
-    public static function getRootRouterNode() : RouterNode
-    {
-        return static::$facade->getRootRouterNode();
+        return static::$facade->getRouterStore();
     }
 
 

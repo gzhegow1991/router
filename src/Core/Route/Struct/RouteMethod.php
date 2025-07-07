@@ -92,7 +92,8 @@ class RouteMethod
             );
         }
 
-        $httpMethod = HttpMethod::fromString($from, $retCur = Result::asValue());
+        $httpMethod = HttpMethod::fromString($from, $retCur = Result::asValueNull());
+
         if ($retCur->isErr()) {
             return Result::err($ret, $retCur);
         }
