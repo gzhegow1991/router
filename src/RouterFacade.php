@@ -193,7 +193,7 @@ class RouterFacade implements RouterInterface
     {
         if ($this->isRouterChanged) {
             throw new RuntimeException(
-                'You have registered new data before your cache is loaded'
+                [ 'You registered the new data before your cache was loaded. Please, call ->cacheSave() first' ]
             );
         }
 
