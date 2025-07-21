@@ -435,7 +435,7 @@ class RouterFacade implements RouterInterface
             ? $pattern
             : [ $pattern, $regex ];
 
-        $routePatternObject = RouterPattern::from($routePattern);
+        $routePatternObject = RouterPattern::from($routePattern)->orThrow();
 
         $this->registerPattern($routePatternObject);
 
@@ -458,8 +458,11 @@ class RouterFacade implements RouterInterface
      */
     public function middlewareOnRouteId($routeId, $middleware) : RouterInterface
     {
-        $routeIdInt = Lib::parseThrow()->int_positive($routeId);
-        $middlewareObject = RouterGenericHandlerMiddleware::from($middleware);
+        $theType = Lib::type();
+
+        $routeIdInt = $theType->int_positive($routeId)->orThrow();
+
+        $routerGenericMiddleware = RouterGenericHandlerMiddleware::from($middleware)->orThrow();
 
         if (! $this->routerStore->routeCollection->hasRoute($routeIdInt)) {
             throw new RuntimeException(
@@ -467,9 +470,9 @@ class RouterFacade implements RouterInterface
             );
         }
 
-        $this->registerMiddleware($middlewareObject);
+        $this->registerMiddleware($routerGenericMiddleware);
 
-        $this->routerStore->middlewareCollection->addRouteIdMiddleware($routeIdInt, $middlewareObject);
+        $this->routerStore->middlewareCollection->addRouteIdMiddleware($routeIdInt, $routerGenericMiddleware);
 
         return $this;
     }
@@ -480,8 +483,9 @@ class RouterFacade implements RouterInterface
      */
     public function middlewareOnRoutePath($routePath, $middleware) : RouterInterface
     {
-        $routePathObject = RoutePath::from($routePath);
-        $middlewareObject = RouterGenericHandlerMiddleware::from($middleware);
+        $routePathObject = RoutePath::from($routePath)->orThrow();
+
+        $routerGenericMiddleware = RouterGenericHandlerMiddleware::from($middleware)->orThrow();
 
         if ($this->config->compileTrailingSlashMode) {
             $routePathString = $routePathObject->getValue();
@@ -502,9 +506,9 @@ class RouterFacade implements RouterInterface
             }
         }
 
-        $this->registerMiddleware($middlewareObject);
+        $this->registerMiddleware($routerGenericMiddleware);
 
-        $this->routerStore->middlewareCollection->addRoutePathMiddleware($routePathObject, $middlewareObject);
+        $this->routerStore->middlewareCollection->addRoutePathMiddleware($routePathObject, $routerGenericMiddleware);
 
         return $this;
     }
@@ -515,12 +519,13 @@ class RouterFacade implements RouterInterface
      */
     public function middlewareOnRouteTag($routeTag, $middleware) : RouterInterface
     {
-        $routeTagObject = RouteTag::from($routeTag);
-        $middlewareObject = RouterGenericHandlerMiddleware::from($middleware);
+        $routeTagObject = RouteTag::from($routeTag)->orThrow();
 
-        $this->registerMiddleware($middlewareObject);
+        $routerGenericMiddleware = RouterGenericHandlerMiddleware::from($middleware)->orThrow();
 
-        $this->routerStore->middlewareCollection->addRouteTagMiddleware($routeTagObject, $middlewareObject);
+        $this->registerMiddleware($routerGenericMiddleware);
+
+        $this->routerStore->middlewareCollection->addRouteTagMiddleware($routeTagObject, $routerGenericMiddleware);
 
         return $this;
     }
@@ -556,8 +561,11 @@ class RouterFacade implements RouterInterface
      */
     public function fallbackOnRouteId($routeId, $fallback) : RouterInterface
     {
-        $routeIdInt = Lib::parseThrow()->int_positive($routeId);
-        $fallbackObject = RouterGenericHandlerFallback::from($fallback);
+        $theType = Lib::type();
+
+        $routeIdInt = $theType->int_positive($routeId)->orThrow();
+
+        $routerGenericFallback = RouterGenericHandlerFallback::from($fallback)->orThrow();
 
         if (! $this->routerStore->routeCollection->hasRoute($routeIdInt)) {
             throw new RuntimeException(
@@ -565,9 +573,9 @@ class RouterFacade implements RouterInterface
             );
         }
 
-        $this->registerFallback($fallbackObject);
+        $this->registerFallback($routerGenericFallback);
 
-        $this->routerStore->fallbackCollection->addRouteIdFallback($routeIdInt, $fallbackObject);
+        $this->routerStore->fallbackCollection->addRouteIdFallback($routeIdInt, $routerGenericFallback);
 
         return $this;
     }
@@ -578,8 +586,9 @@ class RouterFacade implements RouterInterface
      */
     public function fallbackOnRoutePath($routePath, $fallback) : RouterInterface
     {
-        $routePathObject = RoutePath::from($routePath);
-        $fallbackObject = RouterGenericHandlerFallback::from($fallback);
+        $routePathObject = RoutePath::from($routePath)->orThrow();
+
+        $routerGenericFallback = RouterGenericHandlerFallback::from($fallback)->orThrow();
 
         if ($this->config->compileTrailingSlashMode) {
             $routePathString = $routePathObject->getValue();
@@ -600,9 +609,9 @@ class RouterFacade implements RouterInterface
             }
         }
 
-        $this->registerFallback($fallbackObject);
+        $this->registerFallback($routerGenericFallback);
 
-        $this->routerStore->fallbackCollection->addRoutePathFallback($routePathObject, $fallbackObject);
+        $this->routerStore->fallbackCollection->addRoutePathFallback($routePathObject, $routerGenericFallback);
 
         return $this;
     }
@@ -613,12 +622,13 @@ class RouterFacade implements RouterInterface
      */
     public function fallbackOnRouteTag($routeTag, $fallback) : RouterInterface
     {
-        $routeTagObject = RouteTag::from($routeTag);
-        $fallbackObject = RouterGenericHandlerFallback::from($fallback);
+        $routeTagObject = RouteTag::from($routeTag)->orThrow();
 
-        $this->registerFallback($fallbackObject);
+        $routerGenericFallback = RouterGenericHandlerFallback::from($fallback)->orThrow();
 
-        $this->routerStore->fallbackCollection->addRouteTagFallback($routeTagObject, $fallbackObject);
+        $this->registerFallback($routerGenericFallback);
+
+        $this->routerStore->fallbackCollection->addRouteTagFallback($routeTagObject, $routerGenericFallback);
 
         return $this;
     }
@@ -1045,11 +1055,7 @@ class RouterFacade implements RouterInterface
 
         unset($patternDict);
 
-        if (! $theType->regex($r, '/^' . $pathRegex . '$/')) {
-            throw new RuntimeException(
-                [ 'The output regex is not valid: ' . $pathRegex, $pathRegex ]
-            );
-        }
+        $theType->regex('/^' . $pathRegex . '$/')->orThrow();
 
         $attributesIndex = $attributesIndex ?? [];
 

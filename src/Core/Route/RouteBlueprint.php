@@ -69,9 +69,9 @@ class RouteBlueprint
      */
     public function action($action)
     {
-        $actionObject = RouterGenericHandlerAction::from($action);
+        $routeGenericAction = RouterGenericHandlerAction::from($action)->orThrow();
 
-        $this->action = $actionObject;
+        $this->action = $routeGenericAction;
 
         return $this;
     }
@@ -92,7 +92,7 @@ class RouteBlueprint
      */
     public function path($routePath)
     {
-        $routePathObject = RoutePath::from($routePath);
+        $routePathObject = RoutePath::from($routePath)->orThrow();
 
         $this->path = $routePathObject;
 
@@ -104,9 +104,9 @@ class RouteBlueprint
      */
     public function name($name)
     {
-        $nameObject = RouteName::from($name);
+        $routeNameObject = RouteName::from($name)->orThrow();
 
-        $this->name = $nameObject;
+        $this->name = $routeNameObject;
 
         return $this;
     }
@@ -141,7 +141,7 @@ class RouteBlueprint
      */
     public function httpMethod($routeMethod)
     {
-        $routeMethodObject = RouteMethod::from($routeMethod);
+        $routeMethodObject = RouteMethod::from($routeMethod)->orThrow();
 
         $this->methodIndex[ $routeMethodObject->getValue() ] = true;
 
@@ -178,9 +178,9 @@ class RouteBlueprint
      */
     public function tag($tag)
     {
-        $_tag = RouteTag::from($tag);
+        $routeTagObject = RouteTag::from($tag)->orThrow();
 
-        $this->tagIndex[ $_tag->getValue() ] = true;
+        $this->tagIndex[ $routeTagObject->getValue() ] = true;
 
         return $this;
     }
@@ -215,9 +215,9 @@ class RouteBlueprint
      */
     public function middleware($middleware)
     {
-        $_middleware = RouterGenericHandlerMiddleware::from($middleware);
+        $routerGenericMiddleware = RouterGenericHandlerMiddleware::from($middleware)->orThrow();
 
-        $this->middlewareDict[ $_middleware->getKey() ] = $_middleware;
+        $this->middlewareDict[ $routerGenericMiddleware->getKey() ] = $routerGenericMiddleware;
 
         return $this;
     }
@@ -252,9 +252,9 @@ class RouteBlueprint
      */
     public function fallback($fallback)
     {
-        $_fallback = RouterGenericHandlerFallback::from($fallback);
+        $routerGenericFallback = RouterGenericHandlerFallback::from($fallback)->orThrow();
 
-        $this->fallbackDict[ $_fallback->getKey() ] = $_fallback;
+        $this->fallbackDict[ $routerGenericFallback->getKey() ] = $routerGenericFallback;
 
         return $this;
     }

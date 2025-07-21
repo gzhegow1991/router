@@ -6,7 +6,6 @@ use Gzhegow\Lib\Lib;
 use Gzhegow\Router\Router;
 use Gzhegow\Router\RouterInterface;
 use Gzhegow\Router\Core\Route\Route;
-use Gzhegow\Lib\Modules\Php\Result\Result;
 use Gzhegow\Router\Core\Store\RouterStore;
 use Gzhegow\Router\Core\Config\RouterConfig;
 use Gzhegow\Router\Exception\LogicException;
@@ -124,8 +123,8 @@ class RouterDispatcher implements RouterDispatcherInterface
     )
     {
         $contract = null
-            ?? RouterDispatcherRequestContract::from($contract, Result::asValueNull())
-            ?? RouterDispatcherRouteContract::from($contract, Result::asValueNull());
+            ?? RouterDispatcherRequestContract::from($contract)->orNull()
+            ?? RouterDispatcherRouteContract::from($contract)->orNull();
 
         if ($contract instanceof RouterDispatcherRequestContractInterface) {
             $result = $this->dispatchByRequest($contract);
@@ -337,7 +336,7 @@ class RouterDispatcher implements RouterDispatcherInterface
 
             $routeContract = RouterDispatcherRouteContract::fromArray(
                 [ $dispatchRoute, $dispatchActionAttributes ]
-            );
+            )->orThrow();
 
             $result = $this->dispatchByRoute(
                 $routeContract,
@@ -440,7 +439,8 @@ class RouterDispatcher implements RouterDispatcherInterface
 
             $pipelineChild->setThrowable($throwable);
 
-            foreach ( $dispatchMiddlewareList as $devnull ) {
+            $cnt = count($dispatchMiddlewareList);
+            for ( $i = 0; $i < $cnt; $i++ ) {
                 $pipelineChild = $pipelineChild->endMiddleware();
             }
 
@@ -628,7 +628,8 @@ class RouterDispatcher implements RouterDispatcherInterface
 
         $pipelineChild->map($dispatchRouteClone->action);
 
-        foreach ( $dispatchMiddlewareList as $devnull ) {
+        $cnt = count($dispatchMiddlewareList);
+        for ( $i = 0; $i < $cnt; $i++ ) {
             $pipelineChild = $pipelineChild->endMiddleware();
         }
 

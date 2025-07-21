@@ -56,15 +56,18 @@ class RouterCache implements RouterCacheInterface
             }
 
         } elseif ($this->config->cacheDirpath) {
+            $theFsFile = Lib::fsFile();
+            $thePhp = Lib::php();
+
             $cacheFilepath = "{$this->config->cacheDirpath}/{$this->config->cacheFilename}";
 
-            $content = Lib::fsFile()->file_get_contents($cacheFilepath);
+            $content = $theFsFile->file_get_contents($cacheFilepath);
 
             if (! (false
                 || (null === $content)
                 || (false === $content)
             )) {
-                $cacheData = Lib::php()->unserialize($content);
+                $cacheData = $thePhp->unserialize($content);
             }
         }
 
@@ -87,11 +90,14 @@ class RouterCache implements RouterCacheInterface
             $this->config->cacheAdapter->save($cacheItem);
 
         } elseif ($this->config->cacheDirpath) {
+            $theFsFile = Lib::fsFile();
+            $thePhp = Lib::php();
+
             $cacheFilepath = "{$this->config->cacheDirpath}/{$this->config->cacheFilename}";
 
-            $content = Lib::php()->serialize($cacheData);
+            $content = $thePhp->serialize($cacheData);
 
-            Lib::fsFile()->file_put_contents(
+            $theFsFile->file_put_contents(
                 $cacheFilepath, $content, null,
                 [], [ 0775 ]
             );
@@ -115,9 +121,11 @@ class RouterCache implements RouterCacheInterface
             $cacheAdapter->clear();
 
         } elseif ($this->config->cacheDirpath) {
+            $theFsFile = Lib::fsFile();
+
             $cacheFilepath = "{$this->config->cacheDirpath}/{$this->config->cacheFilename}";
 
-            Lib::fsFile()->rmf($cacheFilepath);
+            $theFsFile->rmf($cacheFilepath);
         }
 
         return $this;

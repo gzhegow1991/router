@@ -3,7 +3,7 @@
 namespace Gzhegow\Router\Core\Route\Struct;
 
 use Gzhegow\Lib\Lib;
-use Gzhegow\Lib\Modules\Php\Result\Result;
+use Gzhegow\Lib\Modules\Type\Ret;
 
 
 class RouteTag
@@ -26,64 +26,62 @@ class RouteTag
 
 
     /**
-     * @return static|bool|null
+     * @return static|Ret<static>
      */
-    public static function from($from, $ret = null)
+    public static function from($from, ?array $fallback = null)
     {
-        $retCur = Result::asValue();
+        $ret = Ret::new();
 
         $instance = null
-            ?? static::fromStatic($from, $retCur)
-            ?? static::fromString($from, $retCur);
+            ?? static::fromStatic($from)->orNull($ret)
+            ?? static::fromString($from)->orNull($ret);
 
-        if ($retCur->isErr()) {
-            return Result::err($ret, $retCur);
+        if ($ret->isFail()) {
+            return Ret::throw($fallback, $ret);
         }
 
-        return Result::ok($ret, $instance);
+        return Ret::ok($fallback, $instance);
     }
 
     /**
-     * @return static|bool|null
+     * @return static|Ret<static>
      */
-    public static function fromStatic($from, $ret = null)
+    public static function fromStatic($from, ?array $fallback = null)
     {
         if ($from instanceof static) {
-            return Result::ok($ret, $from);
+            return Ret::ok($fallback, $from);
         }
 
-        return Result::err(
-            $ret,
+        return Ret::throw(
+            $fallback,
             [ 'The `from` should be instance of: ' . static::class, $from ],
             [ __FILE__, __LINE__ ]
         );
     }
 
     /**
-     * @return static|bool|null
+     * @return static|Ret<static>
      */
-    public static function fromString($from, $ret = null)
+    public static function fromString($from, ?array $fallback = null)
     {
-        if (! Lib::type()->trim($fromString, $from)) {
-            return Result::err(
-                $ret,
-                [ 'The `from` should be non-empty trim', $from ],
-                [ __FILE__, __LINE__ ]
-            );
+        $theType = Lib::type();
+
+        if (! $theType->string_not_empty($from)->isOk([ &$fromStringNotEmpty, &$ret ])) {
+            return Ret::throw($fallback, $ret);
         }
 
-        if (false !== strpos($fromString, '!')) {
-            return Result::err(
-                $ret,
+        if (false !== strpos($fromStringNotEmpty, '!')) {
+            return Ret::throw(
+                $fallback,
                 [ 'The `from` should not contain symbol `!`', $from ],
                 [ __FILE__, __LINE__ ]
             );
         }
 
         $instance = new static();
-        $instance->value = $fromString;
+        $instance->value = $fromStringNotEmpty;
 
-        return Result::ok($ret, $instance);
+        return Ret::ok($fallback, $instance);
     }
 
 

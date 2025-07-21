@@ -1,8 +1,5 @@
 <?php
 
-require_once __DIR__ . '/../vendor/autoload.php';
-
-
 // > настраиваем PHP
 \Gzhegow\Lib\Lib::entrypoint()
     ->setDirRoot(__DIR__ . '/..')
@@ -53,11 +50,11 @@ $ffn = new class {
     }
 
 
-    function test(\Closure $fn, array $args = []) : \Gzhegow\Lib\Modules\Test\Test
+    function test(\Closure $fn, array $args = []) : \Gzhegow\Lib\Modules\Test\TestCase
     {
         $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
 
-        return \Gzhegow\Lib\Lib::test()->newTest()
+        return \Gzhegow\Lib\Lib::test()->newTestCase()
             ->fn($fn, $args)
             ->trace($trace)
         ;
@@ -549,13 +546,13 @@ $fn = function () use ($ffn, $router) {
     $ffn->print('TEST 5');
     echo "\n";
 
-
     $contract = \Gzhegow\Router\Core\Dispatcher\Contract\RouterDispatcherRequestContract::fromArray(
         [ 'GET', '/api/v1/user/1/main' ]
-    );
+    )->orThrow();
 
     $result = $router->dispatch($contract);
     echo "\n";
+
     $ffn->print('[ RESULT ]', $result);
 };
 $test = $ffn->test($fn);
@@ -581,9 +578,9 @@ $fn = function () use ($ffn, $router) {
     $ffn->print('TEST 6');
     echo "\n";
 
-
     $result = $router->dispatch([ 'GET', '/api/v1/user/not-found' ]);
     echo "\n";
+
     $ffn->print('[ RESULT ]', $result);
 };
 $test = $ffn->test($fn);
@@ -644,9 +641,9 @@ $fn = function () use ($ffn, $router) {
     $ffn->print('TEST 8');
     echo "\n";
 
-
     $result = $router->dispatch([ 'GET', '/api/v1/user/1/logic' ]);
     echo "\n";
+
     $ffn->print('[ RESULT ]', $result);
 };
 $test = $ffn->test($fn);
@@ -674,9 +671,9 @@ $fn = function () use ($ffn, $router) {
     $ffn->print('TEST 9');
     echo "\n";
 
-
     $result = $router->dispatch([ 'GET', '/api/v1/user/1/runtime' ]);
     echo "\n";
+
     $ffn->print('[ RESULT ]', $result);
 };
 $test = $ffn->test($fn);

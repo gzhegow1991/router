@@ -2,10 +2,11 @@
 
 namespace Gzhegow\Router\Core\Matcher\Contract;
 
+use Gzhegow\Lib\Modules\Type\Ret;
 use Gzhegow\Router\Core\Route\Route;
-use Gzhegow\Lib\Modules\Php\Result\Result;
 use Gzhegow\Router\Core\Route\Struct\RouteTag;
 use Gzhegow\Router\Core\Route\Struct\RouteName;
+use Gzhegow\Router\Core\Route\Struct\RoutePath;
 use Gzhegow\Router\Core\Route\Struct\RouteMethod;
 
 
@@ -36,47 +37,47 @@ class DefaultRouterMatcherContract implements RouterMatcherContractInterface
 
 
     /**
-     * @return static|bool|null
+     * @return static|Ret<static>
      */
-    public static function from($from, $ret = null)
+    public static function from($from, ?array $fallback = null)
     {
-        $retCur = Result::asValue();
+        $ret = Ret::new();
 
         $instance = null
-            ?? static::fromStatic($from, $retCur)
-            ?? static::fromArray($from, $retCur);
+            ?? static::fromStatic($from)->orNull($ret)
+            ?? static::fromArray($from)->orNull($ret);
 
-        if ($retCur->isErr()) {
-            return Result::err($ret, $retCur);
+        if ($ret->isFail()) {
+            return Ret::throw($fallback, $ret);
         }
 
-        return Result::ok($ret, $instance);
+        return Ret::ok($fallback, $instance);
     }
 
     /**
-     * @return static|bool|null
+     * @return static|Ret<static>
      */
-    public static function fromStatic($from, $ret = null)
+    public static function fromStatic($from, ?array $fallback = null)
     {
         if ($from instanceof static) {
-            return Result::ok($ret, $from);
+            return Ret::ok($fallback, $from);
         }
 
-        return Result::err(
-            $ret,
+        return Ret::throw(
+            $fallback,
             [ 'The `from` should be instance of: ' . static::class, $from ],
             [ __FILE__, __LINE__ ]
         );
     }
 
     /**
-     * @return static|bool|null
+     * @return static|Ret<static>
      */
-    public static function fromArray($from, $ret = null)
+    public static function fromArray($from, ?array $fallback = null)
     {
         if (! is_array($from)) {
-            return Result::err(
-                $ret,
+            return Ret::throw(
+                $fallback,
                 [ 'The `from` should be array', $from ],
                 [ __FILE__, __LINE__ ]
             );
@@ -94,13 +95,15 @@ class DefaultRouterMatcherContract implements RouterMatcherContractInterface
             $fromName = false;
 
         } else {
-            $fromName = RouteName::from($fromName, $retCur = Result::asValueNull());
+            $ret = RouteName::from($fromName);
 
-            if ($retCur->isErr()) {
-                return Result::err($ret, $retCur);
+            if ($ret->isFail()) {
+                return Ret::throw($fallback, $ret);
             }
 
-            $fromName = $fromName->getValue();
+            $routeName = $ret->getValue();
+
+            $fromName = $routeName->getValue();
         }
 
         if (null === $fromTag) {
@@ -110,13 +113,15 @@ class DefaultRouterMatcherContract implements RouterMatcherContractInterface
             $fromTag = false;
 
         } else {
-            $fromTag = RouteTag::from($fromTag, $retCur = Result::asValueNull());
+            $ret = RouteTag::from($fromTag);
 
-            if ($retCur->isErr()) {
-                return Result::err($ret, $retCur);
+            if ($ret->isFail()) {
+                return Ret::throw($fallback, $ret);
             }
 
-            $fromTag = $fromTag->getValue();
+            $routeTag = $ret->getValue();
+
+            $fromTag = $routeTag->getValue();
         }
 
         if (null === $fromMethod) {
@@ -126,13 +131,15 @@ class DefaultRouterMatcherContract implements RouterMatcherContractInterface
             $fromMethod = false;
 
         } else {
-            $fromMethod = RouteMethod::from($fromMethod, $retCur = Result::asValueNull());
+            $ret = RouteMethod::from($fromMethod);
 
-            if ($retCur->isErr()) {
-                return Result::err($ret, $retCur);
+            if ($ret->isFail()) {
+                return Ret::throw($fallback, $ret);
             }
 
-            $fromMethod = $fromMethod->getValue();
+            $routeMethod = $ret->getValue();
+
+            $fromMethod = $routeMethod->getValue();
         }
 
         if (null === $fromPath) {
@@ -142,13 +149,15 @@ class DefaultRouterMatcherContract implements RouterMatcherContractInterface
             $fromPath = false;
 
         } else {
-            $fromPath = RouteMethod::from($fromPath, $retCur = Result::asValueNull());
+            $ret = RoutePath::from($fromPath);
 
-            if ($retCur->isErr()) {
-                return Result::err($ret, $retCur);
+            if ($ret->isFail()) {
+                return Ret::throw($fallback, $ret);
             }
 
-            $fromPath = $fromPath->getValue();
+            $routePath = $ret->getValue();
+
+            $fromPath = $routePath->getValue();
         }
 
         $instance = new static();
@@ -157,7 +166,7 @@ class DefaultRouterMatcherContract implements RouterMatcherContractInterface
         $instance->method = $fromMethod;
         $instance->path = $fromPath;
 
-        return Result::ok($ret, $instance);
+        return Ret::ok($fallback, $instance);
     }
 
 

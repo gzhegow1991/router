@@ -15,7 +15,9 @@ class RouterTrailingSlashMiddleware
         array $args = []
     )
     {
-        if (Lib::php()->is_terminal()) {
+        $thePhp = Lib::php();
+
+        if ($thePhp->is_terminal()) {
             return $fnNext($input, $args);
         }
 

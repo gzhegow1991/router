@@ -43,8 +43,8 @@ class RouterUrlGenerator implements RouterUrlGeneratorInterface
             if ($route instanceof Route) {
                 $routeList[ $idx ] = $route;
 
-            } elseif ($theType->string_not_empty($routeNameString, $route)) {
-                $routeNameList[ $idx ] = $routeNameString;
+            } elseif ($theType->string_not_empty($route)->isOk([ &$routeStringNotEmpty ])) {
+                $routeNameList[ $idx ] = $routeStringNotEmpty;
 
             } else {
                 throw new LogicException(

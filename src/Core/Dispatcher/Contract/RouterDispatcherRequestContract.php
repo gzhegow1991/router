@@ -2,7 +2,7 @@
 
 namespace Gzhegow\Router\Core\Dispatcher\Contract;
 
-use Gzhegow\Lib\Modules\Php\Result\Result;
+use Gzhegow\Lib\Modules\Type\Ret;
 use Gzhegow\Router\Core\Route\Struct\HttpPath;
 use Gzhegow\Router\Core\Route\Struct\HttpMethod;
 
@@ -25,47 +25,47 @@ class RouterDispatcherRequestContract implements RouterDispatcherRequestContract
 
 
     /**
-     * @return static|bool|null
+     * @return static|Ret<static>
      */
-    public static function from($from, $ret = null)
+    public static function from($from, ?array $fallback = null)
     {
-        $retCur = Result::asValue();
+        $ret = Ret::new();
 
         $instance = null
-            ?? static::fromStatic($from, $retCur)
-            ?? static::fromArray($from, $retCur);
+            ?? static::fromStatic($from)->orNull($ret)
+            ?? static::fromArray($from)->orNull($ret);
 
-        if ($retCur->isErr()) {
-            return Result::err($ret, $retCur);
+        if ($ret->isFail()) {
+            return Ret::throw($fallback, $ret);
         }
 
-        return Result::ok($ret, $instance);
+        return Ret::ok($fallback, $instance);
     }
 
     /**
-     * @return static|bool|null
+     * @return static|Ret<static>
      */
-    public static function fromStatic($from, $ret = null)
+    public static function fromStatic($from, ?array $fallback = null)
     {
         if ($from instanceof static) {
-            return Result::ok($ret, $from);
+            return Ret::ok($fallback, $from);
         }
 
-        return Result::err(
-            $ret,
+        return Ret::throw(
+            $fallback,
             [ 'The `from` should be instance of: ' . static::class, $from ],
             [ __FILE__, __LINE__ ]
         );
     }
 
     /**
-     * @return static|bool|null
+     * @return static|Ret<static>
      */
-    public static function fromArray($from, $ret = null)
+    public static function fromArray($from, ?array $fallback = null)
     {
         if (! is_array($from)) {
-            return Result::err(
-                $ret,
+            return Ret::throw(
+                $fallback,
                 [ 'The `from` should be array', $from ],
                 [ __FILE__, __LINE__ ]
             );
@@ -74,14 +74,19 @@ class RouterDispatcherRequestContract implements RouterDispatcherRequestContract
         $requestMethod = $from[ 'requestMethod' ] ?? $from[ 0 ];
         $requestPath = $from[ 'requestPath' ] ?? $from[ 1 ];
 
-        $requestMethodObject = HttpMethod::from($requestMethod);
-        $requestPathObject = HttpPath::from($requestPath);
+        if (! HttpMethod::from($requestMethod)->isOk([ &$requestMethodObject, &$ret ])) {
+            return Ret::throw($fallback, $ret);
+        }
+
+        if (! HttpPath::from($requestPath)->isOk([ &$requestPathObject, &$ret ])) {
+            return Ret::throw($fallback, $ret);
+        }
 
         $instance = new static();
         $instance->requestHttpMethod = $requestMethodObject;
         $instance->requestHttpPath = $requestPathObject;
 
-        return Result::ok($ret, $instance);
+        return Ret::ok($fallback, $instance);
     }
 
 

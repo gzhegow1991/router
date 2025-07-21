@@ -4,7 +4,7 @@ namespace Gzhegow\Router\Core\Pattern;
 
 use Gzhegow\Lib\Lib;
 use Gzhegow\Router\Router;
-use Gzhegow\Lib\Modules\Php\Result\Result;
+use Gzhegow\Lib\Modules\Type\Ret;
 
 
 class RouterPattern implements \Serializable
@@ -58,49 +58,49 @@ class RouterPattern implements \Serializable
 
 
     /**
-     * @return static|bool|null
+     * @return static|Ret<static>
      */
-    public static function from($from, $ret = null)
+    public static function from($from, ?array $fallback = null)
     {
-        $retCur = Result::asValue();
+        $ret = Ret::new();
 
         $instance = null
-            ?? static::fromStatic($from, $retCur)
-            ?? static::fromArray($from, $retCur);
+            ?? static::fromStatic($from)->orNull($ret)
+            ?? static::fromArray($from)->orNull($ret);
 
-        if ($retCur->isErr()) {
-            return Result::err($ret, $retCur);
+        if ($ret->isFail()) {
+            return Ret::throw($fallback, $ret);
         }
 
-        return Result::ok($ret, $instance);
+        return Ret::ok($fallback, $instance);
     }
 
     /**
-     * @return static|bool|null
+     * @return static|Ret<static>
      */
-    public static function fromStatic($from, $ret = null)
+    public static function fromStatic($from, ?array $fallback = null)
     {
         if ($from instanceof static) {
-            return Result::ok($ret, $from);
+            return Ret::ok($fallback, $from);
         }
 
-        return Result::err(
-            $ret,
+        return Ret::throw(
+            $fallback,
             [ 'The `from` should be instance of: ' . static::class, $from ],
             [ __FILE__, __LINE__ ]
         );
     }
 
     /**
-     * @return static|bool|null
+     * @return static|Ret<static>
      */
-    public static function fromArray($from, $ret = null)
+    public static function fromArray($from, ?array $fallback = null)
     {
         $theType = Lib::type();
 
         if (! is_array($from)) {
-            return Result::err(
-                $ret,
+            return Ret::throw(
+                $fallback,
                 [ 'The `from` should be array', $from ],
                 [ __FILE__, __LINE__ ]
             );
@@ -108,28 +108,20 @@ class RouterPattern implements \Serializable
 
         [ $pattern, $regex ] = $from + [ null, null ];
 
-        if (! $theType->string_not_empty($patternString, $pattern)) {
-            return Result::err(
-                $ret,
-                [ 'The `from[0]` should be non-empty string', $from ],
-                [ __FILE__, __LINE__ ]
-            );
+        if (! $theType->string_not_empty($pattern)->isOk([ &$patternStringNotEmpty, &$ret ])) {
+            return Ret::throw($fallback, $ret);
         }
 
-        if (! $theType->string_not_empty($regexString, $regex)) {
-            return Result::err(
-                $ret,
-                [ 'The `from[1]` should be non-empty string', $from ],
-                [ __FILE__, __LINE__ ]
-            );
+        if (! $theType->string_not_empty($regex)->isOk([ &$regexStringNotEmpty, &$ret ])) {
+            return Ret::throw($fallback, $ret);
         }
 
         if (! (true
-            && (Router::PATTERN_ENCLOSURE[ 0 ] === $patternString[ 0 ])
-            && (Router::PATTERN_ENCLOSURE[ 1 ] === substr($patternString, -1))
+            && (Router::PATTERN_ENCLOSURE[ 0 ] === $patternStringNotEmpty[ 0 ])
+            && (Router::PATTERN_ENCLOSURE[ 1 ] === substr($patternStringNotEmpty, -1))
         )) {
-            return Result::err(
-                $ret,
+            return Ret::throw(
+                $fallback,
                 [
                     ''
                     . 'The `from[0]` should be wrapped with signs: '
@@ -142,11 +134,11 @@ class RouterPattern implements \Serializable
             );
         }
 
-        $attributeString = substr($patternString, 1, -1);
+        $attributeString = substr($patternStringNotEmpty, 1, -1);
 
         if (! preg_match($regexp = '/[a-z][a-z0-9_]*/', $attributeString)) {
-            return Result::err(
-                $ret,
+            return Ret::throw(
+                $fallback,
                 [
                     ''
                     . 'The `from[0]` should match regex: '
@@ -158,37 +150,33 @@ class RouterPattern implements \Serializable
             );
         }
 
-        if ($isContainSlashes = (false !== strpos($regexString, '/'))) {
-            return Result::err(
-                $ret,
+        if ($isContainSlashes = (false !== strpos($regexStringNotEmpty, '/'))) {
+            return Ret::throw(
+                $fallback,
                 [ 'The `from[1]` should not contain slash symbols', $from ],
                 [ __FILE__, __LINE__ ]
             );
         }
 
-        if ($isContainNamedGroups = preg_match('/\(\?P\<[^\>]+\>/', $regexString)) {
-            return Result::err(
-                $ret,
+        if ($isContainNamedGroups = preg_match('/\(\?P\<[^\>]+\>/', $regexStringNotEmpty)) {
+            return Ret::throw(
+                $fallback,
                 [ 'The `from[1]` should not contain named groups', $from ],
                 [ __FILE__, __LINE__ ]
             );
         }
 
-        if (! $theType->regex($var, $regexp = "/{$regexString}/")) {
-            return Result::err(
-                $ret,
-                [ 'The `from[1]` caused invalid regex: ' . $regexp, $from ],
-                [ __FILE__, __LINE__ ]
-            );
+        if (! $theType->regex($regexp = "/{$regexStringNotEmpty}/")->isOk([ 1 => &$ret ])) {
+            return Ret::throw($fallback, $ret);
         }
 
-        $regexString = "(?<{$attributeString}>{$regexString})";
+        $regexString = "(?<{$attributeString}>{$regexStringNotEmpty})";
 
         $instance = new static();
-        $instance->pattern = $patternString;
+        $instance->pattern = $patternStringNotEmpty;
         $instance->attribute = $attributeString;
         $instance->regex = $regexString;
 
-        return Result::ok($ret, $instance);
+        return Ret::ok($fallback, $instance);
     }
 }

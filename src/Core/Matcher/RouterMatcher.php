@@ -33,7 +33,7 @@ class RouterMatcher implements RouterMatcherInterface
      */
     public function matchAllByIds(array $idList) : array
     {
-        $theParseThrow = Lib::parseThrow();
+        $theType = Lib::type();
 
         $result = [];
 
@@ -41,7 +41,7 @@ class RouterMatcher implements RouterMatcherInterface
 
         $routeIdList = [];
         foreach ( $idList as $idx => $id ) {
-            $routeIdList[ $idx ] = $theParseThrow->int_non_negative($id);
+            $routeIdList[ $idx ] = $theType->int_non_negative($id)->orThrow();
         }
 
         // > отбрасываем оригинальные индексы, поскольку работаем с первичными и будет только одно совпадение
@@ -59,7 +59,7 @@ class RouterMatcher implements RouterMatcherInterface
      */
     public function matchFirstByIds(array $idList) : ?Route
     {
-        $theParseThrow = Lib::parseThrow();
+        $theType = Lib::type();
 
         $result = null;
 
@@ -67,7 +67,7 @@ class RouterMatcher implements RouterMatcherInterface
 
         $routeIdList = [];
         foreach ( $idList as $idx => $id ) {
-            $routeIdList[ $idx ] = $theParseThrow->int_non_negative($id);
+            $routeIdList[ $idx ] = $theType->int_non_negative($id)->orThrow();
         }
 
         // > отбрасываем оригинальные индексы, поскольку работаем с первичными и будет только одно совпадение
@@ -98,7 +98,7 @@ class RouterMatcher implements RouterMatcherInterface
 
         $routeNameList = [];
         foreach ( $nameList as $idx => $name ) {
-            $routeNameList[ $idx ] = RouteName::from($name);
+            $routeNameList[ $idx ] = RouteName::from($name)->orThrow();
         }
 
         $matchIndex = [];
@@ -149,7 +149,7 @@ class RouterMatcher implements RouterMatcherInterface
 
         $routeNameList = [];
         foreach ( $nameList as $idx => $name ) {
-            $routeNameList[ $idx ] = RouteName::from($name);
+            $routeNameList[ $idx ] = RouteName::from($name)->orThrow();
         }
 
         $matchIndex = [];
@@ -186,7 +186,7 @@ class RouterMatcher implements RouterMatcherInterface
 
         $routeTagList = [];
         foreach ( $tagList as $idx => $tag ) {
-            $routeTagList[ $idx ] = RouteTag::from($tag);
+            $routeTagList[ $idx ] = RouteTag::from($tag)->orThrow();
         }
 
         $matchIndex = [];
@@ -239,7 +239,7 @@ class RouterMatcher implements RouterMatcherInterface
 
         $routeTagList = [];
         foreach ( $tagList as $idx => $tag ) {
-            $routeTagList[ $idx ] = RouteTag::from($tag);
+            $routeTagList[ $idx ] = RouteTag::from($tag)->orThrow();
         }
 
         $matchIndex = [];
@@ -282,7 +282,7 @@ class RouterMatcher implements RouterMatcherInterface
         $result = [];
 
         foreach ( $paramsList as $idx => $array ) {
-            $contract = DefaultRouterMatcherContract::from($array);
+            $contract = DefaultRouterMatcherContract::from($array)->orThrow();
 
             if ($unique) {
                 $result += $this->matchByContract($contract);
@@ -313,7 +313,7 @@ class RouterMatcher implements RouterMatcherInterface
         $result = null;
 
         foreach ( $paramsList as $array ) {
-            $contract = DefaultRouterMatcherContract::from($array);
+            $contract = DefaultRouterMatcherContract::from($array)->orThrow();
 
             if ($route = $this->matchFirstByContract($contract)) {
                 $result = $route;
