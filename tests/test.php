@@ -18,18 +18,18 @@ $ffn = new class {
 
     function value_array($value, ?int $maxLevel = null, array $options = []) : string
     {
-        return \Gzhegow\Lib\Lib::debug()->value_array($value, $maxLevel, $options);
+        return \Gzhegow\Lib\Lib::debug()->dump_value_array($value, $maxLevel, $options);
     }
 
     function value_array_multiline($value, ?int $maxLevel = null, array $options = []) : string
     {
-        return \Gzhegow\Lib\Lib::debug()->value_array_multiline($value, $maxLevel, $options);
+        return \Gzhegow\Lib\Lib::debug()->dump_value_array_multiline($value, $maxLevel, $options);
     }
 
 
     function values($separator = null, ...$values) : string
     {
-        return \Gzhegow\Lib\Lib::debug()->values([], $separator, ...$values);
+        return \Gzhegow\Lib\Lib::debug()->dump_values([], $separator, ...$values);
     }
 
 
