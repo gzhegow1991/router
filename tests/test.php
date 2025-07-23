@@ -3,9 +3,9 @@
 // > настраиваем PHP
 \Gzhegow\Lib\Lib::entrypoint()
     ->setDirRoot(__DIR__ . '/..')
-    //
-    ->useAll()
+    ->useAllDefault()
 ;
+
 
 
 // > добавляем несколько функция для тестирования
