@@ -1,7 +1,8 @@
 <?php
 /**
- * @noinspection PhpUndefinedNamespaceInspection
+ * @noinspection PhpFullyQualifiedNameUsageInspection
  * @noinspection PhpUndefinedClassInspection
+ * @noinspection PhpUndefinedNamespaceInspection
  */
 
 namespace Gzhegow\Router\Core\Cache;
@@ -35,10 +36,6 @@ class RouterCacheConfig extends AbstractConfig
     /**
      * > можно установить пакет `composer require symfony/cache` и использовать адаптер, чтобы хранить кэш в redis или любым другим способом
      *
-     * @noinspection PhpFullyQualifiedNameUsageInspection
-     * @noinspection PhpUndefinedClassInspection
-     * @noinspection PhpUndefinedNamespaceInspection
-     *
      * @var object|\Psr\Cache\CacheItemPoolInterface|null
      */
     protected $cacheAdapter;
@@ -57,7 +54,7 @@ class RouterCacheConfig extends AbstractConfig
     protected $cacheFilename = 'router.cache';
 
 
-    protected function validation(array &$refContext = []) : bool
+    protected function validation(array $context = []) : bool
     {
         $theType = Lib::type();
 
@@ -82,7 +79,7 @@ class RouterCacheConfig extends AbstractConfig
                 [
                     ''
                     . 'The `cacheMode` should be one of: '
-                    . implode('|', array_keys(RouterCache::LIST_CACHE_MODE)),
+                    . '[ ' . implode(' ][ ', array_keys(RouterCache::LIST_CACHE_MODE)) . ' ]',
                     //
                     $this,
                 ]

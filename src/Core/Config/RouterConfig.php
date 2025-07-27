@@ -72,7 +72,7 @@ class RouterConfig extends AbstractConfig
     /**
      * @noinspection PhpCastIsUnnecessaryInspection
      */
-    protected function validation(array &$refContext = []) : bool
+    protected function validation(array $context = []) : bool
     {
         $this->registerAllowObjectsAndClosures = (bool) $this->registerAllowObjectsAndClosures;
         $this->dispatchIgnoreMethod = (bool) $this->dispatchIgnoreMethod;
@@ -88,7 +88,7 @@ class RouterConfig extends AbstractConfig
                 [
                     ''
                     . 'The `compileTrailingSlashMode` should be one of: '
-                    . implode(',', array_keys(Router::LIST_TRAILING_SLASH)),
+                    . '[ ' . implode(' ][ ', array_keys(Router::LIST_TRAILING_SLASH)) . ' ]',
                     //
                     $this,
                 ]
@@ -100,7 +100,7 @@ class RouterConfig extends AbstractConfig
                 [
                     ''
                     . 'The `dispatchTrailingSlashMode` should be one of: '
-                    . implode(',', array_keys(Router::LIST_TRAILING_SLASH)),
+                    . '[ ' . implode(' ][ ', array_keys(Router::LIST_TRAILING_SLASH)) . ' ]',
                     //
                     $this,
                 ]
