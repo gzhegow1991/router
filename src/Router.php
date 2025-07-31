@@ -45,47 +45,47 @@ class Router
     }
 
 
-    public static function getRouterFactory() : RouterFactoryInterface
-    {
-        return static::$facade->getRouterFactory();
-    }
-
-
-    public static function getRouterCache() : RouterCacheInterface
-    {
-        return static::$facade->getRouterCache();
-    }
-
-    public static function getRouterDispatcher() : RouterDispatcherInterface
-    {
-        return static::$facade->getRouterDispatcher();
-    }
-
-    public static function getRouterInvoker() : RouterInvokerInterface
-    {
-        return static::$facade->getRouterInvoker();
-    }
-
-    public static function getRouterMatcher() : RouterMatcherInterface
-    {
-        return static::$facade->getRouterMatcher();
-    }
-
-    public static function getRouterUrlGenerator() : RouterUrlGeneratorInterface
-    {
-        return static::$facade->getRouterUrlGenerator();
-    }
-
-
-    public static function getRouterStore() : RouterStore
-    {
-        return static::$facade->getRouterStore();
-    }
-
-
     public static function getConfig() : RouterConfig
     {
         return static::$facade->getConfig();
+    }
+
+
+    public static function getFactory() : RouterFactoryInterface
+    {
+        return static::$facade->getFactory();
+    }
+
+
+    public static function getCache() : RouterCacheInterface
+    {
+        return static::$facade->getCache();
+    }
+
+    public static function getDispatcher() : RouterDispatcherInterface
+    {
+        return static::$facade->getDispatcher();
+    }
+
+    public static function getInvoker() : RouterInvokerInterface
+    {
+        return static::$facade->getInvoker();
+    }
+
+    public static function getMatcher() : RouterMatcherInterface
+    {
+        return static::$facade->getMatcher();
+    }
+
+    public static function getUrlGenerator() : RouterUrlGeneratorInterface
+    {
+        return static::$facade->getUrlGenerator();
+    }
+
+
+    public static function getStore() : RouterStore
+    {
+        return static::$facade->getStore();
     }
 
 

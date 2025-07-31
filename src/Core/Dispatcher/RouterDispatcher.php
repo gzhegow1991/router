@@ -83,9 +83,9 @@ class RouterDispatcher implements RouterDispatcherInterface
     {
         $this->routerConfig = $router->getConfig();
 
-        $this->routerInvoker = $router->getRouterInvoker();
+        $this->routerInvoker = $router->getInvoker();
 
-        $this->routerStore = $router->getRouterStore();
+        $this->routerStore = $router->getStore();
     }
 
 

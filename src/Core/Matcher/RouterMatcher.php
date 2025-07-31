@@ -22,7 +22,7 @@ class RouterMatcher implements RouterMatcherInterface
 
     public function initialize(RouterInterface $router) : void
     {
-        $this->routerStore = $router->getRouterStore();
+        $this->routerStore = $router->getStore();
     }
 
 

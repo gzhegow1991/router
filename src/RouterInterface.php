@@ -27,24 +27,24 @@ use Gzhegow\Router\Core\Dispatcher\Contract\RouterDispatcherRequestContractInter
 
 interface RouterInterface
 {
-    public function getRouterFactory() : RouterFactoryInterface;
-
-
-    public function getRouterCache() : RouterCacheInterface;
-
-    public function getRouterDispatcher() : RouterDispatcherInterface;
-
-    public function getRouterInvoker() : RouterInvokerInterface;
-
-    public function getRouterMatcher() : RouterMatcherInterface;
-
-    public function getRouterUrlGenerator() : RouterUrlGeneratorInterface;
-
-
-    public function getRouterStore() : RouterStore;
-
-
     public function getConfig() : RouterConfig;
+
+
+    public function getFactory() : RouterFactoryInterface;
+
+
+    public function getCache() : RouterCacheInterface;
+
+    public function getDispatcher() : RouterDispatcherInterface;
+
+    public function getInvoker() : RouterInvokerInterface;
+
+    public function getMatcher() : RouterMatcherInterface;
+
+    public function getUrlGenerator() : RouterUrlGeneratorInterface;
+
+
+    public function getStore() : RouterStore;
 
 
     public function cacheClear() : RouterInterface;

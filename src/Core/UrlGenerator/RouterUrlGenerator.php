@@ -20,7 +20,7 @@ class RouterUrlGenerator implements RouterUrlGeneratorInterface
 
     public function initialize(RouterInterface $router) : void
     {
-        $this->routerMatcher = $router->getRouterMatcher();
+        $this->routerMatcher = $router->getMatcher();
     }
 
 

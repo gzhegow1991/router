@@ -114,47 +114,47 @@ class RouterFacade implements RouterInterface
     }
 
 
-    public function getRouterFactory() : RouterFactoryInterface
+    public function getConfig() : RouterConfig
+    {
+        return $this->config;
+    }
+
+
+    public function getFactory() : RouterFactoryInterface
     {
         return $this->routerFactory;
     }
 
 
-    public function getRouterCache() : RouterCacheInterface
+    public function getCache() : RouterCacheInterface
     {
         return $this->routerCache;
     }
 
-    public function getRouterDispatcher() : RouterDispatcherInterface
+    public function getDispatcher() : RouterDispatcherInterface
     {
         return $this->routerDispatcher;
     }
 
-    public function getRouterInvoker() : RouterInvokerInterface
+    public function getInvoker() : RouterInvokerInterface
     {
         return $this->routerInvoker;
     }
 
-    public function getRouterMatcher() : RouterMatcherInterface
+    public function getMatcher() : RouterMatcherInterface
     {
         return $this->routerMatcher;
     }
 
-    public function getRouterUrlGenerator() : RouterUrlGeneratorInterface
+    public function getUrlGenerator() : RouterUrlGeneratorInterface
     {
         return $this->routerUrlGenerator;
     }
 
 
-    public function getRouterStore() : RouterStore
+    public function getStore() : RouterStore
     {
         return $this->routerStore;
-    }
-
-
-    public function getConfig() : RouterConfig
-    {
-        return $this->config;
     }
 
 
