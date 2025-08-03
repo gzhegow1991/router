@@ -632,7 +632,10 @@ $fn = function () use ($ffn, $router) {
     }
     catch ( \Gzhegow\Router\Exception\Exception\DispatchException $e ) {
         $lines = \Gzhegow\Lib\Lib::debugThrowabler()
-            ->getPreviousMessagesAllLines($e, _DEBUG_THROWABLE_WITHOUT_FILE)
+            ->getPreviousMessagesAllLines($e,
+                0
+                | _DEBUG_THROWABLE_WITHOUT_FILE
+            )
         ;
 
         echo '[ CATCH ]' . "\n";

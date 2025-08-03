@@ -730,7 +730,7 @@ class RouterDispatcher implements RouterDispatcherInterface
         return false;
     }
 
-    public function getDispatchRoute() : ?Route
+    public function getDispatchRoute() : Route
     {
         return $this->dispatchRoute;
     }

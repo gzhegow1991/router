@@ -882,7 +882,7 @@ class RouterFacade implements RouterInterface
         return $this->routerDispatcher->hasDispatchRoute($route);
     }
 
-    public function getDispatchRoute() : ?Route
+    public function getDispatchRoute() : Route
     {
         return $this->routerDispatcher->getDispatchRoute();
     }

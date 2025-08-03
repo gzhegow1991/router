@@ -471,7 +471,7 @@ class Router
         return static::$facade->hasDispatchRoute($route);
     }
 
-    public static function getDispatchRoute() : ?Route
+    public static function getDispatchRoute() : Route
     {
         return static::$facade->getDispatchRoute();
     }
