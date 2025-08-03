@@ -3,6 +3,7 @@
 namespace Gzhegow\Router\Core\UrlGenerator;
 
 use Gzhegow\Lib\Lib;
+use Gzhegow\Router\Router;
 use Gzhegow\Router\RouterInterface;
 use Gzhegow\Router\Core\Route\Route;
 use Gzhegow\Router\Exception\LogicException;
@@ -60,7 +61,7 @@ class RouterUrlGenerator implements RouterUrlGeneratorInterface
             $batch = $this->routerMatcher->matchAllByNames($routeNameList);
 
             foreach ( $batch as $idx => $items ) {
-                if ($items) {
+                if ([] !== $items) {
                     $routeList[ $idx ] = reset($items);
                 }
             }
@@ -84,6 +85,12 @@ class RouterUrlGenerator implements RouterUrlGeneratorInterface
     {
         [ $url ] = $this->urls([ $route ], $attributes);
 
+        if (null === $url) {
+            throw new RuntimeException(
+                [ 'The `route` is not found', $route ]
+            );
+        }
+
         return $url;
     }
 
@@ -94,7 +101,7 @@ class RouterUrlGenerator implements RouterUrlGeneratorInterface
 
         $search = [];
         foreach ( $attributesCurrent as $key => $attr ) {
-            $search[ '{' . $key . '}' ] = $attr;
+            $search[ Router::PATTERN_ENCLOSURE[ 0 ] . $key . Router::PATTERN_ENCLOSURE[ 1 ] ] = $attr;
         }
 
         $url = str_replace(
