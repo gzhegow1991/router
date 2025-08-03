@@ -210,7 +210,9 @@ interface RouterInterface
     public function getDispatchRequestPath() : string;
 
 
-    public function getDispatchRoute() : Route;
+    public function hasDispatchRoute(?Route &$route = null) : bool;
+
+    public function getDispatchRoute() : ?Route;
 
     public function getDispatchActionAttributes() : array;
 

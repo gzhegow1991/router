@@ -241,7 +241,7 @@ class Router
      * @param string|RouteTag                           $routeTag
      * @param callable|object|array|class-string|string $fallback
      */
-    public function fallbackOnRouteTag($routeTag, $fallback) : RouterInterface
+    public static function fallbackOnRouteTag($routeTag, $fallback) : RouterInterface
     {
         return static::$facade->fallbackOnRouteTag($routeTag, $fallback);
     }
@@ -466,7 +466,12 @@ class Router
     }
 
 
-    public static function getDispatchRoute() : Route
+    public static function hasDispatchRoute(?Route &$route = null) : bool
+    {
+        return static::$facade->hasDispatchRoute($route);
+    }
+
+    public static function getDispatchRoute() : ?Route
     {
         return static::$facade->getDispatchRoute();
     }
@@ -480,7 +485,7 @@ class Router
     /**
      * @return RouterGenericHandlerMiddleware[]
      */
-    public function getDispatchMiddlewareIndex() : array
+    public static function getDispatchMiddlewareIndex() : array
     {
         return static::$facade->getDispatchMiddlewareIndex();
     }
@@ -488,7 +493,7 @@ class Router
     /**
      * @return RouterGenericHandlerFallback[]
      */
-    public function getDispatchFallbackIndex() : array
+    public static function getDispatchFallbackIndex() : array
     {
         return static::$facade->getDispatchFallbackIndex();
     }

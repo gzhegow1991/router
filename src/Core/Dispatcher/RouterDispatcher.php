@@ -347,6 +347,7 @@ class RouterDispatcher implements RouterDispatcherInterface
 
         } else {
             $pipeContext = null;
+
             if (null !== $context) {
                 if ($context instanceof PipeContext) {
                     $pipeContext = $context;
@@ -716,7 +717,20 @@ class RouterDispatcher implements RouterDispatcherInterface
     }
 
 
-    public function getDispatchRoute() : Route
+    public function hasDispatchRoute(?Route &$route = null) : bool
+    {
+        $route = null;
+
+        if (null !== $this->dispatchRoute) {
+            $route = $this->dispatchRoute;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public function getDispatchRoute() : ?Route
     {
         return $this->dispatchRoute;
     }

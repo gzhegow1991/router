@@ -877,7 +877,12 @@ class RouterFacade implements RouterInterface
     }
 
 
-    public function getDispatchRoute() : Route
+    public function hasDispatchRoute(?Route &$route = null) : bool
+    {
+        return $this->routerDispatcher->hasDispatchRoute($route);
+    }
+
+    public function getDispatchRoute() : ?Route
     {
         return $this->routerDispatcher->getDispatchRoute();
     }

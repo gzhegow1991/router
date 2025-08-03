@@ -75,7 +75,9 @@ interface RouterDispatcherInterface
     public function getDispatchRequestUri() : string;
 
 
-    public function getDispatchRoute() : Route;
+    public function hasDispatchRoute(?Route &$route = null) : bool;
+
+    public function getDispatchRoute() : ?Route;
 
     public function getDispatchActionAttributes() : array;
 
