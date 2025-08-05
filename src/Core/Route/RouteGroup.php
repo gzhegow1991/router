@@ -334,21 +334,29 @@ class RouteGroup
         }
 
         foreach ( $this->routeList as $routeChildBlueprint ) {
-            $path = $this->routeBlueprint->path;
-            $name = $this->routeBlueprint->name;
+            $path = $this->routeBlueprint->path ?? '/';
+            $name = $this->routeBlueprint->name ?? '';
 
-            if (null !== $routeChildBlueprint->path) {
-                $path .= '/' . ltrim($routeChildBlueprint->path, '/');
+            $childPath = $routeChildBlueprint->path;
+            $childName = $routeChildBlueprint->name;
+
+            if ($childPath !== null) {
+                $path .= '/' . ltrim($childPath, '/');
             }
-            if (null !== $routeChildBlueprint->name) {
-                $name .= '.' . ltrim($routeChildBlueprint->name, '.');
+            if ($childName !== null) {
+                $name .= '.' . ltrim($childName, '.');
             }
 
-            $path = '/' . ltrim($path, '/');
-            $name = ltrim($name, '.');
+            if ($path !== null) {
+                $path = '/' . ltrim($path, '/');
+            }
+            if ($name !== null) {
+                $name = ltrim($name, '.');
+            }
 
-            $routeChildBlueprint->path($path);
-
+            if ('' !== $path) {
+                $routeChildBlueprint->path($path);
+            }
             if ('' !== $name) {
                 $routeChildBlueprint->name($name);
             }
