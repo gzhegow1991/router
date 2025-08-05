@@ -334,17 +334,29 @@ class RouteGroup
         }
 
         foreach ( $this->routeList as $routeChildBlueprint ) {
-            $path = $this->routeBlueprint->path . '/' . ltrim($routeChildBlueprint->path, '/');
-            $name = $this->routeBlueprint->name . '.' . ltrim($routeChildBlueprint->name, '.');
+            $path = $this->routeBlueprint->path;
+            $name = $this->routeBlueprint->name;
+
+            if (null !== $routeChildBlueprint->path) {
+                $path .= '/' . ltrim($routeChildBlueprint->path, '/');
+            }
+            if (null !== $routeChildBlueprint->name) {
+                $name .= '.' . ltrim($routeChildBlueprint->name, '.');
+            }
 
             $path = '/' . ltrim($path, '/');
             $name = ltrim($name, '.');
 
-            $tagsIndex = array_replace(
+            $routeChildBlueprint->path($path);
+
+            if ('' !== $name) {
+                $routeChildBlueprint->name($name);
+            }
+
+            $tagsList = array_keys(array_replace(
                 $routeChildBlueprint->tagIndex,
                 $this->routeBlueprint->tagIndex
-            );
-            $tagsList = array_keys($tagsIndex);
+            ));
 
             $middlewaresDict = array_replace(
                 $routeChildBlueprint->middlewareDict,
@@ -355,14 +367,6 @@ class RouteGroup
                 $routeChildBlueprint->fallbackDict,
                 $this->routeBlueprint->fallbackDict
             );
-
-            if ('' !== $path) {
-                $routeChildBlueprint->path($path);
-            }
-
-            if ('' !== $name) {
-                $routeChildBlueprint->name($name);
-            }
 
             $routeChildBlueprint->setTags($tagsList);
             $routeChildBlueprint->setMiddlewares($middlewaresDict);
