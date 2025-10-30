@@ -55,7 +55,7 @@ class HttpPath
             ?? static::fromStatic($from)->orNull($ret)
             ?? static::fromString($from)->orNull($ret);
 
-        if ($ret->isFail()) {
+        if ( $ret->isFail() ) {
             return Ret::throw($fallback, $ret);
         }
 
@@ -67,7 +67,7 @@ class HttpPath
      */
     public static function fromStatic($from, ?array $fallback = null)
     {
-        if ($from instanceof static) {
+        if ( $from instanceof static ) {
             return Ret::ok($fallback, $from);
         }
 
@@ -85,13 +85,13 @@ class HttpPath
     {
         $theType = Lib::type();
 
-        if (! $theType->string_not_empty($from)->isOk([ &$fromString, &$ret ])) {
+        if ( ! $theType->string_not_empty($from)->isOk([ &$fromString, &$ret ]) ) {
             return Ret::throw($fallback, $ret);
         }
 
-        if (0 !== strpos($fromString, '/')) {
+        if ( 0 !== strpos($fromString, '/') ) {
             return Ret::throw(
-                $ret,
+                $fallback,
                 [ 'The `from` should start with `/` sign', $from ],
                 [ __FILE__, __LINE__ ]
             );
@@ -103,27 +103,27 @@ class HttpPath
             [ &$parseUrl ]
         )->isOk([ &$fromLink, &$ret ]);
 
-        if (! $status) {
+        if ( ! $status ) {
             return Ret::throw($fallback, $ret);
         }
 
-        $fromPath = $parseUrl[ 'path' ];
+        $fromPath = $parseUrl['path'];
 
         $fromIsQuery = null;
         $fromQuery = null;
         $fromQueryString = null;
-        if (isset($parseUrl[ 'query' ])) {
+        if ( '' !== $parseUrl['query'] ) {
             $fromIsQuery = '?';
-            $fromQueryString = $parseUrl[ 'query' ];
+            $fromQueryString = $parseUrl['query'];
 
-            parse_str($parseUrl[ 'query' ], $fromQuery);
+            parse_str($parseUrl['query'], $fromQuery);
         }
 
         $isFragment = null;
         $fromFragment = null;
-        if (isset($parseUrl[ 'fragment' ])) {
+        if ( '' !== $parseUrl['fragment'] ) {
             $isFragment = '#';
-            $fromFragment = $parseUrl[ 'fragment' ];
+            $fromFragment = $parseUrl['fragment'];
         }
 
         $fromUri = "{$fromPath}{$fromIsQuery}{$fromQueryString}{$isFragment}{$fromFragment}";
@@ -158,7 +158,7 @@ class HttpPath
     {
         $refQuery = null;
 
-        if (null !== $this->query) {
+        if ( null !== $this->query ) {
             $refQuery = $this->query;
 
             return true;
@@ -177,7 +177,7 @@ class HttpPath
     {
         $refQueryString = null;
 
-        if (null !== $this->queryString) {
+        if ( null !== $this->queryString ) {
             $refQueryString = $this->queryString;
 
             return true;
@@ -196,7 +196,7 @@ class HttpPath
     {
         $refFragment = null;
 
-        if (null !== $this->fragment) {
+        if ( null !== $this->fragment ) {
             $refFragment = $this->fragment;
 
             return true;

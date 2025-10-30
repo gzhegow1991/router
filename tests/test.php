@@ -505,21 +505,21 @@ $fn = function () use ($ffn, $router) {
 
 
     $routeInstances = [];
-    $routeInstances[ 'route1' ] = $router->matchFirstByNames([ 'user.main' ]);
+    $routeInstances['route1'] = $router->matchFirstByNames([ 'user.main' ]);
 
     $routeNames = [];
-    $routeNames[ 'route2' ] = 'user.main';
-    $routeNames[ 'route3' ] = 'user.main';
+    $routeNames['route2'] = 'user.main';
+    $routeNames['route3'] = 'user.main';
 
     $routes = $routeInstances + $routeNames;
 
     $ids = [];
-    $ids[ 'route1' ] = 1;
-    $ids[ 'route2' ] = 2;
-    $ids[ 'route3' ] = 3;
+    $ids['route1'] = 1;
+    $ids['route2'] = 2;
+    $ids['route3'] = 3;
 
     $attributes = [];
-    $attributes[ 'id' ] = $ids;
+    $attributes['id'] = $ids;
 
     // > можно передать либо список объектов (instance of Route::class) и/или список строк - имена роутов
     $result = $router->urls($routes, $attributes);
@@ -611,7 +611,7 @@ $fn = function () use ($ffn, $router) {
         $lines = \Gzhegow\Lib\Lib::debugThrowabler()
             ->getPreviousMessagesAllLines($e,
                 0
-                | _DEBUG_THROWABLE_WITHOUT_FILE
+                | _DEBUG_THROWABLER_INFO_WITHOUT_FILE
             )
         ;
 
