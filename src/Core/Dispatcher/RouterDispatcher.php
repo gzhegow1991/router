@@ -519,10 +519,10 @@ class RouterDispatcher implements RouterDispatcherInterface
         $routePath = $dispatchRouteClone->path;
 
         $routeSubpathList = [];
-        $split = ltrim('/', $routePath);
+        $split = ltrim($routePath, '/');
         $split = explode('/', $split);
         while ( [] !== $split ) {
-            $routeSubpathList[] = implode('/', $split);
+            $routeSubpathList[] = '/' . implode('/', $split);
 
             array_pop($split);
         }
