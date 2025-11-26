@@ -2,8 +2,11 @@
 
 // > настраиваем PHP
 \Gzhegow\Lib\Lib::entrypoint()
+    ->useAllRecommended(false)
+    //
     ->setDirRoot(__DIR__ . '/..')
-    ->useAllRecommended()
+    //
+    ->useAll()
 ;
 
 
