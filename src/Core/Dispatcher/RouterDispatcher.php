@@ -434,7 +434,7 @@ class RouterDispatcher implements RouterDispatcherInterface
             $throwable = new NotFoundException(
                 ''
                 . 'Route not found: '
-                . '[ ' . $contractRequestUri . ' ]'
+                . '[ ' . $contractRequestPath . ' ]'
                 . '[ ' . $contractRequestMethod . ' ]'
             );
 
