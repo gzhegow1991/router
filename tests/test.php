@@ -1,10 +1,9 @@
 <?php
 
 // > настраиваем PHP
-\Gzhegow\Lib\Lib::entrypoint()
-    ->useAllRecommended(false)
-    //
-    ->setDirRoot(__DIR__ . '/..')
+($ent = \Gzhegow\Lib\Lib::entrypoint())
+    ->setAllRecommended()
+    ->setOpt($ent::OPT_CUSTOM_DIR_ROOT, __DIR__ . '/..')
     //
     ->useAll()
 ;
