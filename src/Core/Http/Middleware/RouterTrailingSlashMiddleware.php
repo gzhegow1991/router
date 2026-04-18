@@ -17,7 +17,7 @@ class RouterTrailingSlashMiddleware
     {
         $thePhp = Lib::php();
 
-        if ($thePhp->is_terminal()) {
+        if ($thePhp->is_sapi_terminal()) {
             return $fnNext($input, $args);
         }
 

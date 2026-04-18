@@ -68,7 +68,7 @@ class RouterPattern implements \Serializable
             ?? static::fromStatic($from)->orNull($ret)
             ?? static::fromArray($from)->orNull($ret);
 
-        if ($ret->isFail()) {
+        if ( $ret->isFail() ) {
             return Ret::throw($fallback, $ret);
         }
 
@@ -80,7 +80,7 @@ class RouterPattern implements \Serializable
      */
     public static function fromStatic($from, ?array $fallback = null)
     {
-        if ($from instanceof static) {
+        if ( $from instanceof static ) {
             return Ret::ok($fallback, $from);
         }
 
@@ -98,7 +98,7 @@ class RouterPattern implements \Serializable
     {
         $theType = Lib::type();
 
-        if (! is_array($from)) {
+        if ( ! is_array($from) ) {
             return Ret::throw(
                 $fallback,
                 [ 'The `from` should be array', $from ],
@@ -108,25 +108,25 @@ class RouterPattern implements \Serializable
 
         [ $pattern, $regex ] = $from + [ null, null ];
 
-        if (! $theType->string_not_empty($pattern)->isOk([ &$patternStringNotEmpty, &$ret ])) {
+        if ( ! $theType->string_not_empty($pattern)->isOk([ &$patternStringNotEmpty, &$ret ]) ) {
             return Ret::throw($fallback, $ret);
         }
 
-        if (! $theType->string_not_empty($regex)->isOk([ &$regexStringNotEmpty, &$ret ])) {
+        if ( ! $theType->string_not_empty($regex)->isOk([ &$regexStringNotEmpty, &$ret ]) ) {
             return Ret::throw($fallback, $ret);
         }
 
-        if (! (true
-            && (Router::PATTERN_ENCLOSURE[ 0 ] === $patternStringNotEmpty[ 0 ])
-            && (Router::PATTERN_ENCLOSURE[ 1 ] === substr($patternStringNotEmpty, -1))
-        )) {
+        if ( ! (true
+            && (Router::PATTERN_ENCLOSURE[0] === $patternStringNotEmpty[0])
+            && (Router::PATTERN_ENCLOSURE[1] === substr($patternStringNotEmpty, -1))
+        ) ) {
             return Ret::throw(
                 $fallback,
                 [
                     ''
                     . 'The `from[0]` should be wrapped with signs: '
-                    . '[ ' . Router::PATTERN_ENCLOSURE[ 0 ] . ' ]'
-                    . '[ ' . Router::PATTERN_ENCLOSURE[ 1 ] . ' ]',
+                    . '[ ' . Router::PATTERN_ENCLOSURE[0] . ' ]'
+                    . '[ ' . Router::PATTERN_ENCLOSURE[1] . ' ]',
                     //
                     $from,
                 ],
@@ -136,7 +136,7 @@ class RouterPattern implements \Serializable
 
         $attributeString = substr($patternStringNotEmpty, 1, -1);
 
-        if (! preg_match($regexp = '/[a-z][a-z0-9_]*/', $attributeString)) {
+        if ( ! preg_match($regexp = '/[a-z][a-z0-9_]*/', $attributeString) ) {
             return Ret::throw(
                 $fallback,
                 [
@@ -150,7 +150,9 @@ class RouterPattern implements \Serializable
             );
         }
 
-        if ($isContainSlashes = (false !== strpos($regexStringNotEmpty, '/'))) {
+        $isContainSlashes = (false !== strpos($regexStringNotEmpty, '/'));
+
+        if ( $isContainSlashes ) {
             return Ret::throw(
                 $fallback,
                 [ 'The `from[1]` should not contain slash symbols', $from ],
@@ -158,7 +160,9 @@ class RouterPattern implements \Serializable
             );
         }
 
-        if ($isContainNamedGroups = preg_match('/\(\?P\<[^\>]+\>/', $regexStringNotEmpty)) {
+        $isContainNamedGroups = preg_match('/\(\?P\<[^\>]+\>/', $regexStringNotEmpty);
+
+        if ( $isContainNamedGroups ) {
             return Ret::throw(
                 $fallback,
                 [ 'The `from[1]` should not contain named groups', $from ],
@@ -166,8 +170,16 @@ class RouterPattern implements \Serializable
             );
         }
 
-        if (! $theType->regex($regexp = "/{$regexStringNotEmpty}/")->isOk([ 1 => &$ret ])) {
-            return Ret::throw($fallback, $ret);
+        $regexp = "/{$regexStringNotEmpty}/";
+
+        $ret = $theType->regex($regexp);
+
+        if ( ! $ret->isOk() ) {
+            return Ret::throw(
+                $fallback,
+                $ret,
+                [ __FILE__, __LINE__ ]
+            );
         }
 
         $regexString = "(?<{$attributeString}>{$regexStringNotEmpty})";
