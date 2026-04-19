@@ -379,7 +379,7 @@ class RouterDispatcher implements RouterDispatcherInterface
                 'path' => [],
             ];
 
-            foreach ( $routeSubpathList as $routeSubpath ) {
+            foreach ( array_reverse($routeSubpathList) as $routeSubpath ) {
                 if (isset($middlewareCollection->middlewareIndexByRoutePath[ $routeSubpath ])) {
                     $middlewareIndexes[ 'path' ][ $routeSubpath ] = $middlewareCollection->middlewareIndexByRoutePath[ $routeSubpath ];
                 }
@@ -548,7 +548,7 @@ class RouterDispatcher implements RouterDispatcherInterface
             $fallbackIndexes[ 'id' ][ $routeId ] = $fallbackCollection->fallbackIndexByRouteId[ $routeId ];
         }
 
-        foreach ( $routeSubpathList as $routeSubpath ) {
+        foreach ( array_reverse($routeSubpathList) as $routeSubpath ) {
             if (isset($middlewareCollection->middlewareIndexByRoutePath[ $routeSubpath ])) {
                 $middlewareIndexes[ 'path' ][ $routeSubpath ] = $middlewareCollection->middlewareIndexByRoutePath[ $routeSubpath ];
             }
