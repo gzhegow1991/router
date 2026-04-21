@@ -627,14 +627,15 @@ $fn = function () use ($ffn, $router) {
     $ffn->print('TEST 7');
     echo "\n";
 
+    $theDebugThrowabler = \Gzhegow\Lib\Lib::debugThrowabler();
 
     $result = null;
     try {
         $result = $router->dispatch([ 'GET', '/not-found' ]);
     }
     catch ( \Gzhegow\Router\Exception\Exception\DispatchException $e ) {
-        $lines = \Gzhegow\Lib\Lib::debugThrowabler()
-            ->getPreviousMessagesAllLines($e,
+        $lines = $theDebugThrowabler
+            ->getLines($e,
                 0
                 | _DEBUG_THROWABLER_INFO_WITHOUT_FILE
             )
