@@ -37,9 +37,5 @@
     "optimize-autoloader": true,
 
     "sort-packages": false
-  },
-
-  "extra": {
-    "version": "v1.2.0"
   }
 }

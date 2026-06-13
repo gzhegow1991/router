@@ -8,10 +8,10 @@ use Gzhegow\Router\Core\Store\RouterStore;
 use Gzhegow\Router\Core\Config\RouterConfig;
 use Gzhegow\Router\Core\Route\RouteBlueprint;
 use Gzhegow\Router\Core\Pattern\RouterPattern;
-use Gzhegow\Lib\Modules\Func\Pipe\PipeContext;
 use Gzhegow\Router\Core\Route\Struct\RouteTag;
 use Gzhegow\Router\Core\Route\Struct\RouteName;
 use Gzhegow\Router\Core\Route\Struct\RoutePath;
+use Gzhegow\Lib\Modules\Func\Pipe\FuncPipeContext;
 use Gzhegow\Router\Core\Cache\RouterCacheInterface;
 use Gzhegow\Router\Core\Matcher\RouterMatcherInterface;
 use Gzhegow\Router\Core\Invoker\RouterInvokerInterface;
@@ -371,7 +371,7 @@ class Router
 
     /**
      * @param mixed|RouterDispatcherRequestContractInterface|RouterDispatcherRouteContractInterface $contract
-     * @param array{ 0: array }|PipeContext                                                         $context
+     * @param array{ 0: array }|FuncPipeContext                                                     $context
      *
      * @return mixed
      * @throws DispatchException
@@ -390,7 +390,7 @@ class Router
     }
 
     /**
-     * @param array{ 0: array }|PipeContext $context
+     * @param array{ 0: array }|FuncPipeContext $context
      *
      * @return mixed
      * @throws DispatchException
@@ -409,7 +409,7 @@ class Router
     }
 
     /**
-     * @param array{ 0: array }|PipeContext $context
+     * @param array{ 0: array }|FuncPipeContext $context
      *
      * @return mixed
      * @throws DispatchException

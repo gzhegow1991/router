@@ -2,10 +2,10 @@
 
 namespace Gzhegow\Router\Core\Invoker;
 
-use Gzhegow\Lib\Modules\Func\Invoker\DefaultInvoker;
+use Gzhegow\Lib\Modules\Func\Invoker\DefaultFuncInvoker;
 
 
-class RouterInvoker extends DefaultInvoker implements
+class RouterInvoker extends DefaultFuncInvoker implements
     RouterInvokerInterface
 {
 }

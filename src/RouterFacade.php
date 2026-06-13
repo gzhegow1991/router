@@ -11,9 +11,9 @@ use Gzhegow\Router\Core\Route\RouteBlueprint;
 use Gzhegow\Router\Core\Route\Struct\RouteTag;
 use Gzhegow\Router\Core\Pattern\RouterPattern;
 use Gzhegow\Router\Exception\RuntimeException;
-use Gzhegow\Lib\Modules\Func\Pipe\PipeContext;
 use Gzhegow\Router\Core\Route\Struct\RoutePath;
 use Gzhegow\Router\Core\Route\Struct\RouteName;
+use Gzhegow\Lib\Modules\Func\Pipe\FuncPipeContext;
 use Gzhegow\Router\Core\Cache\RouterCacheInterface;
 use Gzhegow\Router\Core\Matcher\RouterMatcherInterface;
 use Gzhegow\Router\Core\Invoker\RouterInvokerInterface;
@@ -170,7 +170,7 @@ class RouterFacade implements RouterInterface
      */
     public function cacheRemember($fn, ?bool $commit = null) : RouterInterface
     {
-        if ($this->cacheLoad()) {
+        if ( $this->cacheLoad() ) {
             return $this;
         }
 
@@ -178,11 +178,11 @@ class RouterFacade implements RouterInterface
 
         $fn($this);
 
-        if ($commit) {
+        if ( $commit ) {
             $this->commit();
         }
 
-        if ($this->isRouterChanged) {
+        if ( $this->isRouterChanged ) {
             $this->cacheSave();
         }
 
@@ -191,14 +191,14 @@ class RouterFacade implements RouterInterface
 
     protected function cacheLoad() : bool
     {
-        if ($this->isRouterChanged) {
+        if ( $this->isRouterChanged ) {
             throw new RuntimeException(
                 [ 'You registered the new data before your cache was loaded. Please, call ->cacheSave() first' ]
             );
         }
 
         $cacheData = $this->routerCache->loadCache();
-        if (null === $cacheData) {
+        if ( null === $cacheData ) {
             return false;
         }
 
@@ -212,8 +212,8 @@ class RouterFacade implements RouterInterface
         ];
 
         foreach ( $keys as $key => $bool ) {
-            if (isset($cacheData[ $key ])) {
-                $this->routerStore->{$key} = $cacheData[ $key ];
+            if ( isset($cacheData[$key]) ) {
+                $this->routerStore->{$key} = $cacheData[$key];
             }
         }
 
@@ -222,11 +222,11 @@ class RouterFacade implements RouterInterface
 
     protected function cacheSave() : RouterInterface
     {
-        if (! $this->isRouterChanged) {
+        if ( ! $this->isRouterChanged ) {
             return $this;
         }
 
-        if ($this->config->registerAllowObjectsAndClosures) {
+        if ( $this->config->registerAllowObjectsAndClosures ) {
             return $this;
         }
 
@@ -295,19 +295,19 @@ class RouterFacade implements RouterInterface
 
             $routeId = $this->registerRoute($route);
 
-            if ($routeBlueprint->middlewareDict) {
+            if ( $routeBlueprint->middlewareDict ) {
                 foreach ( $routeBlueprint->middlewareDict as $middleware ) {
                     $this->middlewareOnRouteId($routeId, $middleware);
                 }
             }
 
-            if ($routeBlueprint->fallbackDict) {
+            if ( $routeBlueprint->fallbackDict ) {
                 foreach ( $routeBlueprint->fallbackDict as $fallback ) {
                     $this->fallbackOnRouteId($routeId, $fallback);
                 }
             }
 
-            $report[ $routeId ] = $route;
+            $report[$routeId] = $route;
         }
 
         return $report;
@@ -346,13 +346,13 @@ class RouterFacade implements RouterInterface
     {
         $this->isRouterChanged = true;
 
-        if (! $this->config->registerAllowObjectsAndClosures) {
+        if ( ! $this->config->registerAllowObjectsAndClosures ) {
             $isRuntimeAction = null
                 ?? $route->action->hasClosureObject()
                 ?? $route->action->hasMethodObject()
                 ?? $route->action->hasInvokableObject();
 
-            if ($isRuntimeAction) {
+            if ( $isRuntimeAction ) {
                 throw new RuntimeException(
                     [
                         'The `action` should not be runtime object or \Closure',
@@ -376,44 +376,44 @@ class RouterFacade implements RouterInterface
             $part = array_shift($split);
             $partRegex = null;
 
-            $isPattern = (false !== strpos($part, Router::PATTERN_ENCLOSURE[ 0 ]));
+            $isPattern = (false !== strpos($part, Router::PATTERN_ENCLOSURE[0]));
             $isLast = ([] === $split);
 
-            if ($isPattern) {
+            if ( $isPattern ) {
                 $partRegex = $this->compilePathRegex($part);
             }
 
-            if ($isLast) {
-                if ($isPattern) {
-                    $routeNodePrevious->routeIndexByRegex[ $partRegex ][ $route->id ] = true;
+            if ( $isLast ) {
+                if ( $isPattern ) {
+                    $routeNodePrevious->routeIndexByRegex[$partRegex][$route->id] = true;
 
                 } else {
-                    $routeNodePrevious->routeIndexByPart[ $part ][ $route->id ] = true;
+                    $routeNodePrevious->routeIndexByPart[$part][$route->id] = true;
                 }
 
                 foreach ( $route->methodIndex as $httpMethod => $bool ) {
-                    $routeNodePrevious->routeIndexByMethod[ $httpMethod ][ $route->id ] = true;
+                    $routeNodePrevious->routeIndexByMethod[$httpMethod][$route->id] = true;
                 }
 
             } else {
-                if ($isPattern) {
-                    $routeNode = $routeNodePrevious->childNodeListByRegex[ $partRegex ] ?? null;
+                if ( $isPattern ) {
+                    $routeNode = $routeNodePrevious->childNodeListByRegex[$partRegex] ?? null;
 
-                    if (null === $routeNode) {
+                    if ( null === $routeNode ) {
                         $routeNode = $this->routerFactory->newRouterNode();
                         $routeNode->part = $part;
 
-                        $routeNodePrevious->childNodeListByRegex[ $partRegex ] = $routeNode;
+                        $routeNodePrevious->childNodeListByRegex[$partRegex] = $routeNode;
                     }
 
                 } else {
-                    $routeNode = $routeNodePrevious->childNodeListByPart[ $part ] ?? null;
+                    $routeNode = $routeNodePrevious->childNodeListByPart[$part] ?? null;
 
-                    if (null === $routeNode) {
+                    if ( null === $routeNode ) {
                         $routeNode = $this->routerFactory->newRouterNode();
                         $routeNode->part = $part;
 
-                        $routeNodePrevious->childNodeListByPart[ $part ] = $routeNode;
+                        $routeNodePrevious->childNodeListByPart[$part] = $routeNode;
                     }
                 }
 
@@ -464,7 +464,7 @@ class RouterFacade implements RouterInterface
 
         $routerGenericMiddleware = RouterGenericHandlerMiddleware::from($middleware)->orThrow();
 
-        if (! $this->routerStore->routeCollection->hasRoute($routeIdInt)) {
+        if ( ! $this->routerStore->routeCollection->hasRoute($routeIdInt) ) {
             throw new RuntimeException(
                 [ 'Route not found by id: ' . $routeId, $routeId ]
             );
@@ -487,19 +487,19 @@ class RouterFacade implements RouterInterface
 
         $routerGenericMiddleware = RouterGenericHandlerMiddleware::from($middleware)->orThrow();
 
-        if ($this->config->compileTrailingSlashMode) {
+        if ( $this->config->compileTrailingSlashMode ) {
             $routePathString = $routePathObject->getValue();
 
             $isEndsWithSlash = true
                 && ('/' !== $routePathString)
-                && ('/' === $routePathString[ strlen($routePathString) - 1 ]);
+                && ('/' === $routePathString[strlen($routePathString) - 1]);
 
-            if ($isEndsWithSlash && ($this->config->compileTrailingSlashMode === Router::TRAILING_SLASH_NEVER)) {
+            if ( $isEndsWithSlash && ($this->config->compileTrailingSlashMode === Router::TRAILING_SLASH_NEVER) ) {
                 throw new RuntimeException(
                     'The `path` must not end with `/` sign: ' . $routePathString
                 );
 
-            } elseif (! $isEndsWithSlash && ($this->config->compileTrailingSlashMode === Router::TRAILING_SLASH_ALWAYS)) {
+            } elseif ( ! $isEndsWithSlash && ($this->config->compileTrailingSlashMode === Router::TRAILING_SLASH_ALWAYS) ) {
                 throw new RuntimeException(
                     'The `path` must end with `/` sign: ' . $routePathString
                 );
@@ -534,8 +534,8 @@ class RouterFacade implements RouterInterface
     {
         $this->isRouterChanged = true;
 
-        if (! $this->config->registerAllowObjectsAndClosures) {
-            if (false
+        if ( ! $this->config->registerAllowObjectsAndClosures ) {
+            if ( false
                 || $middleware->isClosure()
                 || $middleware->hasMethodObject()
                 || $middleware->hasInvokableObject()
@@ -567,7 +567,7 @@ class RouterFacade implements RouterInterface
 
         $routerGenericFallback = RouterGenericHandlerFallback::from($fallback)->orThrow();
 
-        if (! $this->routerStore->routeCollection->hasRoute($routeIdInt)) {
+        if ( ! $this->routerStore->routeCollection->hasRoute($routeIdInt) ) {
             throw new RuntimeException(
                 [ 'Route not found by id: ' . $routeId, $routeId ]
             );
@@ -590,19 +590,19 @@ class RouterFacade implements RouterInterface
 
         $routerGenericFallback = RouterGenericHandlerFallback::from($fallback)->orThrow();
 
-        if ($this->config->compileTrailingSlashMode) {
+        if ( $this->config->compileTrailingSlashMode ) {
             $routePathString = $routePathObject->getValue();
 
             $isEndsWithSlash = true
                 && ('/' !== $routePathString)
-                && ('/' === $routePathString[ strlen($routePathString) - 1 ]);
+                && ('/' === $routePathString[strlen($routePathString) - 1]);
 
-            if ($isEndsWithSlash && ($this->config->compileTrailingSlashMode === Router::TRAILING_SLASH_NEVER)) {
+            if ( $isEndsWithSlash && ($this->config->compileTrailingSlashMode === Router::TRAILING_SLASH_NEVER) ) {
                 throw new RuntimeException(
                     'The `path` must not end with `/` sign: ' . $routePathString
                 );
 
-            } elseif (! $isEndsWithSlash && ($this->config->compileTrailingSlashMode === Router::TRAILING_SLASH_ALWAYS)) {
+            } elseif ( ! $isEndsWithSlash && ($this->config->compileTrailingSlashMode === Router::TRAILING_SLASH_ALWAYS) ) {
                 throw new RuntimeException(
                     'The `path` must end with `/` sign: ' . $routePathString
                 );
@@ -637,8 +637,8 @@ class RouterFacade implements RouterInterface
     {
         $this->isRouterChanged = true;
 
-        if (! $this->config->registerAllowObjectsAndClosures) {
-            if (false
+        if ( ! $this->config->registerAllowObjectsAndClosures ) {
+            if ( false
                 || $fallback->isClosure()
                 || $fallback->hasMethodObject()
                 || $fallback->hasInvokableObject()
@@ -660,7 +660,7 @@ class RouterFacade implements RouterInterface
 
     public function commit() : RouterInterface
     {
-        if ($this->rootRouterGroup->hasRoutes()) {
+        if ( $this->rootRouterGroup->hasRoutes() ) {
             $this->registerRouteGroup($this->rootRouterGroup);
 
             $this->rootRouterGroup = $this->routerFactory->newRouteGroup();
@@ -782,7 +782,7 @@ class RouterFacade implements RouterInterface
 
     /**
      * @param mixed|RouterDispatcherRequestContractInterface|RouterDispatcherRouteContractInterface $contract
-     * @param array{ 0: array }|PipeContext                                                         $context
+     * @param array{ 0: array }|FuncPipeContext                                                     $context
      *
      * @return mixed
      * @throws DispatchException
@@ -801,7 +801,7 @@ class RouterFacade implements RouterInterface
     }
 
     /**
-     * @param array{ 0: array }|PipeContext $context
+     * @param array{ 0: array }|FuncPipeContext $context
      *
      * @return mixed
      * @throws DispatchException
@@ -820,7 +820,7 @@ class RouterFacade implements RouterInterface
     }
 
     /**
-     * @param array{ 0: array }|PipeContext $context
+     * @param array{ 0: array }|FuncPipeContext $context
      *
      * @return mixed
      * @throws DispatchException
@@ -931,7 +931,7 @@ class RouterFacade implements RouterInterface
 
     protected function compileRoute(RouteBlueprint $routeBlueprint) : Route
     {
-        if (null === ($routePath = $routeBlueprint->path)) {
+        if ( null === ($routePath = $routeBlueprint->path) ) {
             throw new RuntimeException(
                 [
                     'Missing `path` in route',
@@ -940,7 +940,7 @@ class RouterFacade implements RouterInterface
             );
         }
 
-        if (null === $routeBlueprint->action) {
+        if ( null === $routeBlueprint->action ) {
             throw new RuntimeException(
                 [
                     'Missing `action` in route',
@@ -949,7 +949,7 @@ class RouterFacade implements RouterInterface
             );
         }
 
-        if (null === $routeBlueprint->methodIndex) {
+        if ( null === $routeBlueprint->methodIndex ) {
             throw new RuntimeException(
                 [
                     'Missing `method` in route',
@@ -960,17 +960,17 @@ class RouterFacade implements RouterInterface
 
         $routePathString = $routePath->getValue();
 
-        if ($this->config->compileTrailingSlashMode) {
+        if ( $this->config->compileTrailingSlashMode ) {
             $isEndsWithSlash = true
                 && ('/' !== $routePathString)
-                && ('/' === $routePathString[ strlen($routePathString) - 1 ]);
+                && ('/' === $routePathString[strlen($routePathString) - 1]);
 
-            if ($isEndsWithSlash && ($this->config->compileTrailingSlashMode === Router::TRAILING_SLASH_NEVER)) {
+            if ( $isEndsWithSlash && ($this->config->compileTrailingSlashMode === Router::TRAILING_SLASH_NEVER) ) {
                 throw new RuntimeException(
                     'The `path` must not end with `/` sign: ' . $routePathString
                 );
 
-            } elseif (! $isEndsWithSlash && ($this->config->compileTrailingSlashMode === Router::TRAILING_SLASH_ALWAYS)) {
+            } elseif ( ! $isEndsWithSlash && ($this->config->compileTrailingSlashMode === Router::TRAILING_SLASH_ALWAYS) ) {
                 throw new RuntimeException(
                     'The `path` must end with `/` sign: ' . $routePathString
                 );
@@ -987,11 +987,11 @@ class RouterFacade implements RouterInterface
         $route->action = $routeBlueprint->action;
         $route->compiledActionAttributes = array_fill_keys(array_keys($attributesIndex), null);
 
-        if (null !== $routeBlueprint->name) {
+        if ( null !== $routeBlueprint->name ) {
             $route->name = $routeBlueprint->name->getValue();
         }
 
-        if ([] !== $routeBlueprint->methodIndex) {
+        if ( [] !== $routeBlueprint->methodIndex ) {
             $methodIndex = $routeBlueprint->methodIndex;
 
             ksort($methodIndex);
@@ -999,7 +999,7 @@ class RouterFacade implements RouterInterface
             $route->methodIndex = $methodIndex;
         }
 
-        if ([] !== $routeBlueprint->tagIndex) {
+        if ( [] !== $routeBlueprint->tagIndex ) {
             $tagIndex = $routeBlueprint->tagIndex;
 
             ksort($tagIndex);
@@ -1019,9 +1019,9 @@ class RouterFacade implements RouterInterface
         $patternDict = $this->routerStore->patternCollection->patternDict;
 
         $regex = ''
-            . preg_quote(Router::PATTERN_ENCLOSURE[ 0 ], '/')
-            . '[^' . preg_quote(Router::PATTERN_ENCLOSURE[ 1 ], '/') . ']+'
-            . preg_quote(Router::PATTERN_ENCLOSURE[ 1 ], '/');
+            . preg_quote(Router::PATTERN_ENCLOSURE[0], '/')
+            . '[^' . preg_quote(Router::PATTERN_ENCLOSURE[1], '/') . ']+'
+            . preg_quote(Router::PATTERN_ENCLOSURE[1], '/');
 
         $search = [];
 
@@ -1031,19 +1031,19 @@ class RouterFacade implements RouterInterface
                 &$patternDict, &$attributesIndex,
                 &$search
             ) {
-                $patternObject = $patternDict[ $match[ 0 ] ];
+                $patternObject = $patternDict[$match[0]];
 
                 $attribute = $patternObject->attribute;
 
-                if (isset($attributesIndex[ $attribute ])) {
+                if ( isset($attributesIndex[$attribute]) ) {
                     throw new RuntimeException(
                         [ 'The `path` should not contain same attribute few times: ' . $attribute, $attribute ]
                     );
                 }
 
-                $attributesIndex[ $attribute ] = null;
+                $attributesIndex[$attribute] = null;
 
-                $search[ preg_quote($patternObject->pattern, '/') ] = $patternObject->regex;
+                $search[preg_quote($patternObject->pattern, '/')] = $patternObject->regex;
 
                 return $patternObject->pattern;
             },

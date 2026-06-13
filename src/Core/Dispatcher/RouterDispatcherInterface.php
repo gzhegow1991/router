@@ -4,7 +4,7 @@ namespace Gzhegow\Router\Core\Dispatcher;
 
 use Gzhegow\Router\RouterInterface;
 use Gzhegow\Router\Core\Route\Route;
-use Gzhegow\Lib\Modules\Func\Pipe\PipeContext;
+use Gzhegow\Lib\Modules\Func\Pipe\FuncPipeContext;
 use Gzhegow\Router\Exception\Exception\DispatchException;
 use Gzhegow\Router\Core\Handler\Fallback\RouterGenericHandlerFallback;
 use Gzhegow\Router\Core\Handler\Middleware\RouterGenericHandlerMiddleware;
@@ -19,7 +19,7 @@ interface RouterDispatcherInterface
 
     /**
      * @param mixed|RouterDispatcherRequestContractInterface|RouterDispatcherRouteContractInterface $contract
-     * @param array{ 0: array }|PipeContext                                                         $context
+     * @param array{ 0: array }|FuncPipeContext                                                     $context
      *
      * @return mixed
      * @throws DispatchException
@@ -32,7 +32,7 @@ interface RouterDispatcherInterface
     );
 
     /**
-     * @param array{ 0: array }|PipeContext $context
+     * @param array{ 0: array }|FuncPipeContext $context
      *
      * @return mixed
      * @throws DispatchException
@@ -45,7 +45,7 @@ interface RouterDispatcherInterface
     );
 
     /**
-     * @param array{ 0: array }|PipeContext $context
+     * @param array{ 0: array }|FuncPipeContext $context
      *
      * @return mixed
      * @throws DispatchException

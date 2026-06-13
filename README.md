@@ -23,11 +23,12 @@ php test.php
 ```php
 <?php
 
-// > настраиваем PHP
+define('__DIR_ROOT__', __DIR__ . '/..');
+
 \Gzhegow\Lib\Lib::entrypoint()
     ->setAllRecommended()
     //
-    ->setCustomDirRoot(__DIR__ . '/..')
+    ->setCustomDirRoot(__DIR_ROOT__)
     //
     ->useAll()
     //
@@ -35,62 +36,11 @@ php test.php
 ;
 
 
-// > добавляем несколько функция для тестирования
-$ffn = new class {
-    function root() : string
-    {
-        return realpath(__DIR__ . '/..');
-    }
+$theDebug = \Gzhegow\Lib\Lib::debug();
+$theTest = \Gzhegow\Lib\Lib::test();
 
 
-    function value_array($value, ?int $maxLevel = null, array $options = []) : string
-    {
-        return \Gzhegow\Lib\Lib::debug()->dump_value_array($value, $maxLevel, $options);
-    }
-
-    function value_array_multiline($value, ?int $maxLevel = null, array $options = []) : string
-    {
-        return \Gzhegow\Lib\Lib::debug()->dump_value_array_multiline($value, $maxLevel, $options);
-    }
-
-
-    function values($separator = null, ...$values) : string
-    {
-        return \Gzhegow\Lib\Lib::debug()->dump_values([], $separator, ...$values);
-    }
-
-
-    function print(...$values) : void
-    {
-        echo $this->values(' | ', ...$values) . "\n";
-    }
-
-
-    function print_array($value, ?int $maxLevel = null, array $options = []) : void
-    {
-        echo $this->value_array($value, $maxLevel, $options) . "\n";
-    }
-
-    function print_array_multiline($value, ?int $maxLevel = null, array $options = []) : void
-    {
-        echo $this->value_array_multiline($value, $maxLevel, $options) . "\n";
-    }
-
-
-    function test(\Closure $fn, array $args = []) : \Gzhegow\Lib\Modules\Test\TestCase
-    {
-        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
-
-        return \Gzhegow\Lib\Lib::test()->newTestCase()
-            ->fn($fn, $args)
-            ->trace($trace)
-        ;
-    }
-};
-
-
-
-// >>> ЗАПУСКАЕМ!
+// >>> ЗАПУСК
 
 // > сначала всегда фабрика
 $factory = new \Gzhegow\Router\RouterFactory();
@@ -98,7 +48,7 @@ $factory = new \Gzhegow\Router\RouterFactory();
 // > создаем конфигурацию
 $config = new \Gzhegow\Router\Core\Config\RouterConfig();
 $config->configure(
-    function (\Gzhegow\Router\Core\Config\RouterConfig $config) use ($ffn) {
+    static function (\Gzhegow\Router\Core\Config\RouterConfig $config) {
         // >>> роутер
         $config->registerAllowObjectsAndClosures = false;
         $config->compileTrailingSlashMode = \Gzhegow\Router\Router::TRAILING_SLASH_AS_IS;
@@ -107,7 +57,7 @@ $config->configure(
         $config->dispatchForceMethod = null;
 
         // >>> кэш роутера
-        $cacheDir = $ffn->root() . '/var/cache.test';
+        $cacheDir = __DIR_ROOT__ . '/var/cache.test';
         $cacheNamespace = 'gzhegow.router';
         //
         $cacheDirpath = "{$cacheDir}/{$cacheNamespace}";
@@ -324,15 +274,15 @@ $router->cacheRemember(
 
 // > TEST
 // > так можно искать маршруты с помощью имен или тегов
-$fn = function () use ($ffn, $router) {
-    $ffn->print('TEST 1');
+$fn = function () use ($router, $theDebug) {
+    $theDebug->dump_value('TEST 1');
     echo "\n";
 
 
     $ids = [ 1, 2 ];
 
     $routes = $router->matchAllByIds($ids);
-    $ffn->print_array_multiline($routes);
+    $theDebug->dump_array_multiline($routes);
     echo "\n";
 
 
@@ -341,29 +291,29 @@ $fn = function () use ($ffn, $router) {
 
     $batch = $router->matchAllByNames($names);
     foreach ( $batch as $i => $routes ) {
-        $ffn->print('Attribute index', $i);
-        $ffn->print_array_multiline($routes);
+        $theDebug->dump_all_value([ 'Attribute index', $i ]);
+        $theDebug->dump_array_multiline($routes);
     }
     echo "\n";
 
     $batch = $router->matchAllByTags($tags);
     foreach ( $batch as $i => $routes ) {
-        $ffn->print('Attribute index', $i);
-        $ffn->print_array_multiline($routes);
+        $theDebug->dump_all_value([ 'Attribute index', $i ]);
+        $theDebug->dump_array_multiline($routes);
     }
     echo "\n";
 
 
     $route = $router->matchFirstByIds($ids);
-    $ffn->print($route);
+    $theDebug->dump_value($route);
 
     $route = $router->matchFirstByNames($names);
-    $ffn->print($route);
+    $theDebug->dump_value($route);
 
     $route = $router->matchFirstByTags($tags);
-    $ffn->print($route);
+    $theDebug->dump_value($route);
 };
-$test = $ffn->test($fn);
+$test = $theTest->newCase($fn);
 $test->expectStdout('
 "TEST 1"
 
@@ -403,8 +353,8 @@ $test->run();
 
 // > TEST
 // > так можно искать маршруты с по парам "имя-тег", чтобы найти два одинаковых роута для противоположных контекстов
-$fn = function () use ($ffn, $router) {
-    $ffn->print('TEST 2');
+$fn = function () use ($router, $theDebug) {
+    $theDebug->dump_value('TEST 2');
     echo "\n";
 
 
@@ -426,12 +376,12 @@ $fn = function () use ($ffn, $router) {
 
     $batch = $router->matchAllByParams($nameTagMethodList);
     foreach ( $batch as $i => $routes ) {
-        $ffn->print('Attribute index', $i);
-        $ffn->print_array_multiline($routes);
+        $theDebug->dump_all_value([ 'Attribute index', $i ]);
+        $theDebug->dump_array_multiline($routes);
         echo "\n";
     }
 };
-$test = $ffn->test($fn);
+$test = $theTest->newCase($fn);
 $test->expectStdout('
 "TEST 2"
 
@@ -526,8 +476,8 @@ $test->run();
 
 // > TEST
 // > так можно сгенерировать ссылки для зарегистрированных маршрутов
-$fn = function () use ($ffn, $router) {
-    $ffn->print('TEST 4');
+$fn = function () use ($router, $theDebug) {
+    $theDebug->dump_value('TEST 4');
     echo "\n";
 
 
@@ -550,9 +500,9 @@ $fn = function () use ($ffn, $router) {
 
     // > можно передать либо список объектов (instance of Route::class) и/или список строк - имена роутов
     $result = $router->urls($routes, $attributes);
-    $ffn->print_array_multiline($result);
+    $theDebug->dump_array_multiline($result);
 };
-$test = $ffn->test($fn);
+$test = $theTest->newCase($fn);
 $test->expectStdout('
 "TEST 4"
 
@@ -569,8 +519,8 @@ $test->run();
 
 // > TEST
 // > так можно запустить выполнение маршрута в вашем файле index.php, на который указывает apache2/nginx
-$fn = function () use ($ffn, $router) {
-    $ffn->print('TEST 5');
+$fn = function () use ($router, $theDebug) {
+    $theDebug->dump_value('TEST 5');
     echo "\n";
 
     $contract = \Gzhegow\Router\Core\Dispatcher\Contract\RouterDispatcherRequestContract::fromArray(
@@ -580,9 +530,9 @@ $fn = function () use ($ffn, $router) {
     $result = $router->dispatch($contract);
     echo "\n";
 
-    $ffn->print('[ RESULT ]', $result);
+    $theDebug->dump_all_value([ '[ RESULT ]', $result ]);
 };
-$test = $ffn->test($fn);
+$test = $theTest->newCase($fn);
 $test->expectStdout('
 "TEST 5"
 
@@ -601,16 +551,16 @@ $test->run();
 
 // > TEST
 // > такого маршрута нет, запустится ранее указанный fallback-обработчик
-$fn = function () use ($ffn, $router) {
-    $ffn->print('TEST 6');
+$fn = function () use ($router, $theDebug) {
+    $theDebug->dump_value('TEST 6');
     echo "\n";
 
     $result = $router->dispatch([ 'GET', '/api/v1/user/not-found' ]);
     echo "\n";
 
-    $ffn->print('[ RESULT ]', $result);
+    $theDebug->dump_all_value([ '[ RESULT ]', $result ]);
 };
-$test = $ffn->test($fn);
+$test = $theTest->newCase($fn);
 $test->expectStdout('
 "TEST 6"
 
@@ -625,8 +575,8 @@ $test->run();
 
 // > TEST
 // > такого маршрута нет, и одновременно с этим обработчик ошибок не был задан (либо был задан, но перебросил ошибку, что трактуется как "обработка не удалась")
-$fn = function () use ($ffn, $router) {
-    $ffn->print('TEST 7');
+$fn = function () use ($router, $theDebug) {
+    $theDebug->dump_value('TEST 7');
     echo "\n";
 
     $theDebugThrowabler = \Gzhegow\Lib\Lib::debugThrowabler();
@@ -648,9 +598,9 @@ $fn = function () use ($ffn, $router) {
     }
     echo "\n";
 
-    $ffn->print('[ RESULT ]', $result);
+    $theDebug->dump_all_value([ '[ RESULT ]', $result ]);
 };
-$test = $ffn->test($fn);
+$test = $theTest->newCase($fn);
 $test->expectStdout('
 "TEST 7"
 
@@ -668,16 +618,16 @@ $test->run();
 
 // > TEST
 // > этот маршрут бросает \LogicException, запустятся DemoLogicExceptionFallback и DemoThrowableFallback
-$fn = function () use ($ffn, $router) {
-    $ffn->print('TEST 8');
+$fn = function () use ($router, $theDebug) {
+    $theDebug->dump_value('TEST 8');
     echo "\n";
 
     $result = $router->dispatch([ 'GET', '/api/v1/user/1/logic' ]);
     echo "\n";
 
-    $ffn->print('[ RESULT ]', $result);
+    $theDebug->dump_all_value([ '[ RESULT ]', $result ]);
 };
-$test = $ffn->test($fn);
+$test = $theTest->newCase($fn);
 $test->expectStdout('
 "TEST 8"
 
@@ -698,16 +648,16 @@ $test->run();
 
 // > TEST
 // > этот маршрут бросает \RuntimeException, запустится DemoRuntimeExceptionFallback (т.к. он объявлен первым)
-$fn = function () use ($ffn, $router) {
-    $ffn->print('TEST 9');
+$fn = function () use ($router, $theDebug) {
+    $theDebug->dump_value('TEST 9');
     echo "\n";
 
     $result = $router->dispatch([ 'GET', '/api/v1/user/1/runtime' ]);
     echo "\n";
 
-    $ffn->print('[ RESULT ]', $result);
+    $theDebug->dump_all_value([ '[ RESULT ]', $result ]);
 };
-$test = $ffn->test($fn);
+$test = $theTest->newCase($fn);
 $test->expectStdout('
 "TEST 9"
 
